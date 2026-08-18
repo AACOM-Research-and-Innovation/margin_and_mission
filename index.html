@@ -1,0 +1,923 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --indigo:#231262; --indigo-deep:#170b42; --indigo-line:#3a2a7a;
+  --cyan:#54C8E8; --orange:#FFA300; --coral:#FF5959;
+  --paper:#F7F4EC; --paper-rule:#ddd6c4; --ink:#1a1526; --ink-soft:#5d5670;
+  --ok:#3FBF8F;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--indigo-deep);color:var(--paper);
+  font-family:Urbanist,'Segoe UI',Arial,sans-serif;font-weight:400;
+  -webkit-font-smoothing:antialiased}
+.num{font-family:'IBM Plex Mono',Consolas,monospace;font-variant-numeric:tabular-nums}
+button{font-family:inherit;cursor:pointer;border:none}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+h1,h2,h3{font-weight:800;letter-spacing:-.02em;margin:0}
+.wrap{max-width:1400px;margin:0 auto;padding:0 20px 80px}
+
+/* chrome */
+.topbar{background:var(--indigo);border-bottom:1px solid var(--indigo-line);
+  padding:12px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+.brand{font-weight:800;font-size:19px;letter-spacing:-.03em}
+.brand span{color:var(--cyan)}
+.pill{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;
+  padding:5px 11px;border-radius:2px;background:rgba(84,200,232,.13);color:var(--cyan)}
+.pill.warn{background:rgba(255,163,0,.15);color:var(--orange)}
+.pill.live{background:rgba(63,191,143,.15);color:var(--ok)}
+.spacer{flex:1}
+
+/* ledger strip — the signature */
+.ledgers{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--indigo-line);
+  border:1px solid var(--indigo-line);margin:22px 0}
+.ledger{background:var(--paper);color:var(--ink);padding:18px 22px;position:relative;overflow:hidden}
+.ledger .fill{position:absolute;left:0;bottom:0;width:100%;background:rgba(255,89,89,.16);
+  transition:height .6s cubic-bezier(.3,0,.2,1);pointer-events:none}
+.ledger h3{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);
+  font-weight:600;position:relative}
+.ledger .big{font-size:clamp(30px,4.2vw,46px);font-weight:600;margin:6px 0 2px;position:relative;line-height:1}
+.ledger .big.neg{color:var(--coral)}
+.ledger .sub{font-size:13px;color:var(--ink-soft);position:relative}
+.lrow{display:flex;justify-content:space-between;border-top:1px solid var(--paper-rule);
+  padding:5px 0;font-size:13px;position:relative}
+.lrow b{font-weight:600}
+
+/* catalog */
+.grid{display:grid;grid-template-columns:1fr 380px;gap:22px;align-items:start}
+.cat{margin-bottom:26px}
+.cat h2{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);
+  padding-bottom:7px;border-bottom:1px solid var(--indigo-line);margin-bottom:2px}
+.card{display:grid;grid-template-columns:34px 1fr auto;gap:14px;align-items:start;
+  padding:13px 12px;border-bottom:1px solid rgba(58,42,122,.5);text-align:left;width:100%;
+  background:none;color:var(--paper);transition:background .15s}
+.card:hover:not(:disabled){background:rgba(84,200,232,.06)}
+.card:disabled{opacity:.34;cursor:not-allowed}
+.card.on{background:rgba(84,200,232,.11);box-shadow:inset 3px 0 0 var(--cyan)}
+.card.owned{background:rgba(63,191,143,.08);box-shadow:inset 3px 0 0 var(--ok);opacity:.72;cursor:default}
+.cnum{font-size:12px;color:var(--indigo-line);font-weight:600;padding-top:3px}
+.card.on .cnum,.card.owned .cnum{color:var(--cyan)}
+.cname{font-size:15px;font-weight:600;line-height:1.25}
+.cdesc{font-size:12.5px;color:#a79fc4;line-height:1.45;margin-top:4px}
+.cflag{display:inline-block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+  font-weight:600;padding:2px 6px;margin-top:6px;margin-right:5px;border-radius:2px}
+.cflag.req{background:rgba(255,89,89,.15);color:var(--coral)}
+.cflag.rest{background:rgba(255,163,0,.15);color:var(--orange)}
+.cflag.rev{background:rgba(63,191,143,.15);color:var(--ok)}
+.cprice{text-align:right;font-size:13px;white-space:nowrap;padding-top:2px}
+.cprice .one{font-weight:600;font-size:15px}
+.cprice .tail{color:var(--orange);font-size:12px;display:block;margin-top:2px}
+.cprice .tail.credit{color:var(--ok)}
+
+/* rail */
+.rail{position:sticky;top:78px;background:var(--indigo);border:1px solid var(--indigo-line);padding:18px}
+.rail h3{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px}
+.cartrow{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:7px 0;
+  border-bottom:1px solid rgba(58,42,122,.6)}
+.cartrow button{background:none;color:var(--coral);font-size:16px;line-height:1;padding:0 2px}
+.tot{display:flex;justify-content:space-between;padding:8px 0;font-size:14px}
+.tot.head{border-top:2px solid var(--indigo-line);margin-top:12px;padding-top:12px;font-weight:600}
+.btn{width:100%;padding:15px;background:var(--cyan);color:var(--indigo-deep);font-weight:800;
+  font-size:15px;letter-spacing:.02em;margin-top:14px;transition:filter .15s}
+.btn:hover:not(:disabled){filter:brightness(1.1)}
+.btn:disabled{background:#3a3560;color:#7d76a0;cursor:not-allowed}
+.btn.ghost{background:none;border:1px solid var(--indigo-line);color:var(--paper);font-weight:600}
+.btn.alert{background:var(--orange)}
+.alertbox{background:rgba(255,89,89,.12);border-left:3px solid var(--coral);padding:10px 12px;
+  font-size:12.5px;line-height:1.5;margin-top:12px;color:#ffd0d0}
+.notebox{background:rgba(255,163,0,.1);border-left:3px solid var(--orange);padding:10px 12px;
+  font-size:12.5px;line-height:1.5;margin-top:12px;color:#ffe1b0}
+
+/* briefs + events */
+.panel{background:var(--indigo);border:1px solid var(--indigo-line);padding:22px;margin:22px 0}
+.panel h2{font-size:20px;margin-bottom:4px}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--orange);font-weight:600}
+.sig{display:grid;grid-template-columns:26px 1fr;gap:12px;padding:11px 0;
+  border-bottom:1px solid rgba(58,42,122,.6);font-size:14px;line-height:1.5}
+.sig i{font-style:normal;color:var(--cyan);font-weight:600;font-size:12px;
+  font-family:'IBM Plex Mono',monospace;padding-top:2px}
+.sig.priv{background:rgba(84,200,232,.07);padding-left:10px;margin-left:-10px}
+.ev{border-left:3px solid var(--coral);padding:14px 0 14px 16px;margin:16px 0}
+.ev h3{font-size:17px;margin-bottom:6px}
+.ev p{font-size:14px;line-height:1.6;color:#c6bfe0;margin:0}
+.res{margin-top:12px;padding:12px 14px;background:rgba(0,0,0,.22);font-size:13.5px;line-height:1.65}
+.res .line{display:flex;justify-content:space-between;gap:14px;padding:3px 0}
+.res .amt{font-weight:600;white-space:nowrap}
+.neg{color:var(--coral)} .pos{color:var(--ok)}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#8f87b5;
+  font-weight:600;padding:8px 10px;border-bottom:1px solid var(--indigo-line)}
+td{padding:10px;border-bottom:1px solid rgba(58,42,122,.45)}
+td.r,th.r{text-align:right}
+tr.me{background:rgba(84,200,232,.09)}
+.rank{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--cyan)}
+
+/* role picker */
+.picker{max-width:560px;margin:9vh auto;padding:0 20px;text-align:center}
+.picker h1{font-size:clamp(38px,7vw,60px);line-height:.95;margin-bottom:14px}
+.picker h1 em{font-style:normal;color:var(--cyan)}
+.picker p{color:#a79fc4;font-size:15px;line-height:1.6;margin-bottom:34px}
+.roles{display:grid;gap:10px}
+.role{background:var(--indigo);border:1px solid var(--indigo-line);padding:18px 20px;
+  text-align:left;color:var(--paper);transition:border-color .15s,transform .15s}
+.role:hover{border-color:var(--cyan);transform:translateX(3px)}
+.role b{display:block;font-size:16px;font-weight:600;margin-bottom:3px}
+.role span{font-size:13px;color:#a79fc4}
+select,input{background:var(--indigo-deep);border:1px solid var(--indigo-line);color:var(--paper);
+  padding:11px 12px;font-size:14px;font-family:inherit;width:100%;margin-top:8px}
+
+/* facilitator */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:14px}
+.tstat{background:var(--indigo-deep);border:1px solid var(--indigo-line);padding:12px 14px;font-size:13px}
+.tstat b{display:block;font-size:14px;font-weight:600;margin-bottom:4px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:var(--coral)}
+.dot.in{background:var(--ok)}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.ctl .btn{width:auto;padding:12px 22px;margin:0}
+.mini{font-size:12.5px;color:#a79fc4;line-height:1.6;margin-top:10px}
+
+/* projection */
+.proj{padding:40px}
+.proj h1{font-size:clamp(34px,5vw,58px);margin-bottom:26px}
+.proj table{font-size:clamp(16px,2vw,22px)}
+.proj td,.proj th{padding:14px 12px}
+
+.scorecard{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--indigo-line);
+  border:1px solid var(--indigo-line);margin-top:14px}
+.sc{background:var(--indigo-deep);padding:14px}
+.sc .lab{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:#8f87b5;font-weight:600}
+.sc .val{font-size:30px;font-weight:600;margin-top:5px}
+.sc .of{font-size:13px;color:#8f87b5}
+.bar{height:3px;background:rgba(255,255,255,.1);margin-top:9px}
+.bar i{display:block;height:100%;background:var(--cyan)}
+
+@media(max-width:960px){.grid{grid-template-columns:1fr}.rail{position:static}
+  .ledgers{grid-template-columns:1fr}.scorecard{grid-template-columns:repeat(2,1fr)}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div id="app"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   MARGIN AND MISSION — strategic budgeting simulation
+   AACOM Senior Leadership Development Program
+   ══════════════════════════════════════════════════════════════ */
+
+const M = n => (n<0?'−$':'$') + Math.abs(Math.round(n)).toLocaleString();
+const Mk = n => (n<0?'−$':'$') + (Math.abs(n)/1e6).toFixed(Math.abs(n)%1e6===0?1:2) + 'M';
+
+/* ── Institution baseline ────────────────────────────────── */
+const BASE = {
+  tuition: 38400000,      // 640 students × $60,000, scales with enrollment
+  otherRev: 12600000,     // clinical, grants, gifts, other — fixed
+  expense: 48500000,      // → $2.5M starting margin (4.9%). Calibrated: at $1M
+                          // margin, 6 of 8 plausible portfolios went into deficit
+                          // before any event fired, which makes deficit a flat tax
+                          // rather than a consequence. At $2.5M, 1 of 8 does.
+  fund: 5000000,          // Strategic Investment Fund, one-time. Deliberately
+                          // generous — the margin is the binding constraint, not
+                          // the capital, and feeling rich is the trap.
+  restricted: 3000000,    // rural & community health, purpose-restricted
+  reserve: 13000000       // liquid operating reserve → 98 days cash
+};
+
+/* ── Investment catalog ──────────────────────────────────── */
+const CARDS = [
+ {id:1,cat:'Infrastructure and risk',n:'Deferred maintenance: roof, HVAC, envelope',one:1200000,tail:-50000,lag:0,t:['facility'],m:0,s:2,r:5,
+  d:'Retires $1.2M of a $4.2M backlog. Lowers utilities cost. Deferred maintenance is debt you have already incurred and are choosing not to record.'},
+ {id:2,cat:'Infrastructure and risk',n:'Campus hardening: wind, flood, envelope mitigation',one:900000,tail:40000,lag:0,t:['hazard'],m:0,s:1,r:6,
+  d:'Structural and drainage work on the three lowest-elevation buildings.'},
+ {id:3,cat:'Infrastructure and risk',n:'Business continuity and distributed instruction',one:400000,tail:120000,lag:0,t:['continuity'],m:2,s:2,r:5,
+  d:'Standing capability to deliver instruction and assessment off-site within 72 hours of any disruption.'},
+ {id:4,cat:'Infrastructure and risk',n:'Cybersecurity uplift: MFA, EDR, segmentation, IR retainer',one:750000,tail:250000,lag:0,t:['cyber'],m:0,s:3,r:6,
+  d:'Controls, not policy. Carriers now underwrite on the presence of these specific controls.'},
+ {id:5,cat:'Infrastructure and risk',n:'Cyber liability insurance',one:0,tail:180000,lag:0,t:['cyberins'],m:0,s:0,r:2,req:4,reqTxt:'Pays only alongside card 4',
+  d:'Transfers residual risk. Policy contains a controls warranty; a claim without MFA in place is denied.'},
+
+ {id:25,cat:'Academic and program',n:'MS in Clinical AI and Health Informatics, DO dual pathway',one:900000,tail:1400000,lag:1,rev:3200000,t:['program','ai','aiprog'],m:5,s:7,r:0,req:15,reqTxt:'Requires card 15 or delivers 60% value',
+  d:'Fifty-five seats, stackable with the DO. The largest revenue opportunity in the catalog and the largest recurring obligation. Launching without governance capacity is a reputational exposure, not a shortcut.'},
+ {id:6,cat:'Academic and program',n:'MS Biomedical Sciences bridge program',one:600000,tail:900000,lag:1,rev:1400000,t:['program'],m:2,s:2,r:0,
+  d:'Established model, modest margin, feeds the DO applicant pool. Revenue is enrollment-contingent.'},
+ {id:7,cat:'Academic and program',n:'Competency-based curriculum transition',one:800000,tail:150000,lag:2,t:['curric'],m:6,s:5,r:0,
+  d:'Two years of faculty labor before a single visible outcome. Materially strengthens accreditation posture.'},
+ {id:8,cat:'Academic and program',n:'Simulation center expansion',one:1800000,tail:300000,lag:1,t:['sim'],m:4,s:3,r:0,
+  d:'Adds capacity for procedural and OMM assessment. Visible to applicants, expensive to staff.'},
+ {id:9,cat:'Academic and program',n:'Faculty development and retention pool',one:0,tail:500000,lag:0,t:['faculty'],m:4,s:0,r:5,
+  d:'Pure recurring cost with no capital component. Retention is cheaper than replacement and never looks like an accomplishment.'},
+ {id:10,cat:'Academic and program',n:'Class expansion, twenty additional seats',one:400000,tail:600000,lag:0,rev:1200000,t:['expand'],m:2,s:1,r:0,req:12,reqTxt:'Requires card 12 or placement fails',
+  d:'Immediate revenue. Requires clinical placement capacity that must already exist.'},
+ {id:26,cat:'Academic and program',n:'OMM department depth and chair succession',one:250000,tail:550000,lag:1,t:['omm'],m:4,s:3,r:6,
+  d:'Your OMM chair is 63 and no one in the department is credentialed to succeed her. Fellowship line, credentialing support, and a designated successor. Produces nothing visible until the day it is needed.'},
+ {id:28,cat:'Academic and program',n:'Branch campus development and pro forma',one:2500000,tail:1200000,lag:3,rev:4000000,t:['branch'],m:3,s:9,r:0,
+  d:'Site, approvals, faculty, and three years of carrying cost before the first class. Will not return inside this planning horizon under any assumption you can defend.'},
+
+ {id:12,cat:'Clinical education',n:'New clinical and GME partnership',one:1100000,tail:400000,lag:1,t:['clinical'],m:5,s:6,r:4,
+  d:'Affiliation agreement, site development, and core rotation guarantees with a second health system. Unlocks class expansion.'},
+ {id:11,cat:'Clinical education',n:'Preceptor stipend program',one:0,tail:700000,lag:0,t:['preceptor'],m:3,s:2,r:4,
+  d:'Competing schools are bidding for the same community preceptors. This is a defensive recurring commitment.'},
+ {id:13,cat:'Clinical education',n:'Rural and underserved training track',one:500000,tail:250000,lag:1,t:['rural'],m:8,s:3,r:0,rest:true,
+  d:'Eligible for the restricted gift. Strong mission alignment and a prerequisite for capturing aligned philanthropy.'},
+
+ {id:15,cat:'Technology and data',n:'AI governance framework and faculty upskilling',one:200000,tail:100000,lag:0,t:['aigov'],m:2,s:5,r:4,
+  d:'Policy, oversight structure, assessment integrity standards, and faculty capability. Cheap. Unglamorous. Gates the value of every other AI investment.'},
+ {id:14,cat:'Technology and data',n:'AI-enabled early alert and student support',one:350000,tail:200000,lag:1,t:['ai','retention'],m:3,s:2,r:0,req:15,reqTxt:'60% value without card 15',
+  d:'Predictive identification of students at academic risk with a coordinated response protocol.'},
+ {id:17,cat:'Technology and data',n:'Data infrastructure and institutional research capacity',one:450000,tail:250000,lag:1,t:['data','ai'],m:0,s:5,r:2,
+  d:'Warehouse, governance, and two analysts. Grants your team one additional intelligence line in every subsequent signals brief.'},
+ {id:27,cat:'Technology and data',n:'Unified learning platform migration',one:1300000,tail:-180000,lag:2,t:['lms'],m:2,s:5,r:2,
+  d:'One platform replacing three. The three legacy contracts wind down on their own schedules, so you pay for four systems at once for eighteen months. Savings arrive in Year 3, by which time the person who approved this has usually moved on.'},
+ {id:16,cat:'Technology and data',n:'ERP and student information system modernization',one:2200000,tail:400000,lag:2,t:['erp'],m:0,s:6,r:3,
+  d:'Expensive, disruptive, invisible to students, and the reason your financial reporting is currently three weeks late.'},
+
+ {id:18,cat:'Research and advancement',n:'Research startup packages, three faculty hires',one:1500000,tail:900000,lag:3,rev:300000,t:['research'],m:2,s:8,r:0,
+  d:'Will not return inside this planning horizon. The question is whether a dean should make bets that outlive their own tenure.'},
+ {id:19,cat:'Research and advancement',n:'Advancement officer and campaign feasibility study',one:150000,tail:350000,lag:2,rev:600000,t:['adv'],m:0,s:3,r:0,
+  d:'Relationship capacity. Major gifts are cultivated over years and do not arrive at institutions with nobody to receive them.'},
+ {id:20,cat:'Research and advancement',n:'Grant development office',one:200000,tail:300000,lag:1,rev:500000,t:['grants'],m:0,s:3,r:0,
+  d:'Proposal development, compliance, and post-award support. Raises capture rate on external opportunities.'},
+
+ {id:23,cat:'Financial and enrollment',n:'Scholarship and tuition discount pool',one:0,tail:800000,lag:0,t:['aid'],m:4,s:0,r:3,
+  d:'Protects yield when financing conditions tighten. Discounting is a permanent structural decision disguised as a temporary one.'},
+ {id:24,cat:'Financial and enrollment',n:'Pipeline development and enrollment marketing',one:300000,tail:250000,lag:1,t:['pipeline'],m:2,s:2,r:3,
+  d:'Pre-health partnerships, advising outreach, and applicant funnel investment.'},
+ {id:22,cat:'Financial and enrollment',n:'Debt prepayment, $1.0M principal',one:1000000,tail:-180000,lag:0,t:['debt'],m:0,s:1,r:2,
+  d:'Permanently reduces annual debt service by $180K. An 18% recurring return with no execution risk and no mission story.'},
+ {id:21,cat:'Financial and enrollment',n:'Operating reserve transfer, $2.0M',one:2000000,tail:0,lag:0,t:['reserve'],m:0,s:0,r:3,resv:2000000,
+  d:'Moves one-time funds to liquid reserve. Buys days of cash and optionality. Buys nothing else.'}
+];
+const CARD = id => CARDS.find(c=>c.id===id);
+const CATS = [...new Set(CARDS.map(c=>c.cat))];
+
+/* ── Signals briefs ──────────────────────────────────────── */
+const BRIEFS = {
+ 1:{sig:[
+   'Conference committee has retained professional-borrowing caps in the reconciliation text. Floor vote is scheduled; the whip count is not firm.',
+   'Two health-professions institutions in your region disclosed ransomware incidents in the last ninety days. Your carrier has issued a controls questionnaire with a thirty-day response window.',
+   'A competing COM has announced a branch campus 140 miles away, opening in three years.',
+   'The state budget office projects flat higher-education appropriations for the biennium.',
+   'Faculty senate passed a non-binding resolution on clinical workload distribution.',
+   'Your regional accreditor published a routine schedule update with no change to standards.'],
+  priv:'Institutional research flag: 31% of your entering class currently borrows above the proposed cap threshold. Yield exposure is concentrated in your out-of-state applicants.'},
+ 2:{sig:[
+   'Seasonal outlook puts a 70% probability on above-normal storm activity. Three of your buildings carry 1970s-era roof systems and sit inside the surge zone.',
+   'A bipartisan bill tying professional-program state support to documented in-state primary care placement has cleared committee with no organized opposition.',
+   'Your bond rating was affirmed at the current level with a stable outlook.',
+   'National residency application volume is up four percent year over year.',
+   'Your food service vendor has invoked a contractual price escalator.',
+   'Student government has scheduled a referendum on parking allocation.'],
+  priv:'Facilities condition index modeling places three of your buildings in the bottom national quartile. Two of them house your anatomy and simulation functions.'},
+ 3:{sig:[
+   'Three national outlets are preparing coverage on AI use in health-professions assessment. Your accreditor has begun asking peer institutions for their assessment integrity policies.',
+   'Complaints regarding clinical placement adequacy have been logged against two institutions in your region. Focused visits are being scheduled.',
+   'A national workforce report projects primary care shortfall widening through 2035.',
+   'Your malpractice carrier has signaled a mid-single-digit premium increase.',
+   'A neighboring state has authorized a new public COM with a 2031 target opening.',
+   'Federal indirect cost rate negotiations have been extended without change.'],
+  priv:'Prospect research surfaces an unassigned individual with $6M+ capacity and a twenty-year giving history in rural health. No relationship manager is currently assigned.'}
+};
+
+/* ── Event deck ──────────────────────────────────────────── */
+const EVENTS = {
+ 1:[
+  {n:'Professional Education Financing Act takes effect',sig:true,
+   d:'Federal borrowing for professional programs is capped at $45,000 annually and $180,000 lifetime, effective for the coming cycle. Yield softens immediately across the out-of-state pool.',
+   f:t=>{let drop=.06,x=[];
+     if(has(t,23)){drop/=2;x.push('Scholarship pool absorbed half the yield loss')}
+     if(has(t,24)){drop/=2;x.push('Pipeline investment absorbed half of what remained')}
+     if(!has(t,23)&&!has(t,24))x.push('No yield protection in place. Full impact.');
+     return{enroll:-drop,m:-Math.round(drop*100),notes:x,
+       hd:'Entering class down '+(drop*100).toFixed(1)+'%. Effect persists as the cohort progresses.'}}},
+  {n:'Ransomware campaign targets health-professions education',sig:true,
+   d:'A coordinated campaign encrypts student records and assessment systems across the sector. Recovery cost, forensics, notification, and credit monitoring land in a single fiscal year.',
+   f:t=>{let c,x=[];
+     if(has(t,4)){c=300000;x.push('Controls contained the intrusion to a single segment')}
+     else{c=2400000;x.push('No controls. Full recovery, forensics, and notification cost.')}
+     if(has(t,5)&&has(t,4)){c-=250000;x.push('Carrier paid $250K under the policy')}
+     if(has(t,5)&&!has(t,4)){x.push('Claim denied. The policy warranted MFA that was not in place. You paid the premium and carried the loss.')}
+     return{cash:-c,s:has(t,4)?1:0,notes:x,hd:'Incident cost '+M(c)}}},
+  {n:'Teaching hospital acquired; forty core rotation slots eliminated',sig:false,
+   d:'Your primary partner is absorbed by a national system that consolidates education agreements. Forty core slots disappear ninety days before the block begins.',
+   f:t=>{let c=800000,m=-6,x=[];
+     if(has(t,12)){c=0;m=0;x.push('Second partnership absorbed the displacement with no interruption')}
+     else if(has(t,11)){c=400000;m=-3;x.push('Preceptor stipends retained roughly half the affected sites')}
+     else x.push('Students placed at distance and at cost. Two blocks rescheduled.');
+     if(has(t,10)&&!has(t,12)){c+=600000;m-=4;x.push('Twenty expansion seats had no placement capacity behind them. This is the compounding error.')}
+     return{cash:-c,m,notes:x,hd:c?'Placement disruption cost '+M(c):'No disruption'}}}],
+ 2:[
+  {n:'Category 3 storm makes landfall',sig:true,
+   d:'Sustained winds and eighteen inches of rain over thirty-six hours. Roof failure in two buildings, water intrusion in a third, campus closed eleven days.',
+   f:t=>{let c=3000000,x=[];const h1=has(t,1),h2=has(t,2);
+     if(h1&&h2){c=600000;x.push('Roof replacement and hardening held. Damage limited to grounds and one mechanical room.')}
+     else if(h1||h2){c=1500000;x.push('Partial mitigation. One system held; the other did not.')}
+     else x.push('Both roof systems failed. Full replacement plus remediation.');
+     let m=-5;if(has(t,3)){m=-1;x.push('Instruction and assessment continued off-site from day three')}
+     else x.push('Eleven instructional days lost with no continuity capability.');
+     return{cash:-c,m,notes:x,hd:'Damage and remediation '+M(c)}}},
+  {n:'State ties professional-program support to in-state primary care placement',sig:true,
+   d:'The bill passes. Institutions documenting rural and underserved placement receive supplemental support. Institutions that cannot document it absorb a reduction.',
+   f:t=>has(t,13)
+     ?{cash:1500000,m:5,s:2,notes:['Rural track produced the documentation the formula required'],hd:'Supplemental support +'+M(1500000)}
+     :{cash:-500000,m:-4,notes:['No documented placement pathway. Reduction applied.'],hd:'Support reduced '+M(500000)}},
+  {n:'OMM chair departs; clinical faculty attrition follows',sig:false,
+   d:'Your OMM chair leaves for a named professorship. No one in the department is credentialed to succeed her. Twelve percent of clinical faculty follow within the cycle. The national pool of qualified OMM chairs is roughly forty people and eleven schools are searching.',
+   f:t=>{const dep=has(t,26),ret=has(t,9);
+     if(dep)return{m:1,s:1,notes:['Designated successor was credentialed and stepped in without interruption.','You cannot buy your way out of an unfilled OMM chair on any timeline that matters. You bought your way out of it three years ago.'],hd:'Succession held'};
+     if(ret)return{cash:-700000,m:-3,notes:['Retention pool held the clinical faculty. The chair line is still open.','National search entering month nine. Interim coverage by a non-credentialed acting chair.'],hd:'Partial · '+M(700000)+' and an open chair'};
+     return{cash:-1400000,m:-7,cite:1,notes:['Search costs, interim coverage, relocation, and a startup package against a national pool of roughly forty candidates.','OMM instruction and supervision delivered by faculty the accreditor questions. Citation issued.'],hd:'Citation and '+M(1400000)}}}],
+ 3:[
+  {n:'National scrutiny of AI in health-professions assessment',sig:true,
+   d:'Coverage breaks on AI use in professional program assessment. Accreditors request institutional policies. Several schools discover they have deployed tools they cannot describe.',
+   f:t=>{const aiUse=has(t,14)||has(t,25)||has(t,17);
+     if(has(t,15))return{s:4,m:3,notes:['Governance framework produced on request. Coverage cited your institution favorably.'],hd:'Reputational gain'};
+     if(aiUse)return{cash:-700000,m:-6,cite:1,notes:['AI deployed without governance capacity. Remediation, external review, and a citation.','Doing this badly cost more than not doing it at all.'],hd:'Citation and '+M(700000)+' remediation'};
+     return{m:-1,notes:['No exposure. Also no capability.'],hd:'No material effect'}}},
+  {n:'Accreditor schedules a focused site visit on clinical placement adequacy',sig:true,
+   d:'Complaints trigger a focused review of placement capacity, preceptor supervision, and curricular alignment.',
+   f:t=>(has(t,7)||has(t,11)||has(t,12))
+     ?{s:2,notes:['Documented placement capacity and curricular alignment. Visit closed with no findings.'],hd:'No findings'}
+     :{cash:-400000,m:-5,cite:1,notes:['Citation issued on placement adequacy. Response, monitoring report, and consultant costs.'],hd:'Citation and '+M(400000)},},
+  {n:'Estate gift, $4.0M, restricted to rural health',sig:false,
+   d:'A donor of twenty years dies. The estate directs $4.0M to a COM with a rural health program and an established relationship.',
+   f:t=>{const a=has(t,19),b=has(t,13);
+     if(a&&b)return{cash:2500000,tail:-250000,m:8,s:3,notes:['Relationship in place and an aligned program to receive the gift.','Most of the corpus is restricted; $2.5M is spendable and $250K annually now funds the rural track.'],hd:'Gift captured in full'};
+     if(a||b)return{cash:1200000,m:3,notes:[a?'Relationship existed but no aligned program. The estate directed a partial gift and split the remainder.':'Program existed but nobody was managing the relationship. Partial gift.'],hd:'Partial capture '+M(1200000)};
+     return{notes:['No relationship and no aligned program. The estate gave elsewhere.','Gifts are cultivated, not received.'],hd:'Not captured'}}}]
+};
+
+/* ── Mid-year unbudgeted demands ─────────────────────────
+   Read aloud AFTER decisions lock. Each table funds it, defers it,
+   or takes it to the board. The mentor plays the board chair.
+   Facilitator applies the outcome through the override panel.        */
+const MIDYEAR = {
+ 1:{n:'Preceptor rates must rise now',cost:700000,
+  d:'Two competing schools have raised community preceptor payments mid-cycle. Sixteen of your core sites have signalled they will not renew at current rates. The increase is permanent, it was not in the approved budget, and the board chair has already told your CFO that the budget was approved in April for a reason.',
+  opts:'FUND: −$700K reserve, permanent −$700K/yr tail. DEFER: no cost now, lose 12 sites at the Year 1 hospital event and take −4 mission. BOARD ASK: mentor rules.'},
+ 2:{n:'Legacy platform contracts overlap',cost:900000,
+  d:'The three systems you are retiring do not terminate when the new one goes live. Two carry auto-renewal clauses and one runs eleven months past migration. You are paying for four platforms simultaneously and the savings case you presented assumed you would not be.',
+  opts:'FUND: −$900K reserve. DEFER: delay migration one year, lose the Year 3 savings and take −3 strategic. BOARD ASK: mentor rules. Tables not holding card 27 are exempt.'},
+ 3:{n:'Five-year pro forma demanded in ten days',cost:0,
+  d:'University leadership requires a five-year projection of clinical rotation fees with site-level detail, submitted in ten days, ahead of a capital request you need approved.',
+  opts:'HOLD CARD 17: produced from the warehouse in two days, +3 strategic, and the capital request is approved. NO CARD 17: three weeks of staff time reassembling it from spreadsheets, −$250K opportunity cost, −2 strategic, and you submit numbers you cannot defend under questioning.'}
+};
+
+const has = (t,id) => t.held.includes(id);
+
+/* Board Ask: credibility is a balance-sheet phenomenon.
+   Returns what the mentor needs to rule, not the ruling itself.      */
+function boardCase(t){
+  const d=daysCash(t), mg=revenueOf(t,Math.max(1,S?S.round:1))-expenseOf(t);
+  const delivered=t.log.filter(l=>l.margin>0).length;
+  let read;
+  if(d>85&&mg>0) read='Strong. Liquidity and margin support the ask. The board will want conditions, not a refusal.';
+  else if(d>65&&mg>-500000) read='Arguable. The board will ask what gets cut to fund it. Make them name the offset.';
+  else read='Weak. Asking from this position invites a review of everything, not approval of one item.';
+  return{d:Math.round(d),mg,delivered,read};}
+
+/* ── Ledger engine ───────────────────────────────────────── */
+function newTeam(i){return{
+  id:i,name:'Table '+i,cfo:'',mentor:'',
+  fund:BASE.fund,restricted:BASE.restricted,reserve:BASE.reserve,
+  tail:0,enroll:1,held:[],bought:{},cite:0,
+  mPts:0,sPts:0,rPts:0,cumMargin:0,minDays:98,
+  pending:[],locked:{},deciders:{},dissent:{},log:[],adj:[]};}
+
+function revenueOf(t,year){
+  let r = BASE.tuition*t.enroll + BASE.otherRev;
+  t.held.forEach(id=>{const c=CARD(id);if(!c.rev)return;
+    if(year >= (t.bought[id]||0) + c.lag){
+      let v=c.rev;
+      if(c.id===25 && !has(t,15)) v*=0.6;      // AI program without governance
+      if(c.id===14 && !has(t,15)) v*=0.6;
+      if(c.id===10 && !has(t,12)) v*=0.5;      // seats without placement
+      if(c.id===6  && t.enroll<0.95) v*=0.85;  // enrollment-contingent
+      r+=v;}});
+  return r;}
+
+function expenseOf(t){return BASE.expense + t.tail;}
+function daysCash(t){return t.reserve/(expenseOf(t)/365);}
+
+function resolveRound(t,year){
+  const out={year,purchases:[],events:[],flags:[]};
+
+  // 1. purchases
+  t.pending.forEach(id=>{
+    const c=CARD(id);let src='Fund';
+    let cost=c.one;
+    if(c.rest && t.restricted>=cost){t.restricted-=cost;src='Restricted gift';}
+    else t.fund-=cost;
+    if(c.resv){t.reserve+=c.resv;}
+    t.tail+=c.tail;t.held.push(id);t.bought[id]=year;
+    t.mPts+=c.m;t.sPts+=c.s;t.rPts+=c.r;
+    out.purchases.push({n:c.n,cost,tail:c.tail,src});});
+  t.pending=[];
+
+  // 2. operating year
+  const rev=revenueOf(t,year),exp=expenseOf(t),margin=rev-exp;
+  t.cumMargin+=margin;t.reserve+=margin;
+  out.rev=rev;out.exp=exp;out.margin=margin;
+
+  // 3. events
+  EVENTS[year].forEach(e=>{
+    const r=e.f(t);
+    if(r.cash){t.reserve+=r.cash;}
+    if(r.enroll){t.enroll=Math.max(.7,t.enroll+r.enroll);}
+    if(r.tail){t.tail+=r.tail;}
+    if(r.m)t.mPts+=r.m;
+    if(r.s)t.sPts+=r.s;
+    if(r.cite)t.cite+=r.cite;
+    out.events.push({n:e.n,hd:r.hd,notes:r.notes||[],cash:r.cash||0});});
+
+  // 4. liquidity check
+  const d=daysCash(t);t.minDays=Math.min(t.minDays,d);
+  out.days=d;out.reserve=t.reserve;
+  if(d<45)out.flags.push('Days cash below 45. Board has assumed direct budget authority. Financial health category forfeited.');
+  else if(d<60)out.flags.push('Days cash below 60. Covenant threshold breached; austerity measures imposed. Ten-point penalty.');
+  if(t.cite>=2)out.flags.push('Second accreditation citation. Institution moved to probation. Financial health category forfeited.');
+  if(margin<0)out.flags.push('Structural operating deficit of '+M(-margin)+'. Recurring commitments now exceed recurring revenue.');
+
+  t.log.push(out);
+  return out;}
+
+/* ── Scoring ─────────────────────────────────────────────── */
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function score(t){
+  const d=daysCash(t);
+  let fin = clamp(t.reserve/20000000,0,1)*15
+          + clamp(d/120,0,1)*10
+          + clamp((t.cumMargin+3000000)/6000000,0,1)*10;
+  if(t.minDays<60)fin-=10;
+  if(t.minDays<45||t.cite>=2)fin=0;
+  fin=clamp(fin,0,35);
+  const mis = clamp((t.enroll-.85)/.20,0,1)*12 + clamp(t.mPts/40,0,1)*18;
+  const str = clamp(t.sPts/35,0,1)*20;
+  const res = clamp(t.rPts/24,0,1)*15;
+  const adj = t.adj.reduce((a,x)=>a+(x.pts||0),0);
+  return{fin,mis,str,res,adj,total:clamp(fin+mis+str+res+adj,0,120)};}
+
+/* ── Storage ─────────────────────────────────────────────── */
+/* Backend is configurable. Resolution order:
+   1) ?server=https://host   (saved to this device, then URL is cleaned)
+   2) a server previously saved on this device
+   3) if the page is served over http(s): the same origin it came from
+   4) file:// with nothing set: LOCAL DEMO mode (this one browser only)   */
+const K={state:'mm:state',team:i=>'mm:team:'+i};
+function resolveServer(){
+  try{
+    const q=new URLSearchParams(location.search).get('server');
+    if(q!==null){localStorage.setItem('mm:server',q);return q.replace(/\/+$/,'');}
+    const saved=localStorage.getItem('mm:server');
+    if(saved!==null)return saved.replace(/\/+$/,'');
+  }catch(e){}
+  if(location.protocol==='http:'||location.protocol==='https:')return location.origin;
+  return '';
+}
+let API=resolveServer();
+async function sget(k){
+  try{
+    if(API){const r=await fetch(API+'/kv/'+encodeURIComponent(k));if(r.status===404)return null;if(!r.ok)throw 0;const j=await r.json();return j.value!=null?JSON.parse(j.value):null;}
+    if(window.storage){const r=await window.storage.get(k,true);return r?JSON.parse(r.value):null;}
+    const v=localStorage.getItem('kv:'+k);return v?JSON.parse(v):null;
+  }catch(e){return null;}
+}
+async function sset(k,v){
+  const s=JSON.stringify(v);
+  try{
+    if(API){const r=await fetch(API+'/kv/'+encodeURIComponent(k),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({value:s})});return r.ok;}
+    if(window.storage){await window.storage.set(k,s,true);return true;}
+    localStorage.setItem('kv:'+k,s);return true;
+  }catch(e){console.error('storage',e);return false;}
+}
+async function sdel(k){
+  try{
+    if(API){await fetch(API+'/kv/'+encodeURIComponent(k),{method:'DELETE'});return;}
+    if(window.storage){await window.storage.delete(k,true);return;}
+    localStorage.removeItem('kv:'+k);
+  }catch(e){}
+}
+function setServer(){
+  const v=prompt('Server address for THIS device.\n\nLeave blank for local demo mode (this browser only).\nExample: https://sldp-test1.aacom.org', API||'');
+  if(v===null)return;
+  try{localStorage.setItem('mm:server',v.trim());}catch(e){}
+  location.href=location.pathname;
+}
+function serverBadge(){
+  const label=API?API.replace(/^https?:\/\//,''):'Local demo — this browser only';
+  return '<div style="margin-top:22px;font-size:13px;opacity:.72">Server: <b>'+label+'</b> <button onclick="setServer()" style="background:none;border:0;color:#c1440e;cursor:pointer;text-decoration:underline;font:inherit">change</button></div>';
+}
+
+let S=null, ME=null, ROLE=null, CART=[], BUSY=false;
+const $=id=>document.getElementById(id);
+const app=$('app');
+
+async function pull(){
+  S = await sget(K.state);
+  if(ROLE==='team'&&ME) ME = await sget(K.team(ME.id)) || ME;
+  render();}
+
+/* ══════════════ RENDER ══════════════ */
+function render(){
+  if(!ROLE)return renderPicker();
+  if(ROLE==='team')return renderTeam();
+  if(ROLE==='fac')return renderFac();
+  if(ROLE==='proj')return renderProj();}
+
+/* ── role picker ─────────────────────────────────────────── */
+function renderPicker(){
+  app.innerHTML=`<div class="picker">
+    <h1>Margin<br><em>and Mission</em></h1>
+    <p>A three-year strategic budgeting simulation. AACOM Senior Leadership Development Program.</p>
+    <div class="roles">
+      <button class="role" onclick="pickTeam()"><b>I am a table CFO</b><span>Enter your table's investment decisions</span></button>
+      <button class="role" onclick="pickFac()"><b>I am the facilitator</b><span>Run rounds, reveal events, resolve, override</span></button>
+      <button class="role" onclick="pickProj()"><b>Projection display</b><span>Read-only screen for the room</span></button>
+    </div>${serverBadge()}</div>`;}
+
+async function pickTeam(){
+  const st=await sget(K.state);
+  if(!st){app.innerHTML='<div class="picker"><h1>Not open yet</h1><p>The facilitator has not started the session. Refresh in a moment.</p><button class="btn ghost" onclick="location.reload()">Check again</button></div>';return}
+  let o='';for(let i=1;i<=st.tables;i++)o+=`<option value="${i}">Table ${i}</option>`;
+  app.innerHTML=`<div class="picker"><h1>Which table?</h1>
+    <p>One device per table. The CFO enters decisions and reports results back to the table.</p>
+    <select id="tsel">${o}</select>
+    <input id="cfoname" placeholder="CFO name (optional)">
+    <input id="mname" placeholder="Mentor name (optional)">
+    <button class="btn" onclick="joinTeam()">Take the CFO seat</button></div>`;}
+
+async function joinTeam(){
+  const i=+$('tsel').value;
+  let t=await sget(K.team(i))||newTeam(i);
+  t.cfo=$('cfoname').value||t.cfo; t.mentor=$('mname').value||t.mentor;
+  await sset(K.team(i),t);
+  ME=t;ROLE='team';CART=[];loop();}
+
+function pickFac(){ROLE='fac';loop();}
+function pickProj(){ROLE='proj';loop();}
+
+/* ── team console ────────────────────────────────────────── */
+function ledgerStrip(t){
+  const yr=Math.max(1,S?S.round:1);
+  const rev=revenueOf(t,yr),exp=expenseOf(t),mg=rev-exp;
+  const cartTail=CART.reduce((a,id)=>a+CARD(id).tail,0);
+  const projMg=mg-cartTail;
+  const cartOne=CART.reduce((a,id)=>a+CARD(id).one,0);
+  const fill=projMg<0?clamp(-projMg/2000000,.08,1)*100:0;
+  return `<div class="ledgers">
+   <div class="ledger">
+    <h3>Strategic Investment Fund · one-time</h3>
+    <div class="big num">${Mk(t.fund-cartOne)}</div>
+    <div class="sub">${CART.length?'after '+M(cartOne)+' committed this round':'uncommitted'}</div>
+    <div class="lrow"><span>Restricted gift, rural and community health</span><b class="num">${Mk(t.restricted)}</b></div>
+    <div class="lrow"><span>Liquid operating reserve</span><b class="num">${Mk(t.reserve)}</b></div>
+    <div class="lrow"><span>Days cash on hand</span><b class="num">${Math.round(daysCash(t))}</b></div>
+   </div>
+   <div class="ledger">
+    <div class="fill" style="height:${fill}%"></div>
+    <h3>Operating margin · recurring, every year</h3>
+    <div class="big num ${projMg<0?'neg':''}">${Mk(projMg)}</div>
+    <div class="sub">${projMg<0?'structural deficit — draws on reserve annually':'annual surplus'}</div>
+    <div class="lrow"><span>Operating revenue</span><b class="num">${Mk(rev)}</b></div>
+    <div class="lrow"><span>Base expense</span><b class="num">${Mk(BASE.expense)}</b></div>
+    <div class="lrow"><span>Committed recurring tails${cartTail?' incl. this round':''}</span><b class="num" style="color:${(t.tail+cartTail)>0?'#c1440e':'inherit'}">${Mk(t.tail+cartTail)}</b></div>
+   </div></div>`;}
+
+function renderTeam(){
+  if(!S){app.innerHTML='<div class="picker"><p>Waiting for the facilitator…</p></div>';return}
+  const t=ME,rd=S.round,locked=t.locked[rd];
+
+  if(S.phase==='final'){app.innerHTML=chrome(t)+`<div class="wrap">${finalCard(t)}${boardTable(t.id)}</div>`;return}
+
+  if(S.phase==='resolved'&&t.log.length>=rd){
+    app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t)}${resultPanel(t,t.log[rd-1])}${boardTable(t.id)}
+      <p class="mini">Round ${rd} is closed. The facilitator opens Year ${rd+1} when the room is ready.</p></div>`;return}
+
+  if(S.phase==='locked'||S.phase==='reveal'){
+    app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t)}
+      <div class="panel"><div class="eyebrow">Decisions locked</div>
+      <h2>Year ${rd} commitments recorded</h2>
+      <div style="margin-top:14px">${(t.locked[rd]||[]).map(id=>`<div class="cartrow"><span>${CARD(id).n}</span><b class="num">${M(CARD(id).one)}</b></div>`).join('')||'<p class="mini">No investments this round. That is a decision, and it will be scored as one.</p>'}</div>
+      </div>
+      <div class="panel"><div class="eyebrow">Unbudgeted · arriving now</div>
+        <h2>${MIDYEAR[rd].n}</h2>
+        <p style="font-size:15px;line-height:1.65;color:#c6bfe0;margin:10px 0">${MIDYEAR[rd].d}</p>
+        <div class="notebox"><b>Your table has three moves.</b> Fund it from reserve. Defer it and carry the consequence.
+        Or take it to your board chair, who is sitting at your table. Decide, then send someone to make the case.</div>
+        <p class="mini">Your position going in: ${Math.round(daysCash(t))} days cash, operating margin ${Mk(revenueOf(t,rd)-expenseOf(t))}.
+        The board chair can see the same numbers.</p>
+      </div></div>`;return}
+
+  // deliberation
+  const br=BRIEFS[rd];
+  const cartOne=CART.reduce((a,id)=>a+CARD(id).one,0);
+  const cartTail=CART.reduce((a,id)=>a+CARD(id).tail,0);
+  const restEligible=CART.filter(id=>CARD(id).rest).reduce((a,id)=>a+CARD(id).one,0);
+  const fromRest=Math.min(restEligible,t.restricted);
+  const fromFund=cartOne-fromRest;
+  const over=fromFund>t.fund;
+  const mg=revenueOf(t,rd)-expenseOf(t)-cartTail;
+
+  let warn='';
+  CART.forEach(id=>{const c=CARD(id);
+    if(c.req&&!CART.includes(c.req)&&!has(t,c.req))
+      warn+=`<div class="alertbox"><b>Card ${c.id}</b> — ${c.reqTxt}. You do not hold card ${c.req}. This is permitted. It is also the most common way institutions waste money.</div>`;});
+  if(mg<0)warn+=`<div class="alertbox"><b>Structural deficit.</b> These recurring tails put annual operating margin at ${M(mg)}. The Investment Fund cannot cover a recurring obligation. The reserve will absorb it every year from now on.</div>`;
+  if(over)warn+=`<div class="alertbox"><b>Insufficient one-time funds.</b> ${M(fromFund-t.fund)} over the available Fund balance.</div>`;
+
+  app.innerHTML=chrome(t)+`<div class="wrap">
+   ${rd>1?`<div class="panel" style="border-left:3px solid var(--orange);padding:16px 22px">
+     <div class="eyebrow">You are taking the chair</div>
+     <h2 style="font-size:17px;margin-top:4px">Year ${rd} opens on decisions you did not make</h2>
+     <p class="mini" style="margin-top:8px">${t.deciders[rd-1]?`<b style="color:var(--paper)">${t.deciders[rd-1]}</b> decided Year ${rd-1}.`:`Year ${rd-1} was decided by your predecessor.`}
+     You inherit ${Mk(t.fund)} of remaining fund, ${Mk(t.tail)} per year of recurring obligation already committed,
+     and an enrollment index of ${(t.enroll*100).toFixed(1)}%. You may disagree with all of it. You cannot unspend it.</p>
+   </div>`:''}
+   ${ledgerStrip(t)}
+   <div class="panel">
+     <div class="eyebrow">Environmental signals · Year ${rd}</div>
+     <h2>What your intelligence tells you</h2>
+     <p class="mini">Some of this will matter. Some of it will not. Investing against every signal will exhaust the Fund by Year 2.</p>
+     <div style="margin-top:14px">
+     ${br.sig.map((s,i)=>`<div class="sig"><i>${String(i+1).padStart(2,'0')}</i><span>${s}</span></div>`).join('')}
+     ${has(t,17)?`<div class="sig priv"><i style="color:var(--orange)">IR</i><span><b style="color:var(--orange)">Institutional research, available to you only:</b> ${br.priv}</span></div>`:''}
+     </div>
+   </div>
+   <div class="grid">
+    <div>${CATS.map(cat=>`<div class="cat"><h2>${cat}</h2>
+      ${CARDS.filter(c=>c.cat===cat).map(c=>cardEl(c,t)).join('')}</div>`).join('')}</div>
+    <div class="rail">
+      <h3>Year ${rd} commitments</h3>
+      ${CART.length?CART.map(id=>`<div class="cartrow"><span>${CARD(id).n}</span>
+        <span style="white-space:nowrap"><b class="num">${M(CARD(id).one)}</b>
+        <button onclick="drop(${id})" aria-label="Remove">×</button></span></div>`).join('')
+        :'<p class="mini">Nothing selected. Holding funds is a legitimate strategy and scores in exactly one of four categories.</p>'}
+      <div class="tot head"><span>One-time cost</span><b class="num">${M(cartOne)}</b></div>
+      ${fromRest?`<div class="tot"><span style="color:var(--orange)">…drawn from restricted gift</span><b class="num" style="color:var(--orange)">${M(fromRest)}</b></div>`:''}
+      <div class="tot"><span>Fund balance after</span><b class="num" style="color:${over?'var(--coral)':'inherit'}">${M(t.fund-fromFund)}</b></div>
+      <div class="tot"><span>New recurring tail</span><b class="num" style="color:var(--orange)">${M(cartTail)}/yr</b></div>
+      <div class="tot"><span>Resulting margin</span><b class="num ${mg<0?'neg':'pos'}">${M(mg)}/yr</b></div>
+      ${warn}
+      <div style="margin-top:16px;border-top:2px solid var(--indigo-line);padding-top:14px">
+        <h3 style="margin-bottom:4px">Who decided</h3>
+        <p class="mini" style="margin:0 0 8px">A different fellow takes the chair each year. Name this year's decider and the person
+        who argued against the table. Both go on the record.</p>
+        <input id="decName" placeholder="Decider for Year ${rd}" value="${t.deciders[rd]||''}"
+          oninput="ME.deciders[${rd}]=this.value" style="margin-top:0">
+        <input id="disName" placeholder="Who made the case against (optional)" value="${t.dissent[rd]||''}"
+          oninput="ME.dissent[${rd}]=this.value">
+      </div>
+      <button class="btn" ${over?'disabled':''} onclick="lockIn()">Lock in Year ${rd}</button>
+      <p class="mini">The decider states the reasoning aloud before this is entered. Locking is final for this round.</p>
+    </div>
+   </div></div>`;}
+
+function cardEl(c,t){
+  const owned=has(t,c.id),on=CART.includes(c.id);
+  const cls=owned?'owned':on?'on':'';
+  let flags='';
+  if(c.req)flags+=`<span class="cflag req">${c.reqTxt}</span>`;
+  if(c.rest)flags+=`<span class="cflag rest">Restricted gift eligible</span>`;
+  if(c.rev)flags+=`<span class="cflag rev">+${M(c.rev)}/yr from year ${c.lag?'+'+c.lag:'1'}</span>`;
+  if(c.lag&&!c.rev)flags+=`<span class="cflag rest">${c.lag}-year lag to value</span>`;
+  return `<button class="card ${cls}" ${owned?'disabled':''} onclick="pick(${c.id})">
+    <span class="cnum num">${String(c.id).padStart(2,'0')}</span>
+    <span><span class="cname">${c.n}</span><span class="cdesc">${c.d}</span><br>${flags}
+      ${owned?'<span class="cflag rev">Held since Year '+t.bought[c.id]+'</span>':''}</span>
+    <span class="cprice"><span class="one num">${c.one?M(c.one):'—'}</span>
+      <span class="tail num ${c.tail<0?'credit':''}">${c.tail?M(c.tail)+'/yr':'no tail'}</span></span></button>`;}
+
+function pick(id){if(CART.includes(id))return;CART.push(id);render()}
+function drop(id){CART=CART.filter(x=>x!==id);render()}
+
+async function lockIn(){
+  if(BUSY)return;
+  const dn=($('decName')||{}).value||'';
+  if(!dn.trim()){alert('Name the decider for this year before locking in. A table decision needs someone who owns it.');return}
+  BUSY=true;
+  const t=await sget(K.team(ME.id))||ME;
+  t.pending=[...CART];t.locked[S.round]=[...CART];
+  t.deciders[S.round]=dn.trim();
+  t.dissent[S.round]=(($('disName')||{}).value||'').trim();
+  t.cfo=ME.cfo;t.mentor=ME.mentor;
+  await sset(K.team(t.id),t);
+  ME=t;CART=[];BUSY=false;render();}
+
+/* ── results ─────────────────────────────────────────────── */
+function resultPanel(t,L){
+  return `<div class="panel">
+   <div class="eyebrow">Year ${L.year} closed</div><h2>What happened</h2>
+   <div class="res">
+     <div class="line"><span>Operating revenue</span><b class="amt num">${M(L.rev)}</b></div>
+     <div class="line"><span>Operating expense including committed tails</span><b class="amt num">${M(L.exp)}</b></div>
+     <div class="line" style="border-top:1px solid rgba(255,255,255,.14);padding-top:7px">
+       <span><b>Operating margin</b></span><b class="amt num ${L.margin<0?'neg':'pos'}">${M(L.margin)}</b></div>
+   </div>
+   ${L.purchases.length?`<div class="res"><b>Investments made</b>
+     ${L.purchases.map(p=>`<div class="line"><span>${p.n}<span style="color:#8f87b5"> · ${p.src}</span></span>
+       <b class="amt num">${M(-p.cost)}${p.tail?' <span style="color:var(--orange)">'+M(p.tail)+'/yr</span>':''}</b></div>`).join('')}</div>`:''}
+   ${L.events.map(e=>`<div class="ev"><h3>${e.n}</h3>
+     <div class="res"><div class="line"><span><b>${e.hd}</b></span>
+       ${e.cash?`<b class="amt num ${e.cash<0?'neg':'pos'}">${M(e.cash)}</b>`:''}</div>
+       ${e.notes.map(n=>`<div style="color:#a79fc4;padding:3px 0">${n}</div>`).join('')}</div></div>`).join('')}
+   <div class="res"><div class="line"><span><b>Liquid reserve at close</b></span><b class="amt num">${M(L.reserve)}</b></div>
+     <div class="line"><span>Days cash on hand</span><b class="amt num ${L.days<60?'neg':''}">${Math.round(L.days)}</b></div></div>
+   ${L.flags.map(f=>`<div class="alertbox">${f}</div>`).join('')}
+  </div>`;}
+
+function finalCard(t){
+  const s=score(t);
+  return `<div class="panel"><div class="eyebrow">Final position · ${t.name}</div>
+   <h2>${s.total.toFixed(1)} of 100</h2>
+   <div class="scorecard">
+    ${[['Financial health',s.fin,35],['Mission and outcomes',s.mis,30],['Strategic position',s.str,20],['Resilience',s.res,15]]
+     .map(([l,v,m])=>`<div class="sc"><div class="lab">${l}</div><div class="val num">${v.toFixed(1)}</div>
+      <div class="of num">of ${m}</div><div class="bar"><i style="width:${v/m*100}%"></i></div></div>`).join('')}
+   </div>
+   <div class="res" style="margin-top:16px">
+    <div class="line"><span>Liquid reserve</span><b class="amt num">${M(t.reserve)}</b></div>
+    <div class="line"><span>Days cash on hand · lowest reached</span><b class="amt num">${Math.round(daysCash(t))} · ${Math.round(t.minDays)}</b></div>
+    <div class="line"><span>Three-year cumulative margin</span><b class="amt num ${t.cumMargin<0?'neg':'pos'}">${M(t.cumMargin)}</b></div>
+    <div class="line"><span>Enrollment index against Year 0</span><b class="amt num">${(t.enroll*100).toFixed(1)}%</b></div>
+    <div class="line"><span>Unspent Investment Fund</span><b class="amt num">${M(t.fund)}</b></div>
+    <div class="line"><span>Accreditation citations</span><b class="amt num ${t.cite?'neg':''}">${t.cite}</b></div>
+   </div>
+   ${t.adj.length?`<div class="notebox"><b>Facilitator adjustments</b>${t.adj.map(a=>`<div>${a.pts>0?'+':''}${a.pts} pts · ${a.note}</div>`).join('')}</div>`:''}
+   <div class="res" style="margin-top:16px"><b>Who decided what</b>
+    ${[1,2,3].map(y=>t.deciders[y]?`<div class="line"><span>Year ${y} · ${t.deciders[y]}${t.dissent[y]?` <span style="color:#8f87b5">· argued against: ${t.dissent[y]}</span>`:''}</span>
+      <b class="amt num">${(t.locked[y]||[]).length} commitments</b></div>`:'').join('')}
+    <div style="color:#a79fc4;padding-top:8px">Each decider inherited the year before it. Ask the table which inherited position was hardest to accept, and whether the person who argued against the consensus turned out to be right.</div>
+   </div>
+   ${t.fund>2000000?`<div class="notebox">You closed with ${M(t.fund)} uncommitted. That balance scores in financial health and in none of the other three categories. Preserving capital is not the same as deploying it.</div>`:''}
+  </div>`;}
+
+let BOARD=[];
+function boardTable(mine){
+  if(!BOARD.length)return'';
+  return `<div class="panel"><div class="eyebrow">Standings</div><h2>After Year ${S.round}</h2>
+   <table><thead><tr><th></th><th>Table</th><th class="r">Financial</th><th class="r">Mission</th>
+   <th class="r">Strategic</th><th class="r">Resilience</th><th class="r">Total</th></tr></thead><tbody>
+   ${BOARD.map((b,i)=>`<tr class="${b.id===mine?'me':''}"><td class="rank">${i+1}</td><td>${b.name}</td>
+    <td class="r num">${b.s.fin.toFixed(1)}</td><td class="r num">${b.s.mis.toFixed(1)}</td>
+    <td class="r num">${b.s.str.toFixed(1)}</td><td class="r num">${b.s.res.toFixed(1)}</td>
+    <td class="r num"><b>${b.s.total.toFixed(1)}</b></td></tr>`).join('')}
+   </tbody></table></div>`;}
+
+function chrome(t){
+  const ph={brief:'Deliberation open',locked:'Locked',reveal:'Events revealing',resolved:'Round closed',final:'Final'}[S.phase]||S.phase;
+  return `<div class="topbar"><span class="brand">Margin <span>and Mission</span></span>
+   <span class="pill">${t?t.name:'Facilitator'}</span>
+   <span class="pill warn">Year ${S.round} of 3</span>
+   <span class="pill ${S.phase==='brief'?'live':''}">${ph}</span>
+   <span class="spacer"></span>
+   ${t&&t.cfo?`<span class="mini" style="margin:0">CFO ${t.cfo}</span>`:''}</div>`;}
+
+/* ── facilitator ─────────────────────────────────────────── */
+let TEAMS=[];
+async function loadTeams(){
+  if(!S)return;TEAMS=[];
+  for(let i=1;i<=S.tables;i++){const t=await sget(K.team(i))||newTeam(i);TEAMS.push(t)}
+  BOARD=TEAMS.map(t=>({id:t.id,name:t.name,s:score(t)})).sort((a,b)=>b.s.total-a.s.total);}
+
+async function renderFac(){
+  if(!S){app.innerHTML=`<div class="picker"><h1>Start the session</h1>
+    <p>Set the number of tables. Each table takes one device and names a CFO.</p>
+    <input id="ntab" type="number" min="2" max="14" value="8">
+    <button class="btn" onclick="startGame()">Open the session</button></div>`;return}
+  const submitted=TEAMS.filter(t=>t.locked[S.round]).length;
+  app.innerHTML=chrome(null)+`<div class="wrap">
+   <div class="panel"><div class="eyebrow">Facilitator console</div>
+    <h2>Year ${S.round} · ${S.phase}</h2>
+    <div class="fgrid">${TEAMS.map(t=>{const inn=!!t.locked[S.round];
+      return `<div class="tstat"><b>${t.name}</b>
+        <span class="dot ${inn?'in':''}"></span>${inn?(t.locked[S.round].length+' committed'):'deliberating'}
+        <div class="mini" style="margin-top:6px">Fund ${Mk(t.fund)} · margin ${Mk(revenueOf(t,S.round)-expenseOf(t))}
+        <br>${Math.round(daysCash(t))} days cash${t.cite?' · '+t.cite+' citation(s)':''}</div>
+        <button class="btn ghost" style="margin-top:8px;padding:7px;font-size:12px" onclick="facEnter(${t.id})">Enter for this table</button></div>`}).join('')}
+    </div>
+    <div class="ctl">
+      ${S.phase==='brief'?`<button class="btn" onclick="setPhase('locked')">Lock all decisions (${submitted}/${S.tables} in)</button>`:''}
+      ${S.phase==='locked'?`<button class="btn alert" onclick="setPhase('reveal')">Reveal Year ${S.round} events</button>`:''}
+      ${S.phase==='reveal'?`<button class="btn" onclick="doResolve()">Resolve Year ${S.round}</button>`:''}
+      ${S.phase==='resolved'&&S.round<3?`<button class="btn" onclick="nextRound()">Open Year ${S.round+1}</button>`:''}
+      ${S.phase==='resolved'&&S.round===3?`<button class="btn" onclick="setPhase('final')">Publish final standings</button>`:''}
+      <button class="btn ghost" onclick="loadTeams().then(render)">Refresh</button>
+      <button class="btn ghost" onclick="hardReset()">Reset session</button>
+    </div>
+    <p class="mini">Locking with tables still out is fine. A table that has not locked commits nothing that year, which is itself a decision. Use "Enter for this table" if a device fails.</p>
+   </div>
+
+   ${S.phase==='locked'?`<div class="panel"><div class="eyebrow">Mid-year · read aloud now, before events</div>
+     <h2>${MIDYEAR[S.round].n}</h2>
+     <p style="font-size:15px;line-height:1.65;color:#c6bfe0;margin:10px 0">${MIDYEAR[S.round].d}</p>
+     <div class="notebox">${MIDYEAR[S.round].opts}</div>
+     <h3 style="font-size:14px;margin-top:22px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)">Board Ask · what each mentor should know before ruling</h3>
+     <p class="mini">The mentor plays the board chair. Fellows must come to them in person. Credibility is a balance-sheet phenomenon before it is a rhetorical one, and these are the numbers that decide it. Apply the ruling through the override panel below.</p>
+     <table style="margin-top:10px"><thead><tr><th>Table</th><th class="r">Days cash</th><th class="r">Margin</th>
+       <th class="r">Profitable years</th><th>Board's read</th></tr></thead><tbody>
+       ${TEAMS.map(t=>{const b=boardCase(t);return `<tr><td>${t.name}</td><td class="r num">${b.d}</td>
+         <td class="r num ${b.mg<0?'neg':'pos'}">${Mk(b.mg)}</td><td class="r num">${b.delivered}/${S.round-1}</td>
+         <td style="font-size:13px;color:#a79fc4">${b.read}</td></tr>`}).join('')}
+     </tbody></table></div>`:''}
+
+   ${S.phase==='reveal'||S.phase==='resolved'?`<div class="panel"><div class="eyebrow">Year ${S.round} events</div>
+     <h2>Read these aloud</h2>
+     ${EVENTS[S.round].map(e=>`<div class="ev"><h3>${e.n} <span class="cflag ${e.sig?'rev':'req'}">${e.sig?'was signaled':'not signaled'}</span></h3><p>${e.d}</p></div>`).join('')}</div>`:''}
+
+   <div class="panel"><div class="eyebrow">Override</div><h2>Adjust a table</h2>
+    <p class="mini">For mentor huddles and rulings the engine did not anticipate. Adjustments are visible to the table and appear on the final card.</p>
+    <div style="display:grid;grid-template-columns:1fr 120px 2fr auto;gap:10px;align-items:end;margin-top:12px">
+     <select id="adjT">${TEAMS.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select>
+     <input id="adjP" type="number" placeholder="± points" step="0.5">
+     <input id="adjN" placeholder="Reason, shown to the table">
+     <button class="btn" style="width:auto;padding:11px 18px;margin:0" onclick="applyAdj()">Apply</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 160px auto;gap:10px;align-items:end;margin-top:10px">
+     <select id="cashT">${TEAMS.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select>
+     <input id="cashV" type="number" placeholder="± reserve $">
+     <button class="btn ghost" style="width:auto;padding:11px 18px;margin:0" onclick="applyCash()">Adjust reserve</button>
+    </div>
+   </div>
+
+   ${boardTable(0)}
+   ${S.phase==='final'?TEAMS.map(t=>finalCard(t)).join(''):''}
+  </div>`;}
+
+async function startGame(){
+  const n=clamp(+$('ntab').value||8,2,14);
+  S={tables:n,round:1,phase:'brief'};
+  await sset(K.state,S);
+  for(let i=1;i<=n;i++)await sset(K.team(i),newTeam(i));
+  await loadTeams();render();}
+
+async function setPhase(p){S.phase=p;await sset(K.state,S);await loadTeams();render()}
+async function nextRound(){S.round++;S.phase='brief';await sset(K.state,S);render()}
+
+async function doResolve(){
+  if(BUSY)return;BUSY=true;
+  for(let i=1;i<=S.tables;i++){
+    const t=await sget(K.team(i))||newTeam(i);
+    if(t.log.length>=S.round)continue;
+    resolveRound(t,S.round);
+    await sset(K.team(i),t);}
+  S.phase='resolved';await sset(K.state,S);
+  await loadTeams();BUSY=false;render();}
+
+async function applyAdj(){
+  const id=+$('adjT').value,p=+$('adjP').value,n=$('adjN').value||'Facilitator ruling';
+  if(!p)return;
+  const t=await sget(K.team(id));t.adj.push({pts:p,note:n});
+  await sset(K.team(id),t);await loadTeams();render();}
+
+async function applyCash(){
+  const id=+$('cashT').value,v=+$('cashV').value;
+  if(!v)return;
+  const t=await sget(K.team(id));t.reserve+=v;t.adj.push({pts:0,note:'Reserve adjusted '+M(v)});
+  await sset(K.team(id),t);await loadTeams();render();}
+
+async function facEnter(id){
+  const t=await sget(K.team(id));
+  const picks=prompt(`Enter card numbers for ${t.name}, Year ${S.round}, comma separated.\n\nExample: 4, 12, 15`,'');
+  if(picks===null)return;
+  const ids=picks.split(',').map(x=>parseInt(x.trim())).filter(x=>CARD(x)&&!t.held.includes(x));
+  t.pending=ids;t.locked[S.round]=ids;
+  await sset(K.team(id),t);await loadTeams();render();}
+
+async function hardReset(){
+  if(!confirm('Reset the entire session? All table data is erased.'))return;
+  for(let i=1;i<=(S?S.tables:14);i++){await sdel(K.team(i));}
+  await sdel(K.state);
+  S=null;TEAMS=[];BOARD=[];render();}
+
+/* ── projection ──────────────────────────────────────────── */
+function renderProj(){
+  if(!S){app.innerHTML='<div class="proj"><h1>Margin and Mission</h1><p class="mini">Waiting for the facilitator.</p></div>';return}
+  if(S.phase==='reveal'){
+    app.innerHTML=`<div class="proj"><div class="eyebrow">Year ${S.round}</div><h1>What happened</h1>
+     ${EVENTS[S.round].map(e=>`<div class="ev"><h3 style="font-size:26px">${e.n}</h3><p style="font-size:18px">${e.d}</p></div>`).join('')}</div>`;return}
+  app.innerHTML=`<div class="proj"><div class="eyebrow">${S.phase==='final'?'Final standings':'After Year '+S.round}</div>
+   <h1>Margin and Mission</h1>
+   <table><thead><tr><th></th><th>Table</th><th class="r">Fin</th><th class="r">Mission</th>
+   <th class="r">Strategic</th><th class="r">Resil.</th><th class="r">Total</th></tr></thead><tbody>
+   ${BOARD.map((b,i)=>`<tr><td class="rank">${i+1}</td><td>${b.name}</td>
+    <td class="r num">${b.s.fin.toFixed(1)}</td><td class="r num">${b.s.mis.toFixed(1)}</td>
+    <td class="r num">${b.s.str.toFixed(1)}</td><td class="r num">${b.s.res.toFixed(1)}</td>
+    <td class="r num"><b>${b.s.total.toFixed(1)}</b></td></tr>`).join('')}
+   </tbody></table></div>`;}
+
+/* ── loop ────────────────────────────────────────────────── */
+async function loop(){
+  S=await sget(K.state);
+  if(S&&(ROLE==='fac'||ROLE==='proj'))await loadTeams();
+  if(S&&ROLE==='team'&&ME){
+    const t=await sget(K.team(ME.id));if(t)ME=t;
+    TEAMS=[];for(let i=1;i<=S.tables;i++){const x=await sget(K.team(i));if(x)TEAMS.push(x)}
+    BOARD=TEAMS.map(t=>({id:t.id,name:t.name,s:score(t)})).sort((a,b)=>b.s.total-a.s.total);}
+  render();
+  setTimeout(loop,6000);}
+
+render();
+</script>
