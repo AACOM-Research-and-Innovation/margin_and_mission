@@ -1,0 +1,25 @@
+{
+  "name": "margin_and_mission",
+  "version": "1.0.0",
+  "description": "A three-year strategic budgeting simulation for the AACOM SLDP.\r This folder contains everything needed to play it or to host it.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AACOM-Research-and-Innovation/margin_and_mission.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AACOM-Research-and-Innovation/margin_and_mission/issues"
+  },
+  "homepage": "https://github.com/AACOM-Research-and-Innovation/margin_and_mission#readme",
+  "dependencies": {
+    "@netlify/blobs": "^11.0.1"
+  }
+}

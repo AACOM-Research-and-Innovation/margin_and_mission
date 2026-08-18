@@ -1,0 +1,10 @@
+[build]
+  publish = "."
+
+[dev]
+  framework = "#static"
+
+[[redirects]]
+  from = "/kv/*"
+  to = "/.netlify/functions/kv/:splat"
+  status = 200
