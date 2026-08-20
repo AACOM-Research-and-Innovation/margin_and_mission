@@ -909,7 +909,7 @@ function renderProj(){
    </tbody></table></div>`;}
 
 /* ── loop ────────────────────────────────────────────────── */
-async function loop(){
+async function loop_old(){
   S=await sget(K.state);
   if(S&&(ROLE==='fac'||ROLE==='proj'))await loadTeams();
   if(S&&ROLE==='team'&&ME){
@@ -917,7 +917,100 @@ async function loop(){
     TEAMS=[];for(let i=1;i<=S.tables;i++){const x=await sget(K.team(i));if(x)TEAMS.push(x)}
     BOARD=TEAMS.map(t=>({id:t.id,name:t.name,s:score(t)})).sort((a,b)=>b.s.total-a.s.total);}
   render();
-  setTimeout(loop,6000);}
+  setTimeout(loop_old,6000);}
+
+/*
+ * Tracks the last shared state rendered to the page.
+ *
+ * The polling loop serializes the newest server data and compares it with this
+ * value. If nothing changed, the existing DOM remains untouched.
+ */
+let LAST_VIEW_STATE=null;
+
+/*
+ * Poll shared storage for session and team changes.
+ *
+ * Polling is still necessary because the facilitator, tables, and projection
+ * display may all be running on separate devices. The important difference is
+ * that render() is called only when the fetched data has actually changed.
+ */
+async function loop(){
+  // Fetch the current round, phase, and other session-level information.
+  const nextS=await sget(K.state);
+
+  // Start with the existing local value in case no session is currently open.
+  let nextME=ME;
+  let nextTeams=[];
+
+  if(nextS){
+    /*
+     * Fetch every table concurrently.
+     *
+     * The previous implementation awaited each table one at a time, making the
+     * polling cycle longer as more tables were added.
+     */
+    const loadedTeams=await Promise.all(
+      Array.from(
+        {length:nextS.tables},
+        (_,index)=>sget(K.team(index+1))
+      )
+    );
+
+    if(ROLE==='team'){
+      /*
+       * Team screens need their own latest state and all available teams for
+       * the standings. Missing team records are omitted until they exist.
+       */
+      nextTeams=loadedTeams.filter(Boolean);
+      nextME=nextTeams.find(team=>team.id===ME?.id)||ME;
+    }else if(ROLE==='fac'||ROLE==='proj'){
+      /*
+       * Facilitator and projection screens expect every configured table. If a
+       * record is missing, supply the same default team used elsewhere.
+       */
+      nextTeams=loadedTeams.map((team,index)=>team||newTeam(index+1));
+    }
+  }
+
+  /*
+   * Create a snapshot containing everything that can affect the active view.
+   * JSON.stringify provides a straightforward deep comparison for these small,
+   * JSON-compatible state objects.
+   */
+  const nextViewState=JSON.stringify({
+    session:nextS,
+    currentTeam:ROLE==='team'?nextME:null,
+    teams:nextTeams
+  });
+
+  /*
+   * Update the application's in-memory state even when a render is unnecessary,
+   * so click handlers always operate on the latest fetched values.
+   */
+  S=nextS;
+  ME=nextME;
+  TEAMS=nextTeams;
+
+  // Recalculate standings from the newly fetched team data.
+  BOARD=TEAMS
+    .map(team=>({id:team.id,name:team.name,s:score(team)}))
+    .sort((a,b)=>b.s.total-a.s.total);
+
+  /*
+   * Rebuild the page only when shared state differs from the previous poll.
+   * Idle polls now preserve focus, scroll position, inputs, and DOM elements.
+   */
+  if(nextViewState!==LAST_VIEW_STATE){
+    LAST_VIEW_STATE=nextViewState;
+    render();
+  }
+
+  /*
+   * Schedule the next poll after this one finishes. setTimeout avoids starting
+   * another polling cycle while slow network requests are still in progress.
+   */
+  setTimeout(loop,6000);
+}
 
 render();
 </script>
