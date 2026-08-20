@@ -84,6 +84,7 @@ h1,h2,h3{font-weight:800;letter-spacing:-.02em;margin:0}
   font-size:15px;letter-spacing:.02em;margin-top:14px;transition:filter .15s}
 .btn:hover:not(:disabled){filter:brightness(1.1)}
 .btn:disabled{background:#3a3560;color:#7d76a0;cursor:not-allowed}
+.btn.locked,.btn.locked:disabled{background:#6f6f76;color:#fff;cursor:default;filter:none}
 .btn.ghost{background:none;border:1px solid var(--indigo-line);color:var(--paper);font-weight:600}
 .btn.alert{background:var(--orange)}
 .alertbox{background:rgba(255,89,89,.12);border-left:3px solid var(--coral);padding:10px 12px;
@@ -512,6 +513,8 @@ function serverBadge(){
 }
 
 let S=null, ME=null, ROLE=null, CART=[], BUSY=false;
+const FAC_PASSWORD='password';
+const FAC_SESSION_KEY='mm:facilitator-access';
 const $=id=>document.getElementById(id);
 const app=$('app');
 
@@ -556,22 +559,54 @@ async function joinTeam(){
   await sset(K.team(i),t);
   ME=t;ROLE='team';CART=[];loop();}
 
-function pickFac(){ROLE='fac';loop();}
+function pickFac(){
+  try{
+    if(sessionStorage.getItem(FAC_SESSION_KEY)==='granted'){
+      ROLE='fac';loop();return;
+    }
+  }catch(e){}
+  renderFacLogin();
+}
+
+function renderFacLogin(){
+  app.innerHTML=`<div class="picker">
+    <h1>Facilitator access</h1>
+    <p>Enter the facilitator password to open the session controls.</p>
+    <input id="facPass" type="password" placeholder="Password" autocomplete="off"
+      onkeydown="if(event.key==='Enter')submitFacLogin()">
+    <p id="facError" class="mini" role="alert" style="color:var(--coral);min-height:20px;margin:8px 0 0"></p>
+    <button class="btn" onclick="submitFacLogin()">Continue</button>
+    <button class="btn ghost" onclick="renderPicker()">Back</button>
+  </div>`;
+  $('facPass').focus();
+}
+
+function submitFacLogin(){
+  const input=$('facPass');
+  if(input&&input.value===FAC_PASSWORD){
+    try{sessionStorage.setItem(FAC_SESSION_KEY,'granted');}catch(e){}
+    ROLE='fac';loop();return;
+  }
+  if(input){input.value='';input.focus();}
+  const error=$('facError');
+  if(error)error.textContent='Incorrect password.';
+}
+
 function pickProj(){ROLE='proj';loop();}
 
 /* ── team console ────────────────────────────────────────── */
-function ledgerStrip(t){
+function ledgerStrip(t,commitments=CART){
   const yr=Math.max(1,S?S.round:1);
   const rev=revenueOf(t,yr),exp=expenseOf(t),mg=rev-exp;
-  const cartTail=CART.reduce((a,id)=>a+CARD(id).tail,0);
+  const cartTail=commitments.reduce((a,id)=>a+CARD(id).tail,0);
   const projMg=mg-cartTail;
-  const cartOne=CART.reduce((a,id)=>a+CARD(id).one,0);
+  const cartOne=commitments.reduce((a,id)=>a+CARD(id).one,0);
   const fill=projMg<0?clamp(-projMg/2000000,.08,1)*100:0;
   return `<div class="ledgers">
    <div class="ledger">
     <h3>Strategic Investment Fund · one-time</h3>
     <div class="big num">${Mk(t.fund-cartOne)}</div>
-    <div class="sub">${CART.length?'after '+M(cartOne)+' committed this round':'uncommitted'}</div>
+     <div class="sub">${commitments.length?'after '+M(cartOne)+' committed this round':'uncommitted'}</div>
     <div class="lrow"><span>Restricted gift, rural and community health</span><b class="num">${Mk(t.restricted)}</b></div>
     <div class="lrow"><span>Liquid operating reserve</span><b class="num">${Mk(t.reserve)}</b></div>
     <div class="lrow"><span>Days cash on hand</span><b class="num">${Math.round(daysCash(t))}</b></div>
@@ -588,7 +623,9 @@ function ledgerStrip(t){
 
 function renderTeam(){
   if(!S){app.innerHTML='<div class="picker"><p>Waiting for the facilitator…</p></div>';return}
-  const t=ME,rd=S.round,locked=t.locked[rd];
+  const t=ME,rd=S.round;
+  const isLocked=Object.prototype.hasOwnProperty.call(t.locked,rd);
+  const commitments=isLocked?(t.locked[rd]||[]):CART;
 
   if(S.phase==='final'){app.innerHTML=chrome(t)+`<div class="wrap">${finalCard(t)}${boardTable(t.id)}</div>`;return}
 
@@ -597,7 +634,7 @@ function renderTeam(){
       <p class="mini">Round ${rd} is closed. The facilitator opens Year ${rd+1} when the room is ready.</p></div>`;return}
 
   if(S.phase==='locked'||S.phase==='reveal'){
-    app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t)}
+    app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t,t.locked[rd]||[])}
       <div class="panel"><div class="eyebrow">Decisions locked</div>
       <h2>Year ${rd} commitments recorded</h2>
       <div style="margin-top:14px">${(t.locked[rd]||[]).map(id=>`<div class="cartrow"><span>${CARD(id).n}</span><b class="num">${M(CARD(id).one)}</b></div>`).join('')||'<p class="mini">No investments this round. That is a decision, and it will be scored as one.</p>'}</div>
@@ -613,17 +650,17 @@ function renderTeam(){
 
   // deliberation
   const br=BRIEFS[rd];
-  const cartOne=CART.reduce((a,id)=>a+CARD(id).one,0);
-  const cartTail=CART.reduce((a,id)=>a+CARD(id).tail,0);
-  const restEligible=CART.filter(id=>CARD(id).rest).reduce((a,id)=>a+CARD(id).one,0);
+  const cartOne=commitments.reduce((a,id)=>a+CARD(id).one,0);
+  const cartTail=commitments.reduce((a,id)=>a+CARD(id).tail,0);
+  const restEligible=commitments.filter(id=>CARD(id).rest).reduce((a,id)=>a+CARD(id).one,0);
   const fromRest=Math.min(restEligible,t.restricted);
   const fromFund=cartOne-fromRest;
   const over=fromFund>t.fund;
   const mg=revenueOf(t,rd)-expenseOf(t)-cartTail;
 
   let warn='';
-  CART.forEach(id=>{const c=CARD(id);
-    if(c.req&&!CART.includes(c.req)&&!has(t,c.req))
+  commitments.forEach(id=>{const c=CARD(id);
+    if(c.req&&!commitments.includes(c.req)&&!has(t,c.req))
       warn+=`<div class="alertbox"><b>Card ${c.id}</b> — ${c.reqTxt}. You do not hold card ${c.req}. This is permitted. It is also the most common way institutions waste money.</div>`;});
   if(mg<0)warn+=`<div class="alertbox"><b>Structural deficit.</b> These recurring tails put annual operating margin at ${M(mg)}. The Investment Fund cannot cover a recurring obligation. The reserve will absorb it every year from now on.</div>`;
   if(over)warn+=`<div class="alertbox"><b>Insufficient one-time funds.</b> ${M(fromFund-t.fund)} over the available Fund balance.</div>`;
@@ -636,7 +673,7 @@ function renderTeam(){
      You inherit ${Mk(t.fund)} of remaining fund, ${Mk(t.tail)} per year of recurring obligation already committed,
      and an enrollment index of ${(t.enroll*100).toFixed(1)}%. You may disagree with all of it. You cannot unspend it.</p>
    </div>`:''}
-   ${ledgerStrip(t)}
+   ${ledgerStrip(t,commitments)}
    <div class="panel">
      <div class="eyebrow">Environmental signals · Year ${rd}</div>
      <h2>What your intelligence tells you</h2>
@@ -648,12 +685,12 @@ function renderTeam(){
    </div>
    <div class="grid">
     <div>${CATS.map(cat=>`<div class="cat"><h2>${cat}</h2>
-      ${CARDS.filter(c=>c.cat===cat).map(c=>cardEl(c,t)).join('')}</div>`).join('')}</div>
+      ${CARDS.filter(c=>c.cat===cat).map(c=>cardEl(c,t,commitments,isLocked)).join('')}</div>`).join('')}</div>
     <div class="rail">
       <h3>Year ${rd} commitments</h3>
-      ${CART.length?CART.map(id=>`<div class="cartrow"><span>${CARD(id).n}</span>
+      ${commitments.length?commitments.map(id=>`<div class="cartrow"><span>${CARD(id).n}</span>
         <span style="white-space:nowrap"><b class="num">${M(CARD(id).one)}</b>
-        <button onclick="drop(${id})" aria-label="Remove">×</button></span></div>`).join('')
+        ${isLocked?'':`<button onclick="drop(${id})" aria-label="Remove">×</button>`}</span></div>`).join('')
         :'<p class="mini">Nothing selected. Holding funds is a legitimate strategy and scores in exactly one of four categories.</p>'}
       <div class="tot head"><span>One-time cost</span><b class="num">${M(cartOne)}</b></div>
       ${fromRest?`<div class="tot"><span style="color:var(--orange)">…drawn from restricted gift</span><b class="num" style="color:var(--orange)">${M(fromRest)}</b></div>`:''}
@@ -665,36 +702,39 @@ function renderTeam(){
         <h3 style="margin-bottom:4px">Who decided</h3>
         <p class="mini" style="margin:0 0 8px">A different fellow takes the chair each year. Name this year's decider and the person
         who argued against the table. Both go on the record.</p>
-        <input id="decName" placeholder="Decider for Year ${rd}" value="${t.deciders[rd]||''}"
+        <input id="decName" placeholder="Decider for Year ${rd}" value="${t.deciders[rd]||''}" ${isLocked?'disabled':''}
           oninput="ME.deciders[${rd}]=this.value" style="margin-top:0">
-        <input id="disName" placeholder="Who made the case against (optional)" value="${t.dissent[rd]||''}"
+        <input id="disName" placeholder="Who made the case against (optional)" value="${t.dissent[rd]||''}" ${isLocked?'disabled':''}
           oninput="ME.dissent[${rd}]=this.value">
       </div>
-      <button class="btn" ${over?'disabled':''} onclick="lockIn()">Lock in Year ${rd}</button>
+      ${isLocked
+        ?`<button class="btn locked" disabled>Locked In</button>
+          <button class="btn alert" onclick="unlockYear()">Unlock Year ${rd}</button>`
+        :`<button class="btn" ${over?'disabled':''} onclick="lockIn()">Lock in Year ${rd}</button>`}
       <p class="mini">The decider states the reasoning aloud before this is entered. Locking is final for this round.</p>
     </div>
    </div></div>`;}
 
-function cardEl(c,t){
-  const owned=has(t,c.id),on=CART.includes(c.id);
+function cardEl(c,t,commitments=CART,isLocked=false){
+  const owned=has(t,c.id),on=commitments.includes(c.id);
   const cls=owned?'owned':on?'on':'';
   let flags='';
   if(c.req)flags+=`<span class="cflag req">${c.reqTxt}</span>`;
   if(c.rest)flags+=`<span class="cflag rest">Restricted gift eligible</span>`;
   if(c.rev)flags+=`<span class="cflag rev">+${M(c.rev)}/yr from year ${c.lag?'+'+c.lag:'1'}</span>`;
   if(c.lag&&!c.rev)flags+=`<span class="cflag rest">${c.lag}-year lag to value</span>`;
-  return `<button class="card ${cls}" ${owned?'disabled':''} onclick="pick(${c.id})">
+  return `<button class="card ${cls}" ${owned||isLocked?'disabled':''} onclick="pick(${c.id})">
     <span class="cnum num">${String(c.id).padStart(2,'0')}</span>
     <span><span class="cname">${c.n}</span><span class="cdesc">${c.d}</span><br>${flags}
       ${owned?'<span class="cflag rev">Held since Year '+t.bought[c.id]+'</span>':''}</span>
     <span class="cprice"><span class="one num">${c.one?M(c.one):'—'}</span>
       <span class="tail num ${c.tail<0?'credit':''}">${c.tail?M(c.tail)+'/yr':'no tail'}</span></span></button>`;}
 
-function pick(id){if(CART.includes(id))return;CART.push(id);render()}
-function drop(id){CART=CART.filter(x=>x!==id);render()}
+function pick(id){if(ME&&S&&Object.prototype.hasOwnProperty.call(ME.locked,S.round))return;if(CART.includes(id))return;CART.push(id);render()}
+function drop(id){if(ME&&S&&Object.prototype.hasOwnProperty.call(ME.locked,S.round))return;CART=CART.filter(x=>x!==id);render()}
 
 async function lockIn(){
-  if(BUSY)return;
+  if(BUSY||Object.prototype.hasOwnProperty.call(ME.locked,S.round))return;
   const dn=($('decName')||{}).value||'';
   if(!dn.trim()){alert('Name the decider for this year before locking in. A table decision needs someone who owns it.');return}
   BUSY=true;
@@ -705,6 +745,37 @@ async function lockIn(){
   t.cfo=ME.cfo;t.mentor=ME.mentor;
   await sset(K.team(t.id),t);
   ME=t;CART=[];BUSY=false;render();}
+
+async function unlockYear(){
+  if(BUSY||!S||S.phase!=='brief')return;
+  BUSY=true;
+
+  // Confirm shared state so a stale CFO screen cannot unlock after deliberation closes.
+  const state=await sget(K.state);
+  if(!state||state.phase!=='brief'||state.round!==S.round){
+    if(state)S=state;
+    BUSY=false;
+    render();
+    return;
+  }
+
+  const t=await sget(K.team(ME.id))||ME;
+  if(!Object.prototype.hasOwnProperty.call(t.locked,state.round)){
+    ME=t;BUSY=false;render();return;
+  }
+
+  // Restore the saved commitments as an editable draft, then withdraw the shared submission.
+  const restored=[...(t.locked[state.round]||[])];
+  delete t.locked[state.round];
+  t.pending=[];
+
+  if(await sset(K.team(t.id),t)){
+    ME=t;
+    CART=restored;
+  }
+  BUSY=false;
+  render();
+}
 
 /* ── results ─────────────────────────────────────────────── */
 function resultPanel(t,L){
@@ -1009,7 +1080,7 @@ async function loop(){
    * Schedule the next poll after this one finishes. setTimeout avoids starting
    * another polling cycle while slow network requests are still in progress.
    */
-  setTimeout(loop,6000);
+  setTimeout(loop,3000);
 }
 
 render();
