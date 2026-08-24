@@ -60,8 +60,8 @@ h1,h2,h3{font-weight:800;letter-spacing:-.02em;margin:0}
 .card.owned{background:rgba(63,191,143,.08);box-shadow:inset 3px 0 0 var(--ok);opacity:.72;cursor:default}
 .cnum{font-size:12px;color:var(--indigo-line);font-weight:600;padding-top:3px}
 .card.on .cnum,.card.owned .cnum{color:var(--cyan)}
-.cname{font-size:15px;font-weight:600;line-height:1.25}
-.cdesc{font-size:12.5px;color:#a79fc4;line-height:1.45;margin-top:4px}
+.cname{display:block;font-size:15px;font-weight:600;line-height:1.25}
+.cdesc{display:block;font-size:12.5px;color:#a79fc4;line-height:1.45;margin-top:4px}
 .cflag{display:inline-block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
   font-weight:600;padding:2px 6px;margin-top:6px;margin-right:5px;border-radius:2px}
 .cflag.req{background:rgba(255,89,89,.15);color:var(--coral)}
@@ -73,7 +73,7 @@ h1,h2,h3{font-weight:800;letter-spacing:-.02em;margin:0}
 .cprice .tail.credit{color:var(--ok)}
 
 /* rail */
-.rail{position:sticky;top:78px;background:var(--indigo);border:1px solid var(--indigo-line);padding:18px}
+.rail{position:static;background:var(--indigo);border:1px solid var(--indigo-line);padding:18px}
 .rail h3{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px}
 .cartrow{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:7px 0;
   border-bottom:1px solid rgba(58,42,122,.6)}
@@ -157,7 +157,7 @@ select,input{background:var(--indigo-deep);border:1px solid var(--indigo-line);c
 .bar{height:3px;background:rgba(255,255,255,.1);margin-top:9px}
 .bar i{display:block;height:100%;background:var(--cyan)}
 
-@media(max-width:960px){.grid{grid-template-columns:1fr}.rail{position:static}
+@media(max-width:960px){.grid{grid-template-columns:1fr}
   .ledgers{grid-template-columns:1fr}.scorecard{grid-template-columns:repeat(2,1fr)}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -382,7 +382,7 @@ function boardCase(t){
 
 /* ── Ledger engine ───────────────────────────────────────── */
 function newTeam(i){return{
-  id:i,name:'Table '+i,cfo:'',mentor:'',
+  id:i,name:'Table '+i,cfo:'',mentor:'',joined:false,
   fund:BASE.fund,restricted:BASE.restricted,reserve:BASE.reserve,
   tail:0,enroll:1,held:[],bought:{},cite:0,
   mPts:0,sPts:0,rPts:0,cumMargin:0,minDays:98,
@@ -556,6 +556,7 @@ async function joinTeam(){
   const i=+$('tsel').value;
   let t=await sget(K.team(i))||newTeam(i);
   t.cfo=$('cfoname').value||t.cfo; t.mentor=$('mname').value||t.mentor;
+  t.joined=true;
   await sset(K.team(i),t);
   ME=t;ROLE='team';CART=[];loop();}
 
@@ -725,12 +726,16 @@ function cardEl(c,t,commitments=CART,isLocked=false){
   if(c.lag&&!c.rev)flags+=`<span class="cflag rest">${c.lag}-year lag to value</span>`;
   return `<button class="card ${cls}" ${owned||isLocked?'disabled':''} onclick="pick(${c.id})">
     <span class="cnum num">${String(c.id).padStart(2,'0')}</span>
-    <span><span class="cname">${c.n}</span><span class="cdesc">${c.d}</span><br>${flags}
+    <span><span class="cname">${c.n}</span><span class="cdesc">${c.d}</span>${flags}
       ${owned?'<span class="cflag rev">Held since Year '+t.bought[c.id]+'</span>':''}</span>
     <span class="cprice"><span class="one num">${c.one?M(c.one):'—'}</span>
       <span class="tail num ${c.tail<0?'credit':''}">${c.tail?M(c.tail)+'/yr':'no tail'}</span></span></button>`;}
 
-function pick(id){if(ME&&S&&Object.prototype.hasOwnProperty.call(ME.locked,S.round))return;if(CART.includes(id))return;CART.push(id);render()}
+function pick(id){
+  if(ME&&S&&Object.prototype.hasOwnProperty.call(ME.locked,S.round))return;
+  if(CART.includes(id)){CART=CART.filter(x=>x!==id);render();return}
+  CART.push(id);render();
+}
 function drop(id){if(ME&&S&&Object.prototype.hasOwnProperty.call(ME.locked,S.round))return;CART=CART.filter(x=>x!==id);render()}
 
 async function lockIn(){
@@ -862,9 +867,10 @@ async function renderFac(){
   app.innerHTML=chrome(null)+`<div class="wrap">
    <div class="panel"><div class="eyebrow">Facilitator console</div>
     <h2>Year ${S.round} · ${S.phase}</h2>
-    <div class="fgrid">${TEAMS.map(t=>{const inn=!!t.locked[S.round];
+     <div class="fgrid">${TEAMS.map(t=>{const inn=!!t.locked[S.round];
       return `<div class="tstat"><b>${t.name}</b>
         <span class="dot ${inn?'in':''}"></span>${inn?(t.locked[S.round].length+' committed'):'deliberating'}
+        <div class="mini" style="margin-top:6px"><span class="dot ${t.joined?'in':''}"></span>${t.joined?(t.cfo?'CFO joined · '+t.cfo:'CFO joined'):'Waiting for CFO'}</div>
         <div class="mini" style="margin-top:6px">Fund ${Mk(t.fund)} · margin ${Mk(revenueOf(t,S.round)-expenseOf(t))}
         <br>${Math.round(daysCash(t))} days cash${t.cite?' · '+t.cite+' citation(s)':''}</div>
         <button class="btn ghost" style="margin-top:8px;padding:7px;font-size:12px" onclick="facEnter(${t.id})">Enter for this table</button></div>`}).join('')}
