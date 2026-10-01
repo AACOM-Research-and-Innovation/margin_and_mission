@@ -12,8 +12,16 @@ The app has three roles that run at the same time and stay in sync:
 and **projection** (read-only standings for the room or a Zoom screen-share).
 
 ---
+## A. Netlify deployment
 
-## A. Play with it right now (one computer, no install)
+The simulation is hosted on netlify at https://marginandmission.netlify.app/.
+
+Upon visiting the site, a user can select to be:
+- **table CFO**: Makes budget decisions in the simulation.
+- **facilitator**: Controls the rounds. Only one person should be the facilitator.
+- **projection**: Displays the score of all team.
+
+## B. Play with it right now (one computer, no install)
 
 You can click through the whole thing on a single machine.
 
@@ -28,7 +36,7 @@ You can click through the whole thing on a single machine.
 Local demo mode keeps everything inside that one browser. To have separate
 laptops talk to each other, use a server (next section).
 
-## B. Run it for several devices (one command)
+## C. Run it for several devices (one command)
 
 This is how the real demo and the live session run. You need **Node.js 18+**
 installed once (https://nodejs.org, the "LTS" download).
@@ -52,7 +60,7 @@ To stop the server, press `Ctrl+C`. Session data is saved to
 `session-store.json` in this folder, so a restart resumes where it left off.
 Delete that file (or use the facilitator's **Reset**) to start clean.
 
-## C. Pointing the app at a specific server (the "three tests")
+## D. Pointing the app at a specific server (the "three tests")
 
 The server address is configurable **per device**, three ways, in priority order:
 
@@ -68,7 +76,7 @@ for that test. Nothing is hard-coded and nothing needs rebuilding.
 
 ---
 
-## D. For IT — what the server has to do
+## E. For IT — what the server has to do
 
 The app needs two things from a host:
 
