@@ -21,6 +21,39 @@ Upon visiting the site, a user can select to be:
 - **facilitator**: Controls the rounds. Only one person should be the facilitator.
 - **projection**: Displays the score of all team.
 
+### Walkthrough and mentor notes
+
+Start a fresh session with the facilitator's **Reset session** before the walkthrough.
+Saved sessions from earlier versions may contain cards that have been removed.
+
+The institution starts with $47.04M net tuition revenue (640 students × $73,500)
+and $3.96M other revenue. Total operating revenue remains $51.0M against $48.5M
+expense, leaving a $2.5M starting margin. The restricted rural and community-health
+gift is $1.5M; the one-time Investment Fund remains $5M.
+
+The catalog now has 25 cards, retaining this repository's original IDs. The
+biomedical bridge, faculty retention pool, and unified learning-platform migration
+have been removed. The AI dual pathway (card 25) costs $2.2M annually; OMM
+succession (card 26) costs $350K annually. Other cards and the three events per
+year remain in this version.
+
+Read the preceptor **Board Ask in Year 1 only**, after decisions lock and before
+events are revealed. The preceptor stipend program is card 11 in this version.
+Use the existing mentor rulings and facilitator controls; Years 2–3 have no
+mid-year Board Ask. The Year 2 OMM event has two outcomes: succession held
+(+1 mission, +1 strategic), or no succession (−$1.4M, −7 mission, +1 citation).
+
+For the mentor-led debrief, ask:
+
+> Which of your choices would have needed buy-in you did not have to model here
+> — from faculty, the board, or senior leadership — and how would you have secured it?
+
+This question adds discussion, with no new scoring mechanic.
+
+Run `npm test` to check the financial baseline, event outcomes, revenue
+dependencies, and three-round CFO, facilitator, and projection rendering.
+These checks use isolated local state and do not contact the live site.
+
 ## B. Play with it right now (one computer, no install)
 
 You can click through the whole thing on a single machine.
