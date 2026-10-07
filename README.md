@@ -23,22 +23,24 @@ Upon visiting the site, a user can select to be:
 
 ### Walkthrough and mentor notes
 
-Start a fresh session with the facilitator's **Reset session** before the walkthrough.
-Saved sessions from earlier versions may contain cards that have been removed.
+Use the facilitator's **Reset session** before deploying the renumbered catalog,
+then refresh every device and start a fresh session for the walkthrough.
+Saved sessions from earlier versions may contain removed cards or use the old
+card numbering, which can identify different investments in the new catalog.
 
 The institution starts with $47.04M net tuition revenue (640 students × $73,500)
 and $3.96M other revenue. Total operating revenue remains $51.0M against $48.5M
 expense, leaving a $2.5M starting margin. The restricted rural and community-health
 gift is $1.5M; the one-time Investment Fund remains $5M.
 
-The catalog now has 25 cards, retaining this repository's original IDs. The
+The catalog now has 25 cards, numbered consecutively in display order. The
 biomedical bridge, faculty retention pool, and unified learning-platform migration
-have been removed. The AI dual pathway (card 25) costs $2.2M annually; OMM
-succession (card 26) costs $350K annually. Other cards and the three events per
+have been removed. The AI dual pathway (card 6) costs $2.2M annually; OMM
+succession (card 10) costs $350K annually. Other cards and the three events per
 year remain in this version.
 
 Read the preceptor **Board Ask in Year 1 only**, after decisions lock and before
-events are revealed. The preceptor stipend program is card 11 in this version.
+events are revealed. The preceptor stipend program is card 13 in this version.
 Use the existing mentor rulings and facilitator controls; Years 2–3 have no
 mid-year Board Ask. The Year 2 OMM event has two outcomes: succession held
 (+1 mission, +1 strategic), or no succession (−$1.4M, −7 mission, +1 citation).
