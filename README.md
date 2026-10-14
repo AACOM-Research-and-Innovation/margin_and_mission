@@ -14,7 +14,11 @@ and **projection** (read-only standings for the room or a Zoom screen-share).
 ---
 ## A. Netlify deployment
 
-The simulation is hosted on netlify at https://marginandmission.netlify.app/.
+The original 25-card version is hosted at https://marginandmission.netlify.app/.
+This source restores the intended 13-card trial version for the
+`margin-and-mission-trial` Netlify project in the AACOM Innovation team.
+The planned test address is https://margin-and-mission-trial.netlify.app/;
+it becomes usable after the first successful deployment from `trial-core-13`.
 
 Upon visiting the site, a user can select to be:
 - **table CFO**: Makes budget decisions in the simulation.
@@ -33,14 +37,36 @@ and $3.96M other revenue. Total operating revenue remains $51.0M against $48.5M
 expense, leaving a $2.5M starting margin. The restricted rural and community-health
 gift is $1.5M; the one-time Investment Fund remains $5M.
 
-The catalog now has 25 cards, numbered consecutively in display order. The
-biomedical bridge, faculty retention pool, and unified learning-platform migration
-have been removed. The AI dual pathway (card 6) costs $2.2M annually; OMM
-succession (card 10) costs $350K annually. Other cards and the three events per
-year remain in this version.
+The catalog has 13 cards, numbered consecutively in display order:
+
+| Card | Investment | Dependency |
+| --- | --- | --- |
+| 1 | Deferred maintenance | — |
+| 2 | Business continuity | — |
+| 3 | Cybersecurity uplift | — |
+| 4 | Cyber liability insurance | Pays only alongside card 3 |
+| 5 | Clinical AI and Health Informatics dual pathway | Card 10; otherwise 60% revenue |
+| 6 | OMM depth and chair succession | — |
+| 7 | Branch campus development | Revenue matures beyond the three-year exercise |
+| 8 | Preceptor stipend program | — |
+| 9 | Rural and underserved training track | Restricted-gift eligible |
+| 10 | AI governance and faculty upskilling | — |
+| 11 | Data infrastructure and institutional research | Extra private signal |
+| 12 | Advancement officer | Full estate-gift capture with card 9 |
+| 13 | Scholarship and tuition discount pool | — |
+
+The AI dual pathway costs $2.2M annually; OMM succession costs $350K annually.
+The twelve larger-catalog options are removed, along with the already-removed
+biomedical bridge, faculty retention pool, and learning-platform migration.
+
+Each year has two events: borrowing caps and ransomware (Year 1), storm and
+OMM chair departure (Year 2), AI scrutiny and estate gift (Year 3). The hospital
+acquisition, state-support formula, and focused placement visit are removed.
+The baseline and scoring formula are unchanged. The reference prepared portfolio
+scores approximately 70/100; doing nothing scores approximately 25/100.
 
 Read the preceptor **Board Ask in Year 1 only**, after decisions lock and before
-events are revealed. The preceptor stipend program is card 13 in this version.
+events are revealed. The preceptor stipend program is card 8 in this version.
 Use the existing mentor rulings and facilitator controls; Years 2–3 have no
 mid-year Board Ask. The Year 2 OMM event has two outcomes: succession held
 (+1 mission, +1 strategic), or no succession (−$1.4M, −7 mission, +1 citation).
@@ -55,6 +81,19 @@ This question adds discussion, with no new scoring mechanic.
 Run `npm test` to check the financial baseline, event outcomes, revenue
 dependencies, and three-round CFO, facilitator, and projection rendering.
 These checks use isolated local state and do not contact the live site.
+
+### Build and deploy the trial
+
+Use `npm run build` to run the checks and create `dist/index.html`.
+Netlify reads the build command, publish directory (`dist`), and `/kv/*`
+rewrite from `netlify.toml`. The `netlify/functions/kv.mjs` function supplies
+shared state through the existing Netlify Blobs store; dropping only the HTML
+onto Netlify will not provide cross-device sessions.
+
+Connect a separate Netlify project to the test branch for continuous deployment,
+or use an authenticated Netlify CLI deployment with the functions included.
+`.netlify/` is ignored by Git so the local site-link file stays out of commits.
+The new site's stored sessions are separate from the original site's sessions.
 
 ## B. Play with it right now (one computer, no install)
 

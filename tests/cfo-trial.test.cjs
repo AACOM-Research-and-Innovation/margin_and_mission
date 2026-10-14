@@ -43,30 +43,43 @@ test('baseline, surviving identities, and prerequisites remain consistent', () =
   assert.equal(base.fund, 5000000);
   assert.equal(base.reserve, 13000000);
   const cards = json('CARDS');
-  assert.equal(cards.length, 25);
+  assert.equal(cards.length, 13);
   const ids = cards.map(c => c.id);
   assert.equal(new Set(ids).size, ids.length);
-  assert.deepEqual(ids, Array.from({ length: 25 }, (_, i) => i + 1));
-  for (const name of ['MS Biomedical Sciences bridge program',
-    'Faculty development and retention pool', 'Unified learning platform migration']) {
-    assert(!cards.some(c => c.n === name));
-  }
+  assert.deepEqual(ids, Array.from({ length: 13 }, (_, i) => i + 1));
+  assert.deepEqual(cards.map(c => c.n), [
+    'Deferred maintenance: roof, HVAC, envelope',
+    'Business continuity and distributed instruction',
+    'Cybersecurity uplift: MFA, EDR, segmentation, IR retainer',
+    'Cyber liability insurance',
+    'MS in Clinical AI and Health Informatics, DO dual pathway',
+    'OMM department depth and chair succession',
+    'Branch campus development and pro forma',
+    'Preceptor stipend program',
+    'Rural and underserved training track',
+    'AI governance framework and faculty upskilling',
+    'Data infrastructure and institutional research capacity',
+    'Advancement officer and campaign feasibility study',
+    'Scholarship and tuition discount pool',
+  ]);
   for (const card of cards) if (card.req) assert(ids.includes(card.req));
-  assert.equal(cards.find(c => c.id === 6).tail, 2200000);
-  assert.equal(cards.find(c => c.id === 10).tail, 350000);
-  assert.match(cards.find(c => c.id === 13).n, /Preceptor/);
-  assert.deepEqual(json('Object.values(EVENTS).map(events => events.length)'), [3, 3, 3]);
+  assert.equal(cards.find(c => c.id === 5).tail, 2200000);
+  assert.equal(cards.find(c => c.id === 6).tail, 350000);
+  assert.match(cards.find(c => c.id === 8).n, /Preceptor/);
+  assert.equal(cards.find(c => c.id === 4).req, 3);
+  assert.equal(cards.find(c => c.id === 5).req, 10);
+  assert.deepEqual(json('Object.values(EVENTS).map(events => events.length)'), [2, 2, 2]);
 });
 
 test('OMM succession has only the held and unprepared outcomes', () => {
   const { run, json } = appContext();
   run("const omm = EVENTS[2].find(e => e.n.startsWith('OMM chair'));");
-  const held = json('omm.f({held:[10]})');
+  const held = json('omm.f({held:[6]})');
   assert.equal(held.hd, 'Succession held');
   assert.equal(held.m, 1);
   assert.equal(held.s, 1);
   assert.equal(held.cash, undefined);
-  for (const ids of [[], [16]]) {
+  for (const ids of [[], [3]]) {
     const result = json(`omm.f({held:${JSON.stringify(ids)}})`);
     assert.equal(result.cash, -1400000);
     assert.equal(result.m, -7);
@@ -81,44 +94,40 @@ test('risk mitigation and revenue dependencies still work', () => {
     `EVENTS[${year}].find(e => e.n.includes(${JSON.stringify(name)})).f({held:${JSON.stringify(ids)}})`
   );
   assert.equal(event(1, 'Ransomware', []).cash, -2400000);
-  assert.equal(event(1, 'Ransomware', [4]).cash, -300000);
-  assert.equal(event(1, 'Ransomware', [4, 5]).cash, -50000);
-  const denied = event(1, 'Ransomware', [5]);
+  assert.equal(event(1, 'Ransomware', [3]).cash, -300000);
+  assert.equal(event(1, 'Ransomware', [3, 4]).cash, -50000);
+  const denied = event(1, 'Ransomware', [4]);
   assert.equal(denied.cash, -2400000);
   assert.match(denied.notes.join(' '), /Claim denied/);
   assert.equal(event(1, 'Financing Act', []).enroll, -0.06);
-  assert.equal(event(1, 'Financing Act', [22]).enroll, -0.03);
-  assert.equal(event(1, 'Financing Act', [22, 23]).enroll, -0.015);
+  assert.equal(event(1, 'Financing Act', [13]).enroll, -0.03);
   assert.equal(event(2, 'storm', []).cash, -3000000);
   assert.equal(event(2, 'storm', [1]).cash, -1500000);
-  assert.equal(event(2, 'storm', [1, 2]).cash, -600000);
   assert.equal(event(2, 'storm', []).m, -5);
-  assert.equal(event(2, 'storm', [3]).m, -1);
-  assert.equal(event(3, 'scrutiny', [15]).s, 4);
-  assert.equal(event(3, 'scrutiny', [15]).m, 3);
-  const ai = event(3, 'scrutiny', [6]);
+  assert.equal(event(2, 'storm', [2]).m, -1);
+  assert.equal(event(3, 'scrutiny', [10]).s, 4);
+  assert.equal(event(3, 'scrutiny', [10]).m, 3);
+  const ai = event(3, 'scrutiny', [5]);
   assert.equal(ai.cash, -700000);
   assert.equal(ai.m, -6);
   assert.equal(ai.cite, 1);
-  assert.equal(event(3, 'Estate gift', [20, 14]).cash, 2500000);
-  assert.equal(event(3, 'Estate gift', [20]).cash, 1200000);
-  assert.equal(event(3, 'Estate gift', [14]).cash, 1200000);
+  assert.equal(event(3, 'Estate gift', [12, 9]).cash, 2500000);
+  assert.equal(event(3, 'Estate gift', [12]).cash, 1200000);
+  assert.equal(event(3, 'Estate gift', [9]).cash, 1200000);
   assert.equal(event(3, 'Estate gift', []).cash, undefined);
-  run('const t = newTeam(1); t.held=[6]; t.bought={6:1};');
+  run('const t = newTeam(1); t.held=[5]; t.bought={5:1};');
   assert.equal(run('revenueOf(t,1)'), 51000000);
   assert.equal(run('revenueOf(t,2)'), 51000000 + 3200000 * 0.6);
-  run('t.held.push(15);');
+  run('t.held.push(10);');
   assert.equal(run('revenueOf(t,2)'), 54200000);
-  run('t.held=[9]; t.bought={9:1};');
-  assert.equal(run('revenueOf(t,1)'), 51600000);
-  run('t.held.push(12);');
-  assert.equal(run('revenueOf(t,1)'), 52200000);
+  run('t.held=[7]; t.bought={7:1};');
+  for (const year of [1, 2, 3]) assert.equal(run(`revenueOf(t,${year})`), 51000000);
 });
 
 test('Board Ask appears only in Year 1 for CFO and facilitator', async () => {
   const { app, run, json } = appContext();
   assert.deepEqual(json('Object.keys(MIDYEAR)'), ['1']);
-  assert.match(run('MIDYEAR[1].opts'), /card 13/);
+  assert.match(run('MIDYEAR[1].opts'), /card 8/);
   for (const year of [1, 2, 3]) {
     run(`S={round:${year},phase:'locked',tables:1}; ME=newTeam(1);
       ME.locked[${year}]=[4]; TEAMS=[ME]; BOARD=[]; CART=[];`);
@@ -140,7 +149,7 @@ test('Board Ask appears only in Year 1 for CFO and facilitator', async () => {
 test('prepared and do-nothing portfolios complete all rounds and views', async () => {
   const { app, run, json } = appContext();
   run('const prepared=newTeam(1), idle=newTeam(2);');
-  const picks = [[4, 15, 22, 13], [1, 3, 10], [6, 14, 20, 17]];
+  const picks = [[3, 10, 13, 8], [1, 2, 6], [5, 9, 12, 11]];
   for (let year = 1; year <= 3; year++) {
     run(`S={round:${year},phase:'brief',tables:2};
       prepared.pending=${JSON.stringify(picks[year-1])};
@@ -159,6 +168,8 @@ test('prepared and do-nothing portfolios complete all rounds and views', async (
   }
   const result = json('({prepared:score(prepared).total,idle:score(idle).total})');
   assert(result.prepared > result.idle + 20, JSON.stringify(result));
+  assert(result.prepared > 65 && result.prepared < 75, JSON.stringify(result));
+  assert(result.idle > 20 && result.idle < 30, JSON.stringify(result));
   assert.equal(run('prepared.cite'), 0);
   assert.equal(run('prepared.restricted'), 1000000);
   assert.equal(run('prepared.log.length'), 3);
@@ -178,7 +189,7 @@ test('host enters new card numbers, resolves three rounds, adjusts tables, and r
   await run('startGame()');
   assert.match(app.innerHTML, /Facilitator console/);
   assert.equal(run('TEAMS.length'), 2);
-  const picks = [[4, 15, 22, 13], [1, 3, 10], [6, 14, 20, 17]];
+  const picks = [[3, 10, 13, 8], [1, 2, 6], [5, 9, 12, 11]];
   for (let year = 1; year <= 3; year++) {
     answer = picks[year - 1].join(', ') + ', 999';
     await run('facEnter(1)');
@@ -186,7 +197,7 @@ test('host enters new card numbers, resolves three rounds, adjusts tables, and r
     assert.deepEqual(json(`TEAMS[0].locked[${year}]`), picks[year - 1]);
     assert.deepEqual(json('TEAMS[1].pending'), []);
     await run("setPhase('locked')");
-    if (year === 1) assert.match(app.innerHTML, /Tables holding card 13/);
+    if (year === 1) assert.match(app.innerHTML, /Tables holding card 8/);
     else assert.doesNotMatch(app.innerHTML, /Mid-year · read aloud/);
     await run("setPhase('reveal')");
     assert.match(app.innerHTML, /Read these aloud/);
@@ -202,9 +213,9 @@ test('host enters new card numbers, resolves three rounds, adjusts tables, and r
     assert.equal(run('TEAMS[0].reserve'), reserve);
     if (year < 3) await run('nextRound()');
   }
-  assert.equal(run('TEAMS[0].bought[6]'), 3);
-  assert.equal(run('TEAMS[0].bought[10]'), 2);
-  assert.equal(run('TEAMS[0].bought[13]'), 1);
+  assert.equal(run('TEAMS[0].bought[5]'), 3);
+  assert.equal(run('TEAMS[0].bought[6]'), 2);
+  assert.equal(run('TEAMS[0].bought[8]'), 1);
   assert.equal(run('TEAMS[0].cite'), 0);
   const beforeCash = run('TEAMS[1].reserve');
   await run('applyCash()');
@@ -231,23 +242,23 @@ test('CFO selection, locking, unlocking, and polling preserve renumbered IDs', a
   run("S={round:1,phase:'brief',tables:1}; ME=newTeam(1); ROLE='team';");
   await run('sset(K.state,S)');
   await run('sset(K.team(1),ME)');
-  run('pick(6); pick(15); pick(22); drop(22);');
-  assert.deepEqual(json('CART'), [6, 15]);
-  assert.doesNotMatch(app.innerHTML, /You do not hold card 15/);
+  run('pick(5); pick(10); pick(13); drop(13);');
+  assert.deepEqual(json('CART'), [5, 10]);
+  assert.doesNotMatch(app.innerHTML, /You do not hold card 10/);
   await run('lockIn()');
-  assert.deepEqual(json('ME.locked[1]'), [6, 15]);
-  assert.deepEqual(json('ME.pending'), [6, 15]);
+  assert.deepEqual(json('ME.locked[1]'), [5, 10]);
+  assert.deepEqual(json('ME.pending'), [5, 10]);
   await run('loop()');
-  assert.deepEqual(json('ME.locked[1]'), [6, 15]);
+  assert.deepEqual(json('ME.locked[1]'), [5, 10]);
   assert.match(app.innerHTML, /Locked In/);
   await run('unlockYear()');
-  assert.deepEqual(json('CART'), [6, 15]);
+  assert.deepEqual(json('CART'), [5, 10]);
   assert.deepEqual(json('ME.pending'), []);
   assert.equal(run('Object.hasOwn(ME.locked,1)'), false);
   await run('lockIn()');
   await run("sset(K.state,{round:1,phase:'locked',tables:1})");
   await run('loop()');
   await run('unlockYear()');
-  assert.deepEqual(json('ME.locked[1]'), [6, 15]);
+  assert.deepEqual(json('ME.locked[1]'), [5, 10]);
   assert.match(app.innerHTML, /MS in Clinical AI and Health Informatics/);
 });
