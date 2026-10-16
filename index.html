@@ -225,14 +225,10 @@ const CARDS = [
  {id:13,cat:'Technology and data',n:'Data infrastructure and institutional research capacity',one:450000,tail:250000,lag:1,t:['data','ai'],m:0,s:5,r:2,
   d:'Warehouse, governance, and two analysts. Grants your team one additional intelligence line in every subsequent signals brief.'},
 
- // REVIEW CARD: savings retained; its original Year 2 Board Ask remains disabled.
- {id:14,review:true,cat:'Technology and data',n:'Unified learning platform migration',one:1300000,tail:-180000,lag:2,t:['lms'],m:2,s:5,r:2,
-  d:'One platform replacing three. The three legacy contracts wind down on their own schedules, so you pay for four systems at once for eighteen months. Savings arrive in Year 3, by which time the person who approved this has usually moved on.'},
-
- {id:15,cat:'Research and advancement',n:'Advancement officer and campaign feasibility study',one:150000,tail:350000,lag:2,rev:600000,t:['adv'],m:0,s:3,r:0,
+ {id:14,cat:'Research and advancement',n:'Advancement officer and campaign feasibility study',one:150000,tail:350000,lag:2,rev:600000,t:['adv'],m:0,s:3,r:0,
   d:'Relationship capacity. Major gifts are cultivated over years and do not arrive at institutions with nobody to receive them.'},
 
- {id:16,cat:'Financial and enrollment',n:'Scholarship and tuition discount pool',one:0,tail:800000,lag:0,t:['aid'],m:4,s:0,r:3,
+ {id:15,cat:'Financial and enrollment',n:'Scholarship and tuition discount pool',one:0,tail:800000,lag:0,t:['aid'],m:4,s:0,r:3,
   d:'Protects yield when financing conditions tighten. Discounting is a permanent structural decision disguised as a temporary one.'},
 ].filter(card => REVIEW_CONTENT.cards || !card.review);
 const CARD = id => CARDS.find(c=>c.id===id);
@@ -272,8 +268,8 @@ const EVENTS = {
   {n:'Professional Education Financing Act takes effect',sig:true,
    d:'Federal borrowing for professional programs is capped at $45,000 annually and $180,000 lifetime, effective for the coming cycle. Yield softens immediately across the out-of-state pool.',
    f:t=>{let drop=.06,x=[];
-     if(has(t,16)){drop/=2;x.push('Scholarship pool absorbed half the yield loss')}
-     if(!has(t,16))x.push('No yield protection in place. Full impact.');
+     if(has(t,15)){drop/=2;x.push('Scholarship pool absorbed half the yield loss')}
+     if(!has(t,15))x.push('No yield protection in place. Full impact.');
      return{enroll:-drop,m:-Math.round(drop*100),notes:x,
        hd:'Entering class down '+(drop*100).toFixed(1)+'%. Effect persists as the cohort progresses.'}}},
   {n:'Ransomware campaign targets health-professions education',sig:true,
@@ -283,16 +279,7 @@ const EVENTS = {
      else{c=2400000;x.push('No controls. Full recovery, forensics, and notification cost.')}
      if(has(t,4)&&has(t,3)){c-=250000;x.push('Carrier paid $250K under the policy')}
      if(has(t,4)&&!has(t,3)){x.push('Claim denied. The policy warranted MFA that was not in place. You paid the premium and carried the loss.')}
-     return{cash:-c,s:has(t,3)?1:0,notes:x,hd:'Incident cost '+M(c)}}},
-  // REVIEW EVENT: the clinical/GME partnership and class-expansion cards are absent.
-  // Keep the available preceptor mitigation; there is no full-protection route.
-  {review:true,n:'Teaching hospital acquired; forty core rotation slots eliminated',sig:false,
-   reviewNote:'Clinical/GME partnership full mitigation unavailable; class-expansion penalty omitted because that card is absent.',
-   d:'Your primary partner is absorbed by a national system that consolidates education agreements. Forty core slots disappear ninety days before the block begins.',
-   f:t=>{const protectedSites=has(t,10);
-     return{cash:protectedSites?-400000:-800000,m:protectedSites?-3:-6,
-       notes:[protectedSites?'Preceptor stipends retained roughly half the affected sites':'Students placed at distance and at cost. Two blocks rescheduled.'],
-       hd:'Placement disruption cost '+M(protectedSites?400000:800000)}}}],
+     return{cash:-c,s:has(t,3)?1:0,notes:x,hd:'Incident cost '+M(c)}}}],
  2:[
   {n:'Category 3 storm makes landfall',sig:true,
    d:'Sustained winds and eighteen inches of rain over thirty-six hours. Roof failure in two buildings, water intrusion in a third, campus closed eleven days.',
@@ -322,23 +309,15 @@ const EVENTS = {
      if(has(t,12))return{s:4,m:3,notes:['Governance framework produced on request. Coverage cited your institution favorably.'],hd:'Reputational gain'};
      if(aiUse)return{cash:-700000,m:-6,cite:1,notes:['AI deployed without governance capacity. Remediation, external review, and a citation.','Doing this badly cost more than not doing it at all.'],hd:'Citation and '+M(700000)+' remediation'};
      return{m:-1,notes:['No exposure. Also no capability.'],hd:'No material effect'}}},
-  // REVIEW EVENT: only the preceptor pathway remains; curriculum and partnership
-  // alternatives from the larger catalog are unavailable.
-  {review:true,n:'Accreditor schedules a focused site visit on clinical placement adequacy',sig:true,
-   reviewNote:'Preceptor mitigation available; competency curriculum and clinical/GME partnership alternatives unavailable.',
-   d:'Complaints trigger a focused review of placement capacity, preceptor supervision, and curricular alignment.',
-   f:t=>has(t,10)
-     ?{s:2,notes:['Documented placement capacity and curricular alignment. Visit closed with no findings.'],hd:'No findings'}
-     :{cash:-400000,m:-5,cite:1,notes:['Citation issued on placement adequacy. Response, monitoring report, and consultant costs.'],hd:'Citation and '+M(400000)}},
   {n:'Estate gift, $4.0M, restricted to rural health',sig:false,
    d:'A donor of twenty years dies. The estate directs $4.0M to a COM with a rural health program and an established relationship.',
-   f:t=>{const a=has(t,15),b=has(t,11);
+   f:t=>{const a=has(t,14),b=has(t,11);
      if(a&&b)return{cash:2500000,tail:-250000,m:8,s:3,notes:['Relationship in place and an aligned program to receive the gift.','Most of the corpus is restricted; $2.5M is spendable and $250K annually now funds the rural track.'],hd:'Gift captured in full'};
      if(a||b)return{cash:1200000,m:3,notes:[a?'Relationship existed but no aligned program. The estate directed a partial gift and split the remainder.':'Program existed but nobody was managing the relationship. Partial gift.'],hd:'Partial capture '+M(1200000)};
      return{notes:['No relationship and no aligned program. The estate gave elsewhere.','Gifts are cultivated, not received.'],hd:'Not captured'}}}]
 };
 
-// REVIEW: independently exclude the three restored events without editing resolvers.
+// REVIEW: independently exclude the retained state-support event without editing its resolver.
 Object.keys(EVENTS).forEach(year=>{
   EVENTS[year]=EVENTS[year].filter(event=>REVIEW_CONTENT.events || !event.review);
 });

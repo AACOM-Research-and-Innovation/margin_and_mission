@@ -15,7 +15,7 @@ and **projection** (read-only standings for the room or a Zoom screen-share).
 ## A. Netlify deployment
 
 The original 25-card version is hosted at https://marginandmission.netlify.app/.
-This source provides a 16-card, nine-event verification revision for the
+This source provides a 15-card, seven-event verification revision for the
 `margin-and-mission-trial` Netlify project in the AACOM Innovation team.
 The planned test address is https://margin-and-mission-trial.netlify.app/;
 it becomes usable after the first successful deployment from `trial-core-revision`.
@@ -37,8 +37,8 @@ and $3.96M other revenue. Total operating revenue remains $51.0M against $48.5M
 expense, leaving a $2.5M starting margin. The restricted rural and community-health
 gift is $1.5M; the one-time Investment Fund remains $5M.
 
-The default catalog has 16 cards, numbered consecutively in display order.
-The three restored cards and three restored events are flagged with `review: true`
+The default catalog has 15 cards, numbered consecutively in display order.
+The two retained review cards and one retained review event are flagged with `review: true`
 and `REVIEW` comments in `index.html` for verification.
 
 | Card | Investment | Dependency / review status |
@@ -52,13 +52,12 @@ and `REVIEW` comments in `index.html` for verification.
 | 7 | Faculty development and retention pool | **Review:** restored; partial OMM mitigation |
 | 8 | OMM depth and chair succession | Full OMM mitigation |
 | 9 | Branch campus development | Revenue matures beyond the three-year exercise |
-| 10 | Preceptor stipend program | Hospital and focused-visit mitigation; Year 1 Board Ask |
+| 10 | Preceptor stipend program | Year 1 Board Ask |
 | 11 | Rural and underserved training track | Restricted-gift eligible; state-support mitigation |
 | 12 | AI governance and faculty upskilling | — |
 | 13 | Data infrastructure and institutional research | Extra private signal |
-| 14 | Unified learning-platform migration | **Review:** restored; Year 2 Board Ask remains removed |
-| 15 | Advancement officer | Full estate-gift capture with card 11 |
-| 16 | Scholarship and tuition discount pool | Borrowing-cap mitigation |
+| 14 | Advancement officer | Full estate-gift capture with card 11 |
+| 15 | Scholarship and tuition discount pool | Borrowing-cap mitigation |
 
 The AI dual pathway costs $2.2M annually; OMM succession costs $350K annually.
 The bridge uses the post-CFO $1.15M annual delivery cost, not its earlier $900K cost.
@@ -66,9 +65,9 @@ The other twelve larger-catalog options remain excluded.
 
 | Year | Events | Restored event for review |
 | --- | --- | --- |
-| 1 | Borrowing caps; ransomware | Hospital acquisition / lost rotation slots |
+| 1 | Borrowing caps; ransomware | — |
 | 2 | Storm; OMM chair departure | State support tied to primary-care placement |
-| 3 | AI scrutiny; estate gift | Focused placement accreditation visit |
+| 3 | AI scrutiny; estate gift | — |
 
 Event flow: signals brief → lock investments → Year 1 Board Ask if applicable →
 reveal events → resolve outcomes → open the next year. Events occur within each
@@ -78,25 +77,28 @@ round, after choices lock; these are restored scenarios, not newly invented ones
 
 `REVIEW_CONTENT` near the top of the catalog independently enables the restored
 cards and restored events. Both are `true` for this revision. Set `cards: false`
-to exclude cards 6, 7, and 14 and the retention-pool OMM tier. Set `events: false`
-to exclude the three restored events. Set both to `false` for the core 13-card,
+to exclude cards 6 and 7 and the retention-pool OMM tier. Set `events: false`
+to exclude the state-support event. Set both to `false` for the core 13-card,
 six-event version. Card IDs stay stable when filtering; only the enabled default
-16-card catalog is consecutive. Start a fresh session after changing either switch.
+15-card catalog is consecutive. Start a fresh session after changing either switch.
 
-| Restored item | Connection available now | Unavailable connection / review decision |
-| --- | --- | --- |
-| Biomedical bridge | Enrollment index drives the restored revenue multiplier | No missing prerequisite |
-| Faculty retention pool | Restores OMM partial outcome: −$700K, −3 mission, no citation | No missing prerequisite; succession still provides full protection |
-| Platform migration | Cost, recurring savings, and strategic points | Its original Year 2 Board Ask is still removed. Existing engine applies the −$180K tail on purchase despite the description's two-year lag; timing needs review |
-| Hospital acquisition | Preceptor card 10 halves the loss to $400K and −3 mission | Clinical/GME partnership full mitigation is unavailable. The class-expansion penalty is omitted because class expansion is also absent |
-| State-support formula | Rural track card 11 gives $1.5M support; otherwise −$500K | No missing mitigation |
-| Focused placement visit | Preceptor card 10 closes the visit without findings | Competency curriculum and clinical/GME partnership alternative mitigations are unavailable |
+| Retained addition | Available dependency |
+| --- | --- |
+| Biomedical bridge | Enrollment index drives the revenue multiplier; no missing prerequisite |
+| Faculty retention pool | Restores OMM partial outcome: −$700K, −3 mission, no citation; succession still provides full protection |
+| State-support formula | Rural track card 11 gives $1.5M support; otherwise −$500K |
 
-Missing alternatives are documented rather than left as numeric references to
-unrelated cards. Adding those investments would be a separate catalog decision.
-The baseline and scoring formula are unchanged. With all review content enabled,
-the reference prepared portfolio scores 55.8 and doing nothing scores 5.4.
-With review events disabled, those portfolios score 70.2 and 24.6 respectively.
+Platform migration, hospital acquisition, and the focused placement visit were
+removed after dependency verification. The platform's original Year 2 Board Ask
+is absent. The hospital's full-protection partnership and two alternative
+focused-visit mitigation cards are also absent. None of those unavailable
+connections remain in the active catalog or event deck.
+
+The baseline and scoring formula are unchanged. With all remaining review content
+enabled, the reference prepared portfolio scores 57.7 and doing nothing scores 13.9.
+With the state-support event disabled, those portfolios score 70.2 and 24.6
+respectively. The prepared reference portfolio buys the rural track in Year 3,
+after the Year 2 support event, so it does not receive that mitigation.
 These different results are part of the verification, not a recalibration.
 
 Read the preceptor **Board Ask in Year 1 only**, after decisions lock and before

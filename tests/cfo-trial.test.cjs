@@ -48,10 +48,10 @@ test('baseline, surviving identities, and prerequisites remain consistent', () =
   assert.equal(base.fund, 5000000);
   assert.equal(base.reserve, 13000000);
   const cards = json('CARDS');
-  assert.equal(cards.length, 16);
+  assert.equal(cards.length, 15);
   const ids = cards.map(c => c.id);
   assert.equal(new Set(ids).size, ids.length);
-  assert.deepEqual(ids, Array.from({ length: 16 }, (_, i) => i + 1));
+  assert.deepEqual(ids, Array.from({ length: 15 }, (_, i) => i + 1));
   assert.deepEqual(cards.map(c => c.n), [
     'Deferred maintenance: roof, HVAC, envelope',
     'Business continuity and distributed instruction',
@@ -66,7 +66,6 @@ test('baseline, surviving identities, and prerequisites remain consistent', () =
     'Rural and underserved training track',
     'AI governance framework and faculty upskilling',
     'Data infrastructure and institutional research capacity',
-    'Unified learning platform migration',
     'Advancement officer and campaign feasibility study',
     'Scholarship and tuition discount pool',
   ]);
@@ -76,7 +75,10 @@ test('baseline, surviving identities, and prerequisites remain consistent', () =
   assert.match(cards.find(c => c.id === 10).n, /Preceptor/);
   assert.equal(cards.find(c => c.id === 4).req, 3);
   assert.equal(cards.find(c => c.id === 5).req, 12);
-  assert.deepEqual(json('Object.values(EVENTS).map(events => events.length)'), [3, 3, 3]);
+  assert.deepEqual(json('Object.values(EVENTS).map(events => events.length)'), [2, 3, 2]);
+  assert.deepEqual(json('Object.values(EVENTS).flat().filter(e=>e.review).map(e=>e.n)'), [
+    'State ties professional-program support to in-state primary care placement',
+  ]);
 });
 
 test('OMM succession, restored faculty retention, and unprepared outcomes', () => {
@@ -102,29 +104,18 @@ test('OMM succession, restored faculty retention, and unprepared outcomes', () =
   }
 });
 
-test('restored events use available mitigations and bridge revenue follows enrollment', () => {
+test('state-support mitigation is available and bridge revenue follows enrollment', () => {
   const { run, json } = appContext();
   const event = (year, name, held) => json(
     `EVENTS[${year}].find(e=>e.n.includes(${JSON.stringify(name)})).f({held:${JSON.stringify(held)}})`
   );
-  assert.equal(event(1, 'Teaching hospital', []).cash, -800000);
-  assert.equal(event(1, 'Teaching hospital', []).m, -6);
-  assert.equal(event(1, 'Teaching hospital', [10]).cash, -400000);
-  assert.equal(event(1, 'Teaching hospital', [10]).m, -3);
   assert.equal(event(2, 'State ties', []).cash, -500000);
   assert.equal(event(2, 'State ties', [11]).cash, 1500000);
-  assert.equal(event(3, 'focused site visit', []).cash, -400000);
-  assert.equal(event(3, 'focused site visit', []).cite, 1);
-  assert.equal(event(3, 'focused site visit', [10]).s, 2);
-  assert.equal(event(3, 'focused site visit', [10]).cite, undefined);
   run('const bridge=newTeam(1); bridge.held=[6]; bridge.bought={6:1};');
   assert.equal(run('revenueOf(bridge,1)'), 51000000);
   assert.equal(run('revenueOf(bridge,2)'), 52400000);
   run('bridge.enroll=.94;');
   assert.equal(run('revenueOf(bridge,2)'), 47040000 * .94 + 3960000 + 1400000 * .85);
-  run('S={round:1}; const platform=newTeam(2); platform.pending=[14]; resolveRound(platform,1);');
-  assert.equal(run('platform.tail'), -180000);
-  assert.equal(run('platform.fund'), 3700000);
   assert.equal(run('CARD(6).tail'), 1150000);
 });
 
@@ -132,15 +123,15 @@ test('review groups can be excluded independently with no missing card reference
   for (const cards of [true, false]) {
     for (const events of [true, false]) {
       const { app, run, json } = appContext({ review: { cards, events } });
-      assert.equal(run('CARDS.length'), cards ? 16 : 13);
-      assert.deepEqual(json('Object.values(EVENTS).map(es=>es.length)'), events ? [3,3,3] : [2,2,2]);
-      assert.deepEqual(json('CARDS.filter(c=>c.review).map(c=>c.id)'), cards ? [6,7,14] : []);
+      assert.equal(run('CARDS.length'), cards ? 15 : 13);
+      assert.deepEqual(json('Object.values(EVENTS).map(es=>es.length)'), events ? [2,3,2] : [2,2,2]);
+      assert.deepEqual(json('CARDS.filter(c=>c.review).map(c=>c.id)'), cards ? [6,7] : []);
       for (const id of json('CARDS.filter(c=>c.req).map(c=>c.req)')) assert(run(`!!CARD(${id})`));
       const partial = json("EVENTS[2].find(e=>e.n.startsWith('OMM chair')).f({held:[7]})");
       assert.equal(partial.cash, cards ? -700000 : -1400000);
-      assert.match(app.innerHTML, new RegExp(`${cards ? 16 : 13} cards`));
+      assert.match(app.innerHTML, new RegExp(`${cards ? 15 : 13} cards`));
       run('const checked=newTeam(1); const idle=newTeam(2);');
-      const picks = [[3,12,16,10], [1,2,8], [5,11,15,13]];
+      const picks = [[3,12,15,10], [1,2,8], [5,11,14,13]];
       for (let year = 1; year <= 3; year++) {
         run(`S={round:${year},phase:'brief',tables:2}; checked.pending=${JSON.stringify(picks[year-1])};
           checked.locked[${year}]=checked.pending.slice(); resolveRound(checked,${year}); resolveRound(idle,${year});
@@ -173,7 +164,7 @@ test('risk mitigation and revenue dependencies still work', () => {
   assert.equal(denied.cash, -2400000);
   assert.match(denied.notes.join(' '), /Claim denied/);
   assert.equal(event(1, 'Financing Act', []).enroll, -0.06);
-  assert.equal(event(1, 'Financing Act', [16]).enroll, -0.03);
+  assert.equal(event(1, 'Financing Act', [15]).enroll, -0.03);
   assert.equal(event(2, 'storm', []).cash, -3000000);
   assert.equal(event(2, 'storm', [1]).cash, -1500000);
   assert.equal(event(2, 'storm', []).m, -5);
@@ -184,8 +175,8 @@ test('risk mitigation and revenue dependencies still work', () => {
   assert.equal(ai.cash, -700000);
   assert.equal(ai.m, -6);
   assert.equal(ai.cite, 1);
-  assert.equal(event(3, 'Estate gift', [15, 11]).cash, 2500000);
-  assert.equal(event(3, 'Estate gift', [15]).cash, 1200000);
+  assert.equal(event(3, 'Estate gift', [14, 11]).cash, 2500000);
+  assert.equal(event(3, 'Estate gift', [14]).cash, 1200000);
   assert.equal(event(3, 'Estate gift', [11]).cash, 1200000);
   assert.equal(event(3, 'Estate gift', []).cash, undefined);
   run('const t = newTeam(1); t.held=[5]; t.bought={5:1};');
@@ -222,7 +213,7 @@ test('Board Ask appears only in Year 1 for CFO and facilitator', async () => {
 test('prepared and do-nothing portfolios complete all rounds and views', async () => {
   const { app, run, json } = appContext();
   run('const prepared=newTeam(1), idle=newTeam(2);');
-  const picks = [[3, 12, 16, 10], [1, 2, 8], [5, 11, 15, 13]];
+  const picks = [[3, 12, 15, 10], [1, 2, 8], [5, 11, 14, 13]];
   for (let year = 1; year <= 3; year++) {
     run(`S={round:${year},phase:'brief',tables:2};
       prepared.pending=${JSON.stringify(picks[year-1])};
@@ -241,8 +232,8 @@ test('prepared and do-nothing portfolios complete all rounds and views', async (
   }
   const result = json('({prepared:score(prepared).total,idle:score(idle).total})');
   assert(result.prepared > result.idle + 20, JSON.stringify(result));
-  assert(result.prepared > 50 && result.prepared < 65, JSON.stringify(result));
-  assert(result.idle > 0 && result.idle < 15, JSON.stringify(result));
+  assert(result.prepared > 55 && result.prepared < 60, JSON.stringify(result));
+  assert(result.idle > 10 && result.idle < 17, JSON.stringify(result));
   assert.equal(run('prepared.cite'), 0);
   assert.equal(run('prepared.restricted'), 1000000);
   assert.equal(run('prepared.log.length'), 3);
@@ -262,7 +253,7 @@ test('host enters new card numbers, resolves three rounds, adjusts tables, and r
   await run('startGame()');
   assert.match(app.innerHTML, /Facilitator console/);
   assert.equal(run('TEAMS.length'), 2);
-  const picks = [[3, 12, 16, 10], [1, 2, 8], [5, 11, 15, 13]];
+  const picks = [[3, 12, 15, 10], [1, 2, 8], [5, 11, 14, 13]];
   for (let year = 1; year <= 3; year++) {
     answer = picks[year - 1].join(', ') + ', 999';
     await run('facEnter(1)');
@@ -315,7 +306,7 @@ test('CFO selection, locking, unlocking, and polling preserve renumbered IDs', a
   run("S={round:1,phase:'brief',tables:1}; ME=newTeam(1); ROLE='team';");
   await run('sset(K.state,S)');
   await run('sset(K.team(1),ME)');
-  run('pick(5); pick(12); pick(16); drop(16);');
+  run('pick(5); pick(12); pick(15); drop(15);');
   assert.deepEqual(json('CART'), [5, 12]);
   assert.doesNotMatch(app.innerHTML, /You do not hold card 12/);
   await run('lockIn()');
