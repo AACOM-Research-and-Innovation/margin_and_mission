@@ -189,6 +189,9 @@ const BASE = {
 };
 
 /* ── Investment catalog ──────────────────────────────────── */
+// REVIEW: restored content is enabled for verification. Disable a group here
+// to test its removal; start a fresh session whenever these switches change.
+const REVIEW_CONTENT = { cards: true, events: true };
 const CARDS = [
  {id:1,cat:'Infrastructure and risk',n:'Deferred maintenance: roof, HVAC, envelope',one:1200000,tail:-50000,lag:0,t:['facility'],m:0,s:2,r:5,
   d:'Retires $1.2M of a $4.2M backlog. Lowers utilities cost. Deferred maintenance is debt you have already incurred and are choosing not to record.'},
@@ -199,29 +202,39 @@ const CARDS = [
  {id:4,cat:'Infrastructure and risk',n:'Cyber liability insurance',one:0,tail:180000,lag:0,t:['cyberins'],m:0,s:0,r:2,req:3,reqTxt:'Pays only alongside card 3',
   d:'Transfers residual risk. Policy contains a controls warranty; a claim without MFA in place is denied.'},
 
- {id:5,cat:'Academic and program',n:'MS in Clinical AI and Health Informatics, DO dual pathway',one:900000,tail:2200000,lag:1,rev:3200000,t:['program','ai','aiprog'],m:5,s:7,r:0,req:10,reqTxt:'Requires card 10 or delivers 60% value',
+ {id:5,cat:'Academic and program',n:'MS in Clinical AI and Health Informatics, DO dual pathway',one:900000,tail:2200000,lag:1,rev:3200000,t:['program','ai','aiprog'],m:5,s:7,r:0,req:12,reqTxt:'Requires card 12 or delivers 60% value',
   d:'Fifty-five seats, stackable with the DO. The largest revenue opportunity in the catalog and the largest recurring obligation. Launching without governance capacity is a reputational exposure, not a shortcut.'},
- {id:6,cat:'Academic and program',n:'OMM department depth and chair succession',one:250000,tail:350000,lag:1,t:['omm'],m:4,s:3,r:6,
+ // REVIEW CARD: restores the enrollment-sensitive bridge and post-CFO $1.15M tail.
+ {id:6,review:true,cat:'Academic and program',n:'MS Biomedical Sciences bridge program',one:600000,tail:1150000,lag:1,rev:1400000,t:['program'],m:2,s:2,r:0,
+  d:'Established model, modest margin, feeds the DO applicant pool. Revenue is enrollment-contingent.'},
+ // REVIEW CARD: restores the partial-mitigation tier in the OMM event.
+ {id:7,review:true,cat:'Academic and program',n:'Faculty development and retention pool',one:0,tail:500000,lag:0,t:['faculty'],m:4,s:0,r:5,
+  d:'Pure recurring cost with no capital component. Retention is cheaper than replacement and never looks like an accomplishment.'},
+ {id:8,cat:'Academic and program',n:'OMM department depth and chair succession',one:250000,tail:350000,lag:1,t:['omm'],m:4,s:3,r:6,
   d:'Your OMM chair is 63 and no one in the department is credentialed to succeed her. Fellowship line, credentialing support, and a designated successor. Produces nothing visible until the day it is needed.'},
- {id:7,cat:'Academic and program',n:'Branch campus development and pro forma',one:2500000,tail:1200000,lag:3,rev:4000000,t:['branch'],m:3,s:9,r:0,
+ {id:9,cat:'Academic and program',n:'Branch campus development and pro forma',one:2500000,tail:1200000,lag:3,rev:4000000,t:['branch'],m:3,s:9,r:0,
   d:'Site, approvals, faculty, and three years of carrying cost before the first class. Will not return inside this planning horizon under any assumption you can defend.'},
 
- {id:8,cat:'Clinical education',n:'Preceptor stipend program',one:0,tail:700000,lag:0,t:['preceptor'],m:3,s:2,r:4,
+ {id:10,cat:'Clinical education',n:'Preceptor stipend program',one:0,tail:700000,lag:0,t:['preceptor'],m:3,s:2,r:4,
   d:'Competing schools are bidding for the same community preceptors. This is a defensive recurring commitment.'},
- {id:9,cat:'Clinical education',n:'Rural and underserved training track',one:500000,tail:250000,lag:1,t:['rural'],m:8,s:3,r:0,rest:true,
+ {id:11,cat:'Clinical education',n:'Rural and underserved training track',one:500000,tail:250000,lag:1,t:['rural'],m:8,s:3,r:0,rest:true,
   d:'Eligible for the restricted gift. Strong mission alignment and a prerequisite for capturing aligned philanthropy.'},
 
- {id:10,cat:'Technology and data',n:'AI governance framework and faculty upskilling',one:200000,tail:100000,lag:0,t:['aigov'],m:2,s:5,r:4,
+ {id:12,cat:'Technology and data',n:'AI governance framework and faculty upskilling',one:200000,tail:100000,lag:0,t:['aigov'],m:2,s:5,r:4,
   d:'Policy, oversight structure, assessment integrity standards, and faculty capability. Cheap. Unglamorous. Gates the value of every other AI investment.'},
- {id:11,cat:'Technology and data',n:'Data infrastructure and institutional research capacity',one:450000,tail:250000,lag:1,t:['data','ai'],m:0,s:5,r:2,
+ {id:13,cat:'Technology and data',n:'Data infrastructure and institutional research capacity',one:450000,tail:250000,lag:1,t:['data','ai'],m:0,s:5,r:2,
   d:'Warehouse, governance, and two analysts. Grants your team one additional intelligence line in every subsequent signals brief.'},
 
- {id:12,cat:'Research and advancement',n:'Advancement officer and campaign feasibility study',one:150000,tail:350000,lag:2,rev:600000,t:['adv'],m:0,s:3,r:0,
+ // REVIEW CARD: savings retained; its original Year 2 Board Ask remains disabled.
+ {id:14,review:true,cat:'Technology and data',n:'Unified learning platform migration',one:1300000,tail:-180000,lag:2,t:['lms'],m:2,s:5,r:2,
+  d:'One platform replacing three. The three legacy contracts wind down on their own schedules, so you pay for four systems at once for eighteen months. Savings arrive in Year 3, by which time the person who approved this has usually moved on.'},
+
+ {id:15,cat:'Research and advancement',n:'Advancement officer and campaign feasibility study',one:150000,tail:350000,lag:2,rev:600000,t:['adv'],m:0,s:3,r:0,
   d:'Relationship capacity. Major gifts are cultivated over years and do not arrive at institutions with nobody to receive them.'},
 
- {id:13,cat:'Financial and enrollment',n:'Scholarship and tuition discount pool',one:0,tail:800000,lag:0,t:['aid'],m:4,s:0,r:3,
+ {id:16,cat:'Financial and enrollment',n:'Scholarship and tuition discount pool',one:0,tail:800000,lag:0,t:['aid'],m:4,s:0,r:3,
   d:'Protects yield when financing conditions tighten. Discounting is a permanent structural decision disguised as a temporary one.'},
-];
+].filter(card => REVIEW_CONTENT.cards || !card.review);
 const CARD = id => CARDS.find(c=>c.id===id);
 const CATS = [...new Set(CARDS.map(c=>c.cat))];
 
@@ -259,8 +272,8 @@ const EVENTS = {
   {n:'Professional Education Financing Act takes effect',sig:true,
    d:'Federal borrowing for professional programs is capped at $45,000 annually and $180,000 lifetime, effective for the coming cycle. Yield softens immediately across the out-of-state pool.',
    f:t=>{let drop=.06,x=[];
-     if(has(t,13)){drop/=2;x.push('Scholarship pool absorbed half the yield loss')}
-     if(!has(t,13))x.push('No yield protection in place. Full impact.');
+     if(has(t,16)){drop/=2;x.push('Scholarship pool absorbed half the yield loss')}
+     if(!has(t,16))x.push('No yield protection in place. Full impact.');
      return{enroll:-drop,m:-Math.round(drop*100),notes:x,
        hd:'Entering class down '+(drop*100).toFixed(1)+'%. Effect persists as the cohort progresses.'}}},
   {n:'Ransomware campaign targets health-professions education',sig:true,
@@ -270,7 +283,16 @@ const EVENTS = {
      else{c=2400000;x.push('No controls. Full recovery, forensics, and notification cost.')}
      if(has(t,4)&&has(t,3)){c-=250000;x.push('Carrier paid $250K under the policy')}
      if(has(t,4)&&!has(t,3)){x.push('Claim denied. The policy warranted MFA that was not in place. You paid the premium and carried the loss.')}
-     return{cash:-c,s:has(t,3)?1:0,notes:x,hd:'Incident cost '+M(c)}}}],
+     return{cash:-c,s:has(t,3)?1:0,notes:x,hd:'Incident cost '+M(c)}}},
+  // REVIEW EVENT: the clinical/GME partnership and class-expansion cards are absent.
+  // Keep the available preceptor mitigation; there is no full-protection route.
+  {review:true,n:'Teaching hospital acquired; forty core rotation slots eliminated',sig:false,
+   reviewNote:'Clinical/GME partnership full mitigation unavailable; class-expansion penalty omitted because that card is absent.',
+   d:'Your primary partner is absorbed by a national system that consolidates education agreements. Forty core slots disappear ninety days before the block begins.',
+   f:t=>{const protectedSites=has(t,10);
+     return{cash:protectedSites?-400000:-800000,m:protectedSites?-3:-6,
+       notes:[protectedSites?'Preceptor stipends retained roughly half the affected sites':'Students placed at distance and at cost. Two blocks rescheduled.'],
+       hd:'Placement disruption cost '+M(protectedSites?400000:800000)}}}],
  2:[
   {n:'Category 3 storm makes landfall',sig:true,
    d:'Sustained winds and eighteen inches of rain over thirty-six hours. Roof failure in two buildings, water intrusion in a third, campus closed eleven days.',
@@ -280,24 +302,46 @@ const EVENTS = {
      let m=-5;if(has(t,2)){m=-1;x.push('Instruction and assessment continued off-site from day three')}
      else x.push('Eleven instructional days lost with no continuity capability.');
      return{cash:-c,m,notes:x,hd:'Damage and remediation '+M(c)}}},
+  // REVIEW EVENT: rural-track mitigation remains available.
+  {review:true,n:'State ties professional-program support to in-state primary care placement',sig:true,
+   reviewNote:'Rural-track mitigation is available in the catalog.',
+   d:'The bill passes. Institutions documenting rural and underserved placement receive supplemental support. Institutions that cannot document it absorb a reduction.',
+   f:t=>has(t,11)
+     ?{cash:1500000,m:5,s:2,notes:['Rural track produced the documentation the formula required'],hd:'Supplemental support +'+M(1500000)}
+     :{cash:-500000,m:-4,notes:['No documented placement pathway. Reduction applied.'],hd:'Support reduced '+M(500000)}},
   {n:'OMM chair departs; clinical faculty attrition follows',sig:false,
    d:'Your OMM chair leaves for a named professorship. No one in the department is credentialed to succeed her. Twelve percent of clinical faculty follow within the cycle. The national pool of qualified OMM chairs is roughly forty people and eleven schools are searching.',
-   f:t=>{if(has(t,6))return{m:1,s:1,notes:['Designated successor was credentialed and stepped in without interruption.','You cannot buy your way out of an unfilled OMM chair on any timeline that matters. You bought your way out of it three years ago.'],hd:'Succession held'};
+   f:t=>{if(has(t,8))return{m:1,s:1,notes:['Designated successor was credentialed and stepped in without interruption.','You cannot buy your way out of an unfilled OMM chair on any timeline that matters. You bought your way out of it three years ago.'],hd:'Succession held'};
+     // REVIEW CARD: removing the retention pool also removes this partial tier.
+     if(REVIEW_CONTENT.cards && has(t,7))return{cash:-700000,m:-3,notes:['Retention pool held the clinical faculty. The chair line is still open.','National search entering month nine. Interim coverage by a non-credentialed acting chair.'],hd:'Partial · '+M(700000)+' and an open chair'};
      return{cash:-1400000,m:-7,cite:1,notes:['Search costs, interim coverage, relocation, and a startup package against a national pool of roughly forty candidates.','OMM instruction and supervision delivered by faculty the accreditor questions. Citation issued.'],hd:'Citation and '+M(1400000)}}}],
  3:[
   {n:'National scrutiny of AI in health-professions assessment',sig:true,
    d:'Coverage breaks on AI use in professional program assessment. Accreditors request institutional policies. Several schools discover they have deployed tools they cannot describe.',
-   f:t=>{const aiUse=has(t,5)||has(t,11);
-     if(has(t,10))return{s:4,m:3,notes:['Governance framework produced on request. Coverage cited your institution favorably.'],hd:'Reputational gain'};
+   f:t=>{const aiUse=has(t,5)||has(t,13);
+     if(has(t,12))return{s:4,m:3,notes:['Governance framework produced on request. Coverage cited your institution favorably.'],hd:'Reputational gain'};
      if(aiUse)return{cash:-700000,m:-6,cite:1,notes:['AI deployed without governance capacity. Remediation, external review, and a citation.','Doing this badly cost more than not doing it at all.'],hd:'Citation and '+M(700000)+' remediation'};
      return{m:-1,notes:['No exposure. Also no capability.'],hd:'No material effect'}}},
+  // REVIEW EVENT: only the preceptor pathway remains; curriculum and partnership
+  // alternatives from the larger catalog are unavailable.
+  {review:true,n:'Accreditor schedules a focused site visit on clinical placement adequacy',sig:true,
+   reviewNote:'Preceptor mitigation available; competency curriculum and clinical/GME partnership alternatives unavailable.',
+   d:'Complaints trigger a focused review of placement capacity, preceptor supervision, and curricular alignment.',
+   f:t=>has(t,10)
+     ?{s:2,notes:['Documented placement capacity and curricular alignment. Visit closed with no findings.'],hd:'No findings'}
+     :{cash:-400000,m:-5,cite:1,notes:['Citation issued on placement adequacy. Response, monitoring report, and consultant costs.'],hd:'Citation and '+M(400000)}},
   {n:'Estate gift, $4.0M, restricted to rural health',sig:false,
    d:'A donor of twenty years dies. The estate directs $4.0M to a COM with a rural health program and an established relationship.',
-   f:t=>{const a=has(t,12),b=has(t,9);
+   f:t=>{const a=has(t,15),b=has(t,11);
      if(a&&b)return{cash:2500000,tail:-250000,m:8,s:3,notes:['Relationship in place and an aligned program to receive the gift.','Most of the corpus is restricted; $2.5M is spendable and $250K annually now funds the rural track.'],hd:'Gift captured in full'};
      if(a||b)return{cash:1200000,m:3,notes:[a?'Relationship existed but no aligned program. The estate directed a partial gift and split the remainder.':'Program existed but nobody was managing the relationship. Partial gift.'],hd:'Partial capture '+M(1200000)};
      return{notes:['No relationship and no aligned program. The estate gave elsewhere.','Gifts are cultivated, not received.'],hd:'Not captured'}}}]
 };
+
+// REVIEW: independently exclude the three restored events without editing resolvers.
+Object.keys(EVENTS).forEach(year=>{
+  EVENTS[year]=EVENTS[year].filter(event=>REVIEW_CONTENT.events || !event.review);
+});
 
 /* ── Mid-year unbudgeted demands ─────────────────────────
    Read aloud in YEAR 1 ONLY, after decisions lock. Each table funds it, defers it,
@@ -306,7 +350,7 @@ const EVENTS = {
 const MIDYEAR = {
  1:{n:'Preceptor rates must rise now',cost:700000,
   d:'Two competing schools have raised community preceptor payments mid-cycle. Sixteen of your core sites have signalled they will not renew at current rates. The increase is permanent, it was not in the approved budget, and the board chair has already told your CFO that the budget was approved in April for a reason.',
-  opts:'FUND: −$700K reserve, permanent −$700K/yr tail. DEFER: no cost now, lose 12 preceptor sites and take −4 mission (mentor ruling). BOARD ASK: mentor rules. Tables holding card 8 have largely pre-absorbed this.'}
+  opts:'FUND: −$700K reserve, permanent −$700K/yr tail. DEFER: no cost now, lose 12 preceptor sites and take −4 mission (mentor ruling). BOARD ASK: mentor rules. Tables holding card 10 have largely pre-absorbed this.'}
 };
 
 const has = (t,id) => t.held.includes(id);
@@ -335,7 +379,8 @@ function revenueOf(t,year){
   t.held.forEach(id=>{const c=CARD(id);if(!c.rev)return;
     if(year >= (t.bought[id]||0) + c.lag){
       let v=c.rev;
-      if(c.id===5 && !has(t,10)) v*=0.6;      // AI program without governance
+      if(c.id===5 && !has(t,12)) v*=0.6;      // AI program without governance
+      if(c.id===6 && t.enroll<0.95) v*=0.85; // REVIEW CARD: bridge yield exposure
       r+=v;}});
   return r;}
 
@@ -479,7 +524,7 @@ function renderPicker(){
       <button class="role" onclick="pickFac()"><b>I am the facilitator</b><span>Run rounds, reveal events, resolve, override</span></button>
       <button class="role" onclick="pickProj()"><b>Projection display</b><span>Read-only screen for the room</span></button>
     </div>${serverBadge()}
-    <p class="mini" style="margin-top:10px">Version: Core 13 · October 14, 2026</p></div>`;}
+    <p class="mini" style="margin-top:10px">Version: Trial revision · ${CARDS.length} cards · ${Object.values(EVENTS).reduce((n,events)=>n+events.length,0)} events · October 16, 2026</p></div>`;}
 
 async function pickTeam(){
   const st=await sget(K.state);
@@ -624,7 +669,7 @@ function renderTeam(){
      <p class="mini">Some of this will matter. Some of it will not. Investing against every signal will exhaust the Fund by Year 2.</p>
      <div style="margin-top:14px">
      ${br.sig.map((s,i)=>`<div class="sig"><i>${String(i+1).padStart(2,'0')}</i><span>${s}</span></div>`).join('')}
-     ${has(t,11)?`<div class="sig priv"><i style="color:var(--orange)">IR</i><span><b style="color:var(--orange)">Institutional research, available to you only:</b> ${br.priv}</span></div>`:''}
+     ${has(t,13)?`<div class="sig priv"><i style="color:var(--orange)">IR</i><span><b style="color:var(--orange)">Institutional research, available to you only:</b> ${br.priv}</span></div>`:''}
      </div>
    </div>
    <div class="grid">
@@ -900,7 +945,7 @@ async function applyCash(){
 
 async function facEnter(id){
   const t=await sget(K.team(id));
-  const picks=prompt(`Enter card numbers for ${t.name}, Year ${S.round}, comma separated.\n\nExample: 3, 8, 10`,'');
+  const picks=prompt(`Enter card numbers for ${t.name}, Year ${S.round}, comma separated.\n\nExample: 3, 10, 12`,'');
   if(picks===null)return;
   const ids=picks.split(',').map(x=>parseInt(x.trim())).filter(x=>CARD(x)&&!t.held.includes(x));
   t.pending=ids;t.locked[S.round]=ids;
