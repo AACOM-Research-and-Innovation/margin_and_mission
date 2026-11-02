@@ -1,6 +1,6 @@
 # Suggested investment card descriptions
 
-Proposals for review. These descriptions have not been applied to the app. Costs, dependencies and actual revenue-start years remain in the separate card labels.
+Implemented November 2, 2026 following review. The table preserves the previous descriptions alongside the approved replacements. Costs, dependencies and actual revenue-start years remain in the separate card labels.
 
 | Card | Current description | Suggested description |
 | --- | --- | --- |

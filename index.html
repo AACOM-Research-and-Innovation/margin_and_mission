@@ -200,42 +200,42 @@ const BASE = {
 const REVIEW_CONTENT = { cards: true, events: true };
 const CARDS = [
  {id:1,cat:'Infrastructure and risk',n:'Deferred maintenance: roof, HVAC, envelope',one:1200000,tail:-50000,lag:0,t:['facility'],m:0,s:2,r:5,
-  d:'Retires $1.2M of a $4.2M backlog. Lowers utilities cost. Deferred maintenance is debt you have already incurred and are choosing not to record.'},
+  d:'Repairs roofs, heating and cooling systems, and building exteriors. Addresses $1.2 million of the $4.2 million maintenance backlog and reduces annual utility costs.'},
  {id:2,cat:'Infrastructure and risk',n:'Business continuity and distributed instruction',one:400000,tail:120000,lag:0,t:['continuity'],m:2,s:2,r:5,
-  d:'Standing capability to deliver instruction and assessment off-site within 72 hours of any disruption.'},
+  d:'Funds the systems and arrangements needed to continue teaching and assessment off-site within 72 hours of a disruption.'},
  {id:3,cat:'Infrastructure and risk',n:'Cybersecurity uplift: MFA, EDR, segmentation, IR retainer',one:750000,tail:250000,lag:0,t:['cyber'],m:0,s:3,r:6,
-  d:'Controls, not policy. Carriers now underwrite on the presence of these specific controls.'},
+  d:'Adds stronger sign-in controls, device monitoring, network separation and contracted incident-response support.'},
  {id:4,cat:'Infrastructure and risk',n:'Cyber liability insurance',one:0,tail:180000,lag:0,t:['cyberins'],m:0,s:0,r:2,req:3,reqTxt:'Pays only alongside card 3',
-  d:'Transfers residual risk. Policy contains a controls warranty; a claim without MFA in place is denied.'},
+  d:'Purchases cyber insurance for covered incident costs. Claims require the cybersecurity controls in card 3.'},
 
  {id:5,cat:'Academic and program',n:'MS in Clinical AI and Health Informatics, DO dual pathway',one:900000,tail:2200000,lag:1,rev:3200000,t:['program','ai','aiprog'],m:5,s:7,r:0,req:12,reqTxt:'Requires card 12 or delivers 60% value',
-  d:'Fifty-five seats, stackable with the DO. The largest revenue opportunity in the catalog and the largest recurring obligation. Launching without governance capacity is a reputational exposure, not a shortcut.'},
+  d:'Creates a 55-seat master’s pathway that students can combine with the DO program. Requires substantial annual spending before program revenue begins.'},
  // REVIEW CARD: restores the enrollment-sensitive bridge and post-CFO $1.15M tail.
  {id:6,review:true,cat:'Academic and program',n:'MS Biomedical Sciences bridge program',one:600000,tail:1150000,lag:1,rev:1400000,t:['program'],m:2,s:2,r:0,
-  d:'Established model, modest margin, feeds the DO applicant pool. Revenue is enrollment-contingent.'},
+  d:'Creates a biomedical sciences master’s program that feeds the DO applicant pool. Program revenue is lower when enrollment declines.'},
  // REVIEW CARD: restores the partial-mitigation tier in the OMM event.
  {id:7,review:true,cat:'Academic and program',n:'Faculty development and retention pool',one:0,tail:500000,lag:0,t:['faculty'],m:4,s:0,r:5,
-  d:'Pure recurring cost with no capital component. Retention is cheaper than replacement and never looks like an accomplishment.'},
+  d:'Funds faculty development and retention through an ongoing annual allocation, with no startup cost.'},
  {id:8,cat:'Academic and program',n:'OMM department depth and chair succession',one:250000,tail:350000,lag:1,t:['omm'],m:4,s:3,r:6,
-  d:'Your OMM chair is 63 and no one in the department is credentialed to succeed her. Fellowship line, credentialing support, and a designated successor. Produces nothing visible until the day it is needed.'},
+  d:'Funds fellowship training, credentialing and a designated successor for the OMM chair. No current faculty member is qualified to replace the chair.'},
  {id:9,cat:'Academic and program',n:'Branch campus development and pro forma',one:2500000,tail:1200000,lag:3,rev:4000000,t:['branch'],m:3,s:9,r:0,
-  d:'Site, approvals, faculty, and three years of carrying cost before the first class. Will not return inside this planning horizon under any assumption you can defend.'},
+  d:'Funds site selection, approvals and faculty preparation for a branch campus. Annual costs begin immediately; program revenue begins after the three-round exercise.'},
 
  {id:10,cat:'Clinical education',n:'Preceptor stipend program',one:0,tail:700000,lag:0,t:['preceptor'],m:3,s:2,r:4,
-  d:'Competing schools are bidding for the same community preceptors. This is a defensive recurring commitment.'},
+  d:'Funds ongoing payments to community preceptors to help retain clinical training sites as competing schools increase their payments.'},
  {id:11,cat:'Clinical education',n:'Rural and underserved training track',one:500000,tail:250000,lag:1,t:['rural'],m:8,s:3,r:0,rest:true,
-  d:'Eligible for the restricted gift. Strong mission alignment and a prerequisite for capturing aligned philanthropy.'},
+  d:'Develops a clinical training track serving rural and underserved communities.'},
 
  {id:12,cat:'Technology and data',n:'AI governance framework and faculty upskilling',one:200000,tail:100000,lag:0,t:['aigov'],m:2,s:5,r:4,
-  d:'Policy, oversight structure, assessment integrity standards, and faculty capability. Cheap. Unglamorous. Gates the value of every other AI investment.'},
+  d:'Funds AI policies, oversight, assessment-integrity standards and faculty training to support the college’s use of AI.'},
  {id:13,cat:'Technology and data',n:'Data infrastructure and institutional research capacity',one:450000,tail:250000,lag:1,t:['data','ai'],m:0,s:5,r:2,
-  d:'Warehouse, governance, and two analysts. Grants your team one additional intelligence line in every subsequent signals brief.'},
+  d:'Funds a data warehouse, data governance and two analysts. Provides additional institution-specific information in subsequent annual briefs.'},
 
  {id:14,cat:'Research and advancement',n:'Advancement officer and campaign feasibility study',one:150000,tail:350000,lag:2,rev:600000,t:['adv'],m:0,s:3,r:0,
-  d:'Relationship capacity. Major gifts are cultivated over years and do not arrive at institutions with nobody to receive them.'},
+  d:'Hires an advancement officer and assesses the feasibility of a fundraising campaign. Builds donor relationships over several years.'},
 
  {id:15,cat:'Financial and enrollment',n:'Scholarship and tuition discount pool',one:0,tail:800000,lag:0,t:['aid'],m:4,s:0,r:3,
-  d:'Protects yield when financing conditions tighten. Discounting is a permanent structural decision disguised as a temporary one.'},
+  d:'Funds scholarships and tuition discounts to help maintain enrollment when students face tighter borrowing limits.'},
 ].filter(card => REVIEW_CONTENT.cards || !card.review);
 const CARD = id => CARDS.find(c=>c.id===id);
 const CATS = [...new Set(CARDS.map(c=>c.cat))];
