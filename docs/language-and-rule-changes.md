@@ -2,7 +2,7 @@
 
 November 2, 2026
 
-We have revised the simulation language so participants see the same terms when choosing investments, reviewing results and comparing standings. The activity retains 15 investment cards, seven events and three simulated years. This record brings together the approved card descriptions, financial labels, briefing terminology, submission instructions and related rule corrections.
+We have revised the simulation language so participants see the same terms when choosing investments, reviewing results and comparing standings. The activity now has 14 investment cards, seven events and three simulated years. The later follow-up removed branch campus development; the description comparison below preserves the earlier 15-card review. This record brings together the approved card descriptions, financial labels, briefing terminology, submission instructions and related rule corrections.
 
 Three terminology categories remain open for discussion: decision-making roles, the name of the Board Ask exercise and the person making the board ruling. Yield language is also unchanged. These are separate from the changes implemented below.
 
@@ -99,7 +99,7 @@ Decision-making roles remain as currently written, including decider and the per
 
 Yield language has not been changed. The narrative concerns admissions yield and the entering class, while the engine changes a single enrollment index that scales total tuition revenue. Those concepts are not interchangeable. The intended population and timing should be discussed before changing either the narrative or the model.
 
-The proposed order of annual briefing before the four financial cards remains a layout proposal. This terminology revision does not reorder the screen. The more detailed end-of-year results explanation and structured Board Ask rulings also remain outside this implementation.
+The subsequent approved follow-up places the annual briefing before the four financial cards, enlarges its typography and keeps the inherited-commitments handover first in Years 2 and 3. The three-year plan stays with the finances and the compact summary remains sticky. The more detailed end-of-year results explanation and structured Board Ask rulings also remain outside this implementation.
 
 ## Approved descriptions for all 15 investment cards
 
@@ -126,3 +126,9 @@ The table preserves the wording before the plain-language rewrite and the final 
 ## Review and implementation record
 
 Implemented on the review branch for draft pull request 1 against trial-core-revision. The record combines the October 7 mentor feedback with the November 2 language decisions. Deployment remains pending.
+
+## Subsequent approved catalog and briefing changes
+
+Branch campus development and pro forma (previous card 9) is removed. Previous cards 10–15 are renumbered 9–14: preceptor 9, rural track 10, AI governance 11, data/IR 12, advancement 13, scholarship 14. All app dependencies and event references follow those numbers. The earlier comparison tables and change-log JSON record the prior language revision and its numbering.
+
+Data/IR now displays an orange notice: “Adds additional findings in annual briefing starting Year 2” for a Year 1 purchase. It adjusts to Year 3 for a Year 2 purchase and identifies Year 4 as after the exercise for a Year 3 purchase. Old saved-session records are preserved under their previous keys; the renumbered catalog starts a separate session.
