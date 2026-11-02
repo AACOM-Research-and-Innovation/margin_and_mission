@@ -94,12 +94,16 @@ is absent. The hospital's full-protection partnership and two alternative
 focused-visit mitigation cards are also absent. None of those unavailable
 connections remain in the active catalog or event deck.
 
-The baseline and scoring formula are unchanged. With all remaining review content
-enabled, the reference prepared portfolio scores 57.7 and doing nothing scores 13.9.
-With the state-support event disabled, those portfolios score 70.2 and 24.6
-respectively. The prepared reference portfolio buys the rural track in Year 3,
-after the Year 2 support event, so it does not receive that mitigation.
-These different results are part of the verification, not a recalibration.
+The financial baseline is unchanged. The language revision adds an investment-fund
+component of up to 5 points within the existing 35-point financial-health maximum;
+reserve-balance points decrease from 15 to 10. The no-exposure AI outcome no longer
+deducts a mission point. With review content enabled, the prepared reference
+portfolio scores 56.6 and doing nothing scores 17.0. These are regression scenarios,
+not participant performance standards. The state-support event changes these
+outcomes when enabled or disabled.
+
+See [language and rule changes](docs/language-and-rule-changes.md) for terminology,
+all 15 card-description comparisons, the two-gift explanation and deferred issues.
 
 Read the preceptor **Board Ask in Year 1 only**, after decisions lock and before
 events are revealed. Use the existing mentor rulings and facilitator controls;

@@ -233,7 +233,8 @@ test('prepared and do-nothing portfolios complete all rounds and views', async (
   const result = json('({prepared:score(prepared).total,idle:score(idle).total})');
   assert(result.prepared > result.idle + 20, JSON.stringify(result));
   assert(result.prepared > 55 && result.prepared < 60, JSON.stringify(result));
-  assert(result.idle > 10 && result.idle < 17, JSON.stringify(result));
+  assert.equal(Number(result.prepared.toFixed(1)),56.6,JSON.stringify(result));
+  assert.equal(Number(result.idle.toFixed(1)),17.0,JSON.stringify(result));
   assert.equal(run('prepared.cite'), 0);
   assert.equal(run('prepared.restricted'), 1000000);
   assert.equal(run('prepared.log.length'), 3);
@@ -314,7 +315,7 @@ test('CFO selection, locking, unlocking, and polling preserve renumbered IDs', a
   assert.deepEqual(json('ME.pending'), [5, 12]);
   await run('loop()');
   assert.deepEqual(json('ME.locked[1]'), [5, 12]);
-  assert.match(app.innerHTML, /Locked In/);
+  assert.match(app.innerHTML, /Submitted/);
   await run('unlockYear()');
   assert.deepEqual(json('CART'), [5, 12]);
   assert.deepEqual(json('ME.pending'), []);
@@ -369,20 +370,57 @@ test('three-year plan includes delayed revenue and does not leak future events',
 test('financial labels and compact interaction flags cover all retained cards', () => {
   const {app,run}=appContext();
   run("S={round:1,phase:'brief',tables:1}; ME=newTeam(1); ROLE='team'; CART=[11]; renderTeam();");
-  assert.match(app.innerHTML,/15 choices/);
+  assert.match(app.innerHTML,/15 investment cards/);
   assert.match(app.innerHTML,/Investment fund.*one-time balance/);
   assert.match(app.innerHTML,/No automatic annual refill/);
-  assert.match(app.innerHTML,/Restricted gift.*eligible startup only/);
+  assert.match(app.innerHTML,/Starting restricted gift.*eligible startup only/);
   assert.match(app.innerHTML,/Operating reserve.*cash held/);
-  assert.match(app.innerHTML,/Startup.*paid once/);
+  assert.match(app.innerHTML,/Startup cost.*paid once/);
   assert.match(app.innerHTML,/Annual expense/);
   assert.match(app.innerHTML,/class="cflag req">Requires card 12 or delivers 60% revenue/);
   assert.match(app.innerHTML,/class="cflag req">Pays out only alongside card 3/);
-  assert.match(app.innerHTML,/class="cflag rest">Restricted gift eligible/);
+  assert.match(app.innerHTML,/class="cflag rest">Starting restricted gift eligible/);
   assert.match(app.innerHTML,/class="cflag rev">Annual revenue \$3,200,000 begins Year 2/);
   assert.doesNotMatch(app.innerHTML,/Startup paid from:|Points and event protection apply|No annual revenue modeled/);
-  assert.equal((app.innerHTML.match(/Restricted gift eligible/g)||[]).length,1);
+  assert.equal((app.innerHTML.match(/Starting restricted gift eligible/g)||[]).length,1);
   assert.doesNotMatch(app.innerHTML,/lag to value|New recurring tail/);
   assert.equal((app.innerHTML.match(/class="card /g)||[]).length,15);
   assert.match(run('cardEl(CARD(4),ME)'),/Startup.*paid once.*\$0/s);
+});
+
+
+test('unspent investment fund earns five financial-health points within the existing cap', () => {
+  const {run,json}=appContext();
+  run('const rich=newTeam(1); rich.reserve=20000000; rich.cumMargin=3000000; rich.fund=0; const spent=score(rich);');
+  assert.equal(run('spent.fin'),30);
+  run('rich.fund=2500000;');assert.equal(run('score(rich).fin'),32.5);
+  run('rich.fund=5000000;');assert.equal(run('score(rich).fin'),35);
+  for (const category of ['mis','str','res']) assert.equal(run(`score(rich).${category}`),run(`spent.${category}`));
+  run('rich.fund=9000000;');assert.equal(run('score(rich).fin'),35);
+  run('rich.minDays=44;');assert.equal(run('score(rich).fin'),0);
+  run('rich.minDays=98;rich.cite=2;');assert.equal(run('score(rich).fin'),0);
+});
+
+test('no-exposure AI outcome has no penalty and OMM outcome has no false chronology', () => {
+  const {run,json}=appContext();
+  const neutral=json("EVENTS[3].find(e=>e.n.includes('scrutiny')).f({held:[]})");
+  assert.equal(neutral.m,undefined);assert.equal(neutral.cash,undefined);assert.equal(neutral.s,undefined);assert.equal(neutral.cite,undefined);
+  assert.equal(neutral.hd,'No material effect');
+  assert.doesNotMatch(run("EVENTS[2].find(e=>e.n.startsWith('OMM')).f({held:[8]}).notes.join(' ')"),/three years ago/);
+  assert.match(run("EVENTS[2].find(e=>e.n.startsWith('OMM')).f({held:[8]}).notes.join(' ')"),/earlier succession investment/);
+});
+
+test('terminology stays consistent while yield narration and deferred role labels stay unchanged', async () => {
+  const {app,run}=appContext();
+  run("S={round:1,phase:'brief',tables:1};ME=newTeam(1);ROLE='team';CART=[];renderTeam();");
+  assert.match(app.innerHTML,/Annual briefing/);assert.match(app.innerHTML,/Submit Year 1 selections/);
+  assert.match(app.innerHTML,/Decider for Year 1/);assert.match(app.innerHTML,/Who made the case against/);
+  assert.equal(run("BRIEFS[1].priv"),'Institutional research flag: 31% of your entering class currently borrows above the proposed cap threshold. Yield exposure is concentrated in your out-of-state applicants.');
+  assert.match(run('EVENTS[1][0].d'),/Yield softens immediately across the out-of-state pool/);
+  assert.equal(run('EVENTS[1][0].f({held:[15]}).notes[0]'),'Scholarship pool absorbed half the yield loss');
+  assert.match(run('timingText(CARD(13),ME,1)'),/Additional institutional research finding in each later briefing, starting Year 2/);
+  run("S.phase='final';renderTeam();");assert.doesNotMatch(app.innerHTML,/of 100/);assert.match(app.innerHTML,/Total score:/);
+  run("TEAMS=[ME];BOARD=[{id:1,name:'Table 1',s:score(ME)}];S.phase='locked';");await run('renderFac()');
+  assert.match(app.innerHTML,/Board Ask/);assert.match(app.innerHTML,/mentor plays the board chair/);
+  assert.match(app.innerHTML,/Deliberation closed/);assert.match(app.innerHTML,/Calculate|Show/);
 });

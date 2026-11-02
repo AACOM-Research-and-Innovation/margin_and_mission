@@ -1,0 +1,527 @@
+[
+  {
+    "before": "Operating expense including committed tails",
+    "after": "Annual operating expenses",
+    "occurrences": 1
+  },
+  {
+    "before": "Operating margin</b>",
+    "after": "Operating result</b>",
+    "occurrences": 1
+  },
+  {
+    "before": "operating margin ${Mk",
+    "after": "operating result ${Mk",
+    "occurrences": 1
+  },
+  {
+    "before": "Fund ${Mk(t.fund)} · margin",
+    "after": "Investment fund ${Mk(t.fund)} · operating result",
+    "occurrences": 1
+  },
+  {
+    "before": "Liquid reserve at close",
+    "after": "Operating reserve at year-end",
+    "occurrences": 1
+  },
+  {
+    "before": "Liquid reserve</span>",
+    "after": "Operating reserve</span>",
+    "occurrences": 1
+  },
+  {
+    "before": "Three-year cumulative margin",
+    "after": "Cumulative operating result over three years",
+    "occurrences": 1
+  },
+  {
+    "before": "Unspent Investment Fund",
+    "after": "Unspent investment fund",
+    "occurrences": 1
+  },
+  {
+    "before": "Preserving capital is not the same as deploying it.",
+    "after": "Unspent investment funds support financial health but do not add mission, strategic position or resilience points.",
+    "occurrences": 1
+  },
+  {
+    "before": "Annual expense added by selections",
+    "after": "Annual expenses added by selections",
+    "occurrences": 1
+  },
+  {
+    "before": "Existing annual commitments",
+    "after": "Existing annual expenses",
+    "occurrences": 1
+  },
+  {
+    "before": "Annual surplus",
+    "after": "Operating surplus",
+    "occurrences": 1
+  },
+  {
+    "before": "Annual deficit",
+    "after": "Operating deficit",
+    "occurrences": 1
+  },
+  {
+    "before": "Base annual expenses",
+    "after": "Base operating expenses",
+    "occurrences": 1
+  },
+  {
+    "before": "Surplus / deficit</th>",
+    "after": "Operating result</th>",
+    "occurrences": 1
+  },
+  {
+    "before": "let src='Fund'",
+    "after": "let src='Investment fund'",
+    "occurrences": 1
+  },
+  {
+    "before": "'Restricted gift':`Restricted gift ${M(restricted)} + Fund",
+    "after": "'Starting restricted gift':`Starting restricted gift ${M(restricted)} + Investment fund",
+    "occurrences": 1
+  },
+  {
+    "before": "Insufficient one-time funds.",
+    "after": "Insufficient investment fund balance.",
+    "occurrences": 1
+  },
+  {
+    "before": "These annual commitments put",
+    "after": "These annual expenses put",
+    "occurrences": 1
+  },
+  {
+    "before": "The Investment Fund cannot cover a recurring obligation.",
+    "after": "The investment fund pays startup costs; annual expenses are paid through operations.",
+    "occurrences": 1
+  },
+  {
+    "before": "A continuing deficit draws on reserves;",
+    "after": "A continuing deficit draws on the operating reserve;",
+    "occurrences": 1
+  },
+  {
+    "before": "Recurring commitments now exceed recurring revenue.",
+    "after": "Annual operating expenses now exceed annual revenue.",
+    "occurrences": 1
+  },
+  {
+    "before": "per year of recurring obligation already committed",
+    "after": "per year of existing annual expenses",
+    "occurrences": 1
+  },
+  {
+    "before": "existing annual commitments continue.",
+    "after": "existing annual expenses continue.",
+    "occurrences": 1
+  },
+  {
+    "before": "−$700K reserve, permanent −$700K/yr tail",
+    "after": "−$700K operating reserve, permanent $700K annual expense",
+    "occurrences": 1
+  },
+  {
+    "before": "Fund it from reserve.",
+    "after": "Fund it from the operating reserve.",
+    "occurrences": 1
+  },
+  {
+    "before": "Days cash below",
+    "after": "Days cash on hand below",
+    "occurrences": 2
+  },
+  {
+    "before": " days cash, operating result",
+    "after": " days cash on hand, operating result",
+    "occurrences": 1
+  },
+  {
+    "before": " days cash${t.cite",
+    "after": " days cash on hand${t.cite",
+    "occurrences": 1
+  },
+  {
+    "before": ">Days cash</th>",
+    "after": ">Days cash on hand</th>",
+    "occurrences": 1
+  },
+  {
+    "before": ">Margin</th>",
+    "after": ">Operating result</th>",
+    "occurrences": 1
+  },
+  {
+    "before": "Days cash on hand · lowest reached",
+    "after": "Days cash on hand · current / lowest recorded",
+    "occurrences": 1
+  },
+  {
+    "before": "± reserve $",
+    "after": "± operating reserve $",
+    "occurrences": 1
+  },
+  {
+    "before": "Adjust reserve</button>",
+    "after": "Adjust operating reserve</button>",
+    "occurrences": 1
+  },
+  {
+    "before": "'Reserve adjusted '",
+    "after": "'Operating reserve adjusted '",
+    "occurrences": 1
+  },
+  {
+    "before": "Startup · paid once",
+    "after": "Startup cost · paid once",
+    "occurrences": 1
+  },
+  {
+    "before": "Startup from this fund",
+    "after": "Startup cost paid from investment fund",
+    "occurrences": 1
+  },
+  {
+    "before": "Startup from restricted gift",
+    "after": "Startup cost paid from starting restricted gift",
+    "occurrences": 1
+  },
+  {
+    "before": "Restricted gift · eligible startup only",
+    "after": "Starting restricted gift · eligible startup only",
+    "occurrences": 1
+  },
+  {
+    "before": "…drawn from restricted gift",
+    "after": "…paid from starting restricted gift",
+    "occurrences": 1
+  },
+  {
+    "before": ">Restricted gift <b",
+    "after": ">Starting restricted gift <b",
+    "occurrences": 1
+  },
+  {
+    "before": "Recorded days cash on hand",
+    "after": "Current days cash on hand",
+    "occurrences": 1
+  },
+  {
+    "before": "Annual revenue</span>",
+    "after": "Annual operating revenue</span>",
+    "occurrences": 1
+  },
+  {
+    "before": "Operating revenue</span>",
+    "after": "Annual operating revenue</span>",
+    "occurrences": 1
+  },
+  {
+    "before": ">Annual expenses</th>",
+    "after": ">Annual operating expenses</th>",
+    "occurrences": 1
+  },
+  {
+    "before": ">Revenue</th>",
+    "after": ">Annual operating revenue</th>",
+    "occurrences": 1
+  },
+  {
+    "before": "Annual expenses remain in operations.",
+    "after": "Annual expenses reduce the operating result.",
+    "occurrences": 1
+  },
+  {
+    "before": "Year ${L.year} closed",
+    "after": "Year ${L.year} complete",
+    "occurrences": 1
+  },
+  {
+    "before": "Round ${rd} is closed.",
+    "after": "Year ${rd} is complete.",
+    "occurrences": 1
+  },
+  {
+    "before": "Environmental signals · Year",
+    "after": "Annual briefing · Year",
+    "occurrences": 1
+  },
+  {
+    "before": "What your intelligence tells you",
+    "after": "Environmental signals",
+    "occurrences": 1
+  },
+  {
+    "before": "Additional intelligence from Year",
+    "after": "Additional institutional research finding in each later briefing, starting Year",
+    "occurrences": 1
+  },
+  {
+    "before": "Institutional research, available to you only:",
+    "after": "Additional institutional research finding for your table:",
+    "occurrences": 1
+  },
+  {
+    "before": "subsequent annual briefs.",
+    "after": "subsequent annual briefings.",
+    "occurrences": 1
+  },
+  {
+    "before": "Investing against every signal will exhaust the Fund by Year 2.",
+    "after": "Responding to every signal can exhaust the investment fund by Year 2.",
+    "occurrences": 1
+  },
+  {
+    "before": "Decisions locked</div>",
+    "after": "Investment selections submitted</div>",
+    "occurrences": 1
+  },
+  {
+    "before": "Year ${rd} commitments recorded",
+    "after": "Year ${rd} investment selections submitted",
+    "occurrences": 1
+  },
+  {
+    "before": "Your commitments are recorded.",
+    "after": "Your investment selections are submitted.",
+    "occurrences": 1
+  },
+  {
+    "before": "Year ${rd} commitments</h3>",
+    "after": "Year ${rd} selected investments</h3>",
+    "occurrences": 1
+  },
+  {
+    "before": "Purchased Year ${t.bought[c.id]} · annual expense continues",
+    "after": "Purchased Year ${t.bought[c.id]} · annual effect continues",
+    "occurrences": 1
+  },
+  {
+    "before": "prerequisite is not held or selected",
+    "after": "prerequisite is not purchased or selected",
+    "occurrences": 1
+  },
+  {
+    "before": "Investments made</b>",
+    "after": "Investments purchased</b>",
+    "occurrences": 1
+  },
+  {
+    "before": "} commitments</b>",
+    "after": "} investments submitted</b>",
+    "occurrences": 1
+  },
+  {
+    "before": "+' committed')",
+    "after": "+' investments submitted')",
+    "occurrences": 1
+  },
+  {
+    "before": "Lock in Year ${rd}",
+    "after": "Submit Year ${rd} selections",
+    "occurrences": 1
+  },
+  {
+    "before": ">Locked In</button>",
+    "after": ">Submitted</button>",
+    "occurrences": 1
+  },
+  {
+    "before": ">Unlock Year ${rd}</button>",
+    "after": ">Edit Year ${rd} submission</button>",
+    "occurrences": 1
+  },
+  {
+    "before": "Name the decider for this year before locking in.",
+    "after": "Name the decider for this year before submitting.",
+    "occurrences": 1
+  },
+  {
+    "before": "Lock all decisions (${submitted}/${S.tables} in)",
+    "after": "Close deliberation (${submitted}/${S.tables} tables submitted)",
+    "occurrences": 1
+  },
+  {
+    "before": "Reveal Year ${S.round} events",
+    "after": "Show Year ${S.round} events",
+    "occurrences": 1
+  },
+  {
+    "before": "Resolve Year ${S.round}",
+    "after": "Calculate Year ${S.round} results",
+    "occurrences": 1
+  },
+  {
+    "before": "Locking with tables still out is fine. A table that has not locked commits nothing that year, which is itself a decision.",
+    "after": "Closing deliberation with outstanding submissions records no new investments for those tables that year.",
+    "occurrences": 1
+  },
+  {
+    "before": "locked:'Locked',reveal:'Events revealing',resolved:'Round closed'",
+    "after": "locked:'Deliberation closed',reveal:'Events shown',resolved:'Year complete'",
+    "occurrences": 1
+  },
+  {
+    "before": "Year ${S.round} · ${S.phase}",
+    "after": "Year ${S.round} · ${phaseLabel(S.phase)}",
+    "occurrences": 1
+  },
+  {
+    "before": "Run rounds, reveal events, resolve, override",
+    "after": "Run each simulated year, show events, calculate results, apply adjustments",
+    "occurrences": 1
+  },
+  {
+    "before": "A three-year strategic budgeting simulation. AACOM",
+    "after": "A three-year strategic budgeting simulation. Each round represents one year. AACOM",
+    "occurrences": 1
+  },
+  {
+    "before": "after the three-round exercise",
+    "after": "after the three-year exercise",
+    "occurrences": 2
+  },
+  {
+    "before": ">Financial</th>",
+    "after": ">Financial health</th>",
+    "occurrences": 1
+  },
+  {
+    "before": ">Fin</th>",
+    "after": ">Financial health</th>",
+    "occurrences": 1
+  },
+  {
+    "before": ">Mission</th>",
+    "after": ">Mission and outcomes</th>",
+    "occurrences": 2
+  },
+  {
+    "before": ">Strategic</th>",
+    "after": ">Strategic position</th>",
+    "occurrences": 2
+  },
+  {
+    "before": ">Resil.</th>",
+    "after": ">Resilience</th>",
+    "occurrences": 1
+  },
+  {
+    "before": "return{m:-1,notes:['No exposure. Also no capability.'],hd:'No material effect'}",
+    "after": "return{notes:['No AI-related investment requiring remediation. No financial or score change from this event.'],hd:'No material effect'}",
+    "occurrences": 1
+  },
+  {
+    "before": "You cannot buy your way out of an unfilled OMM chair on any timeline that matters. You bought your way out of it three years ago.",
+    "after": "Your earlier succession investment provided a qualified replacement.",
+    "occurrences": 1
+  },
+  {
+    "before": "${s.total.toFixed(1)} of 100",
+    "after": "Total score: ${s.total.toFixed(1)}",
+    "occurrences": 1
+  },
+  {
+    "before": "Roof replacement held.",
+    "after": "Deferred maintenance (card 1) protected the repaired roofs.",
+    "occurrences": 1
+  },
+  {
+    "before": "Instruction and assessment continued off-site from day three",
+    "after": "Business continuity (card 2) allowed instruction and assessment off-site from day three",
+    "occurrences": 1
+  },
+  {
+    "before": "Controls contained the intrusion to a single segment",
+    "after": "Cybersecurity uplift (card 3) contained the intrusion to a single segment",
+    "occurrences": 1
+  },
+  {
+    "before": "Retention pool held the clinical faculty.",
+    "after": "Faculty development and retention (card 7) retained the clinical faculty.",
+    "occurrences": 1
+  },
+  {
+    "before": "Rural track produced the documentation the formula required",
+    "after": "Rural and underserved training track (card 11) produced the documentation required",
+    "occurrences": 1
+  },
+  {
+    "before": "Governance framework produced on request.",
+    "after": "AI governance (card 12) documentation was provided on request.",
+    "occurrences": 1
+  },
+  {
+    "before": "Relationship in place and an aligned program to receive the gift.",
+    "after": "Advancement officer (card 14) and rural track (card 11) provided the relationship and program required.",
+    "occurrences": 1
+  },
+  {
+    "before": "function chrome(t){\n  const ph={brief:'Deliberation open',locked:'Deliberation closed',reveal:'Events shown',resolved:'Year complete',final:'Final'}[S.phase]||S.phase;",
+    "after": "function phaseLabel(phase){return {brief:'Deliberation open',locked:'Deliberation closed',reveal:'Events shown',resolved:'Year complete',final:'Final'}[phase]||phase;}\nfunction chrome(t){\n  const ph=phaseLabel(S.phase);",
+    "occurrences": 1
+  },
+  {
+    "before": "clamp(t.reserve/20000000,0,1)*15",
+    "after": "clamp(t.reserve/20000000,0,1)*10\n          + clamp(t.fund/BASE.fund,0,1)*5",
+    "occurrences": 1
+  },
+  {
+    "before": "Most of the corpus is restricted; $2.5M is spendable and $250K annually now funds the rural track.",
+    "after": "The $4.0M estate gift adds $2.5M to the operating reserve and reduces the rural track’s annual expense by $250K. It does not refill the starting restricted gift.",
+    "occurrences": 1
+  },
+  {
+    "before": "No investments this round. That is a decision, and it will be scored as one.",
+    "after": "No new investments submitted for this year. Existing investments remain in effect.",
+    "occurrences": 1
+  },
+  {
+    "before": "Excludes future events, board rulings and future purchases.",
+    "after": "Excludes future events, board rulings and future investment purchases.",
+    "occurrences": 1
+  },
+  {
+    "before": "Three-year view of known commitments",
+    "after": "Three-year view of purchased and selected investments",
+    "occurrences": 1
+  },
+  {
+    "before": "of remaining fund,",
+    "after": "of remaining investment fund,",
+    "occurrences": 1
+  },
+  {
+    "before": "Year ${y} · closed",
+    "after": "Year ${y} · complete",
+    "occurrences": 1
+  },
+  {
+    "before": "${CARDS.length} choices across",
+    "after": "${CARDS.length} investment cards across",
+    "occurrences": 1
+  },
+  {
+    "before": ">Restricted gift eligible</span>",
+    "after": ">Starting restricted gift eligible</span>",
+    "occurrences": 1
+  },
+  {
+    "before": "Liquidity and margin support the ask.",
+    "after": "Liquidity and the operating result support the ask.",
+    "occurrences": 1
+  },
+  {
+    "before": ">Profitable years</th>",
+    "after": ">Years with operating surplus</th>",
+    "occurrences": 1
+  },
+  {
+    "before": "Provides additional institution-specific information in subsequent annual briefings.",
+    "after": "Provides an additional institutional research finding in subsequent annual briefings.",
+    "occurrences": 1
+  }
+]
