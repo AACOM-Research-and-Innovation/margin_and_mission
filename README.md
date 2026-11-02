@@ -14,7 +14,11 @@ and **projection** (read-only standings for the room or a Zoom screen-share).
 ---
 ## A. Netlify deployment
 
-The simulation is hosted on netlify at https://marginandmission.netlify.app/.
+The original 25-card version is hosted at https://marginandmission.netlify.app/.
+This source provides a 14-card, seven-event verification revision for the
+`margin-and-mission-trial` Netlify project in the AACOM Innovation team.
+The planned test address is https://margin-and-mission-trial.netlify.app/;
+it becomes usable after the first successful deployment from `trial-core-revision`.
 
 Upon visiting the site, a user can select to be:
 - **table CFO**: Makes budget decisions in the simulation.
@@ -23,27 +27,92 @@ Upon visiting the site, a user can select to be:
 
 ### Walkthrough and mentor notes
 
-Use the facilitator's **Reset session** before deploying the renumbered catalog,
-then refresh every device and start a fresh session for the walkthrough.
-Saved sessions from earlier versions may contain removed cards or use the old
-card numbering, which can identify different investments in the new catalog.
+This 14-card catalog uses separate saved-session keys so old card numbers cannot
+be interpreted as different investments. Start a fresh session and refresh every
+device when switching to this revision. Previous session records remain untouched.
+
+Participant order: inherited-commitments handover in Years 2–3 → annual briefing →
+four financial cards and three-year plan → sticky financial summary → investments.
+The briefing uses larger headings and text. Data/IR (now card 12) has an orange
+notice showing the first subsequent annual briefing, based on purchase year.
 
 The institution starts with $47.04M net tuition revenue (640 students × $73,500)
 and $3.96M other revenue. Total operating revenue remains $51.0M against $48.5M
 expense, leaving a $2.5M starting margin. The restricted rural and community-health
 gift is $1.5M; the one-time Investment Fund remains $5M.
 
-The catalog now has 25 cards, numbered consecutively in display order. The
-biomedical bridge, faculty retention pool, and unified learning-platform migration
-have been removed. The AI dual pathway (card 6) costs $2.2M annually; OMM
-succession (card 10) costs $350K annually. Other cards and the three events per
-year remain in this version.
+The default catalog has 14 cards, numbered consecutively in display order.
+The two retained review cards and one retained review event are flagged with `review: true`
+and `REVIEW` comments in `index.html` for verification.
+
+| Card | Investment | Dependency / review status |
+| --- | --- | --- |
+| 1 | Deferred maintenance | — |
+| 2 | Business continuity | — |
+| 3 | Cybersecurity uplift | — |
+| 4 | Cyber liability insurance | Pays only alongside card 3 |
+| 5 | Clinical AI and Health Informatics dual pathway | Card 11; otherwise 60% revenue |
+| 6 | Biomedical Sciences bridge | **Review:** restored; revenue ×0.85 below 95% enrollment |
+| 7 | Faculty development and retention pool | **Review:** restored; partial OMM mitigation |
+| 8 | OMM depth and chair succession | Full OMM mitigation |
+| 9 | Preceptor stipend program | Year 1 Board Ask |
+| 10 | Rural and underserved training track | Restricted-gift eligible; state-support mitigation |
+| 11 | AI governance and faculty upskilling | — |
+| 12 | Data infrastructure and institutional research | Extra private signal |
+| 13 | Advancement officer | Full estate-gift capture with card 10 |
+| 14 | Scholarship and tuition discount pool | Borrowing-cap mitigation |
+
+The AI dual pathway costs $2.2M annually; OMM succession costs $350K annually.
+The bridge uses the post-CFO $1.15M annual delivery cost, not its earlier $900K cost.
+The other thirteen larger-catalog options remain excluded.
+
+| Year | Events | Restored event for review |
+| --- | --- | --- |
+| 1 | Borrowing caps; ransomware | — |
+| 2 | Storm; OMM chair departure | State support tied to primary-care placement |
+| 3 | AI scrutiny; estate gift | — |
+
+Event flow: signals brief → lock investments → Year 1 Board Ask if applicable →
+reveal events → resolve outcomes → open the next year. Events occur within each
+round, after choices lock; these are restored scenarios, not newly invented ones.
+
+### Review dependencies and removal switches
+
+`REVIEW_CONTENT` near the top of the catalog independently enables the restored
+cards and restored events. Both are `true` for this revision. Set `cards: false`
+to exclude cards 6 and 7 and the retention-pool OMM tier. Set `events: false`
+to exclude the state-support event. Set both to `false` for the 12-card,
+six-event version. Card IDs stay stable when filtering; only the enabled default
+14-card catalog is consecutive. Start a fresh session after changing either switch.
+
+| Retained addition | Available dependency |
+| --- | --- |
+| Biomedical bridge | Enrollment index drives the revenue multiplier; no missing prerequisite |
+| Faculty retention pool | Restores OMM partial outcome: −$700K, −3 mission, no citation; succession still provides full protection |
+| State-support formula | Rural track card 10 gives $1.5M support; otherwise −$500K |
+
+Platform migration, hospital acquisition, and the focused placement visit were
+removed after dependency verification. The platform's original Year 2 Board Ask
+is absent. The hospital's full-protection partnership and two alternative
+focused-visit mitigation cards are also absent. None of those unavailable
+connections remain in the active catalog or event deck.
+
+The financial baseline is unchanged. The language revision adds an investment-fund
+component of up to 5 points within the existing 35-point financial-health maximum;
+reserve-balance points decrease from 15 to 10. The no-exposure AI outcome no longer
+deducts a mission point. With review content enabled, the prepared reference
+portfolio scores 56.6 and doing nothing scores 17.0. These are regression scenarios,
+not participant performance standards. The state-support event changes these
+outcomes when enabled or disabled.
+
+See [language and rule changes](docs/language-and-rule-changes.md) for terminology,
+the historical 15-card description comparisons, the two-gift explanation and deferred issues.
 
 Read the preceptor **Board Ask in Year 1 only**, after decisions lock and before
-events are revealed. The preceptor stipend program is card 13 in this version.
-Use the existing mentor rulings and facilitator controls; Years 2–3 have no
-mid-year Board Ask. The Year 2 OMM event has two outcomes: succession held
-(+1 mission, +1 strategic), or no succession (−$1.4M, −7 mission, +1 citation).
+events are revealed. Use the existing mentor rulings and facilitator controls;
+Years 2–3 have no mid-year Board Ask. The Year 2 OMM event has three outcomes
+while the retention pool is enabled: succession held (+1 mission, +1 strategic),
+retention pool only (−$700K, −3 mission), or neither (−$1.4M, −7 mission, +1 citation).
 
 For the mentor-led debrief, ask:
 
@@ -55,6 +124,19 @@ This question adds discussion, with no new scoring mechanic.
 Run `npm test` to check the financial baseline, event outcomes, revenue
 dependencies, and three-round CFO, facilitator, and projection rendering.
 These checks use isolated local state and do not contact the live site.
+
+### Build and deploy the trial
+
+Use `npm run build` to run the checks and create `dist/index.html`.
+Netlify reads the build command, publish directory (`dist`), and `/kv/*`
+rewrite from `netlify.toml`. The `netlify/functions/kv.mjs` function supplies
+shared state through the existing Netlify Blobs store; dropping only the HTML
+onto Netlify will not provide cross-device sessions.
+
+Connect a separate Netlify project to the test branch for continuous deployment,
+or use an authenticated Netlify CLI deployment with the functions included.
+`.netlify/` is ignored by Git so the local site-link file stays out of commits.
+The new site's stored sessions are separate from the original site's sessions.
 
 ## B. Play with it right now (one computer, no install)
 
@@ -126,7 +208,7 @@ The app needs two things from a host:
        DELETE /kv/{key}                                    -> 200
 
    Values are small JSON strings. A session uses about ten keys
-   (`mm:state` and `mm:team:1..6`), a few KB each. Enable **CORS**
+   (`mm:14-card:state` and `mm:14-card:team:1..6`), a few KB each. Enable **CORS**
    (`Access-Control-Allow-Origin`) if the app is served from a different origin
    than the API; if the same server does both, CORS isn't needed.
 

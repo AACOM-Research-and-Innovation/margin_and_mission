@@ -5,8 +5,8 @@
 
 <style>
 :root{
-  --indigo:#231262; --indigo-deep:#170b42; --indigo-line:#3a2a7a;
-  --cyan:#54C8E8; --orange:#FFA300; --coral:#FF5959;
+  --indigo:#211261; --indigo-deep:#170b42; --indigo-line:#3a2a7a;
+  --cyan:#54C8E8; --orange:#ffa400; --coral:#ff595a;
   --paper:#F7F4EC; --paper-rule:#ddd6c4; --ink:#1a1526; --ink-soft:#5d5670;
   --ok:#3FBF8F;
 }
@@ -57,7 +57,7 @@ h1,h2,h3{font-weight:800;letter-spacing:-.02em;margin:0}
 .card:hover:not(:disabled){background:rgba(84,200,232,.06)}
 .card:disabled{opacity:.34;cursor:not-allowed}
 .card.on{background:rgba(84,200,232,.11);box-shadow:inset 3px 0 0 var(--cyan)}
-.card.owned{background:rgba(63,191,143,.08);box-shadow:inset 3px 0 0 var(--ok);opacity:.72;cursor:default}
+.card.owned{background:rgba(63,191,143,.08);box-shadow:inset 3px 0 0 var(--ok);opacity:1;cursor:default}
 .cnum{font-size:12px;color:var(--indigo-line);font-weight:600;padding-top:3px}
 .card.on .cnum,.card.owned .cnum{color:var(--cyan)}
 .cname{display:block;font-size:15px;font-weight:600;line-height:1.25}
@@ -98,6 +98,11 @@ h1,h2,h3{font-weight:800;letter-spacing:-.02em;margin:0}
 .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--orange);font-weight:600}
 .sig{display:grid;grid-template-columns:26px 1fr;gap:12px;padding:11px 0;
   border-bottom:1px solid rgba(58,42,122,.6);font-size:14px;line-height:1.5}
+.annual-briefing{border-top:4px solid var(--cyan)}
+.annual-briefing .eyebrow{font-size:14px}
+.annual-briefing h2{font-size:clamp(26px,3vw,34px);margin-top:6px}
+.annual-briefing .mini{font-size:16px;line-height:1.6}
+.annual-briefing .sig{font-size:17px;line-height:1.6;padding:14px 0}
 .sig i{font-style:normal;color:var(--cyan);font-weight:600;font-size:12px;
   font-family:'IBM Plex Mono',monospace;padding-top:2px}
 .sig.priv{background:rgba(84,200,232,.07);padding-left:10px;margin-left:-10px}
@@ -160,6 +165,12 @@ select,input{background:var(--indigo-deep);border:1px solid var(--indigo-line);c
 @media(max-width:960px){.grid{grid-template-columns:1fr}
   .ledgers{grid-template-columns:1fr}.scorecard{grid-template-columns:repeat(2,1fr)}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.cost-label{display:block;font-size:12px;color:#d5cfea;margin-top:6px}
+.card-timing{display:block;font-size:13px;color:#d5cfea;line-height:1.5;margin-top:7px}
+.cdesc{color:#c6bfe0}.cnum{color:#b1b1b1}.card:disabled.owned{opacity:1}
+.finance-dock{position:sticky;top:64px;z-index:40;display:flex;flex-wrap:wrap;gap:10px 24px;background:var(--indigo);border:1px solid var(--cyan);padding:12px;margin:18px 0;font-size:14px}
+.finance-dock b{display:block;margin-top:3px}.planning{padding:16px;background:var(--indigo);border:1px solid var(--indigo-line);margin:18px 0}.planning summary{cursor:pointer;font-weight:600}.planning caption{text-align:left;padding:10px 0}.plan-scroll{overflow-x:auto}
+@media(max-width:600px){.card{grid-template-columns:24px 1fr;gap:8px}.cprice{grid-column:2;text-align:left;white-space:normal}.cost-label{display:inline-block;margin-right:8px}.cprice .tail{display:inline;margin-right:12px}.finance-dock{top:0;font-size:12px}.ledger .lrow{gap:12px}.wrap{padding:0 12px 40px}}
 </style>
 
 <div id="app"></div>
@@ -189,63 +200,46 @@ const BASE = {
 };
 
 /* ── Investment catalog ──────────────────────────────────── */
+// REVIEW: restored content is enabled for verification. Disable a group here
+// to test its removal; start a fresh session whenever these switches change.
+const REVIEW_CONTENT = { cards: true, events: true };
 const CARDS = [
  {id:1,cat:'Infrastructure and risk',n:'Deferred maintenance: roof, HVAC, envelope',one:1200000,tail:-50000,lag:0,t:['facility'],m:0,s:2,r:5,
-  d:'Retires $1.2M of a $4.2M backlog. Lowers utilities cost. Deferred maintenance is debt you have already incurred and are choosing not to record.'},
- {id:2,cat:'Infrastructure and risk',n:'Campus hardening: wind, flood, envelope mitigation',one:900000,tail:40000,lag:0,t:['hazard'],m:0,s:1,r:6,
-  d:'Structural and drainage work on the three lowest-elevation buildings.'},
- {id:3,cat:'Infrastructure and risk',n:'Business continuity and distributed instruction',one:400000,tail:120000,lag:0,t:['continuity'],m:2,s:2,r:5,
-  d:'Standing capability to deliver instruction and assessment off-site within 72 hours of any disruption.'},
- {id:4,cat:'Infrastructure and risk',n:'Cybersecurity uplift: MFA, EDR, segmentation, IR retainer',one:750000,tail:250000,lag:0,t:['cyber'],m:0,s:3,r:6,
-  d:'Controls, not policy. Carriers now underwrite on the presence of these specific controls.'},
- {id:5,cat:'Infrastructure and risk',n:'Cyber liability insurance',one:0,tail:180000,lag:0,t:['cyberins'],m:0,s:0,r:2,req:4,reqTxt:'Pays only alongside card 4',
-  d:'Transfers residual risk. Policy contains a controls warranty; a claim without MFA in place is denied.'},
+  d:'Repairs roofs, heating and cooling systems, and building exteriors. Addresses $1.2 million of the $4.2 million maintenance backlog and reduces annual utility costs.'},
+ {id:2,cat:'Infrastructure and risk',n:'Business continuity and distributed instruction',one:400000,tail:120000,lag:0,t:['continuity'],m:2,s:2,r:5,
+  d:'Funds the systems and arrangements needed to continue teaching and assessment off-site within 72 hours of a disruption.'},
+ {id:3,cat:'Infrastructure and risk',n:'Cybersecurity uplift: MFA, EDR, segmentation, IR retainer',one:750000,tail:250000,lag:0,t:['cyber'],m:0,s:3,r:6,
+  d:'Adds stronger sign-in controls, device monitoring, network separation and contracted incident-response support.'},
+ {id:4,cat:'Infrastructure and risk',n:'Cyber liability insurance',one:0,tail:180000,lag:0,t:['cyberins'],m:0,s:0,r:2,req:3,reqTxt:'Pays only alongside card 3',
+  d:'Purchases cyber insurance for covered incident costs. Claims require the cybersecurity controls in card 3.'},
 
- {id:6,cat:'Academic and program',n:'MS in Clinical AI and Health Informatics, DO dual pathway',one:900000,tail:2200000,lag:1,rev:3200000,t:['program','ai','aiprog'],m:5,s:7,r:0,req:15,reqTxt:'Requires card 15 or delivers 60% value',
-  d:'Fifty-five seats, stackable with the DO. The largest revenue opportunity in the catalog and the largest recurring obligation. Launching without governance capacity is a reputational exposure, not a shortcut.'},
- {id:7,cat:'Academic and program',n:'Competency-based curriculum transition',one:800000,tail:150000,lag:2,t:['curric'],m:6,s:5,r:0,
-  d:'Two years of faculty labor before a single visible outcome. Materially strengthens accreditation posture.'},
- {id:8,cat:'Academic and program',n:'Simulation center expansion',one:1800000,tail:300000,lag:1,t:['sim'],m:4,s:3,r:0,
-  d:'Adds capacity for procedural and OMM assessment. Visible to applicants, expensive to staff.'},
- {id:9,cat:'Academic and program',n:'Class expansion, twenty additional seats',one:400000,tail:600000,lag:0,rev:1200000,t:['expand'],m:2,s:1,r:0,req:12,reqTxt:'Requires card 12 or placement fails',
-  d:'Immediate revenue. Requires clinical placement capacity that must already exist.'},
- {id:10,cat:'Academic and program',n:'OMM department depth and chair succession',one:250000,tail:350000,lag:1,t:['omm'],m:4,s:3,r:6,
-  d:'Your OMM chair is 63 and no one in the department is credentialed to succeed her. Fellowship line, credentialing support, and a designated successor. Produces nothing visible until the day it is needed.'},
- {id:11,cat:'Academic and program',n:'Branch campus development and pro forma',one:2500000,tail:1200000,lag:3,rev:4000000,t:['branch'],m:3,s:9,r:0,
-  d:'Site, approvals, faculty, and three years of carrying cost before the first class. Will not return inside this planning horizon under any assumption you can defend.'},
+ {id:5,cat:'Academic and program',n:'MS in Clinical AI and Health Informatics, DO dual pathway',one:900000,tail:2200000,lag:1,rev:3200000,t:['program','ai','aiprog'],m:5,s:7,r:0,req:11,reqTxt:'Requires card 11 or delivers 60% value',
+  d:'Creates a 55-seat master’s pathway that students can combine with the DO program. Requires substantial annual spending before program revenue begins.'},
+ // REVIEW CARD: restores the enrollment-sensitive bridge and post-CFO $1.15M tail.
+ {id:6,review:true,cat:'Academic and program',n:'MS Biomedical Sciences bridge program',one:600000,tail:1150000,lag:1,rev:1400000,t:['program'],m:2,s:2,r:0,
+  d:'Creates a biomedical sciences master’s program that feeds the DO applicant pool. Program revenue is lower when enrollment declines.'},
+ // REVIEW CARD: restores the partial-mitigation tier in the OMM event.
+ {id:7,review:true,cat:'Academic and program',n:'Faculty development and retention pool',one:0,tail:500000,lag:0,t:['faculty'],m:4,s:0,r:5,
+  d:'Funds faculty development and retention through an ongoing annual allocation, with no startup cost.'},
+ {id:8,cat:'Academic and program',n:'OMM department depth and chair succession',one:250000,tail:350000,lag:1,t:['omm'],m:4,s:3,r:6,
+  d:'Funds fellowship training, credentialing and a designated successor for the OMM chair. No current faculty member is qualified to replace the chair.'},
 
- {id:12,cat:'Clinical education',n:'New clinical and GME partnership',one:1100000,tail:400000,lag:1,t:['clinical'],m:5,s:6,r:4,
-  d:'Affiliation agreement, site development, and core rotation guarantees with a second health system. Unlocks class expansion.'},
- {id:13,cat:'Clinical education',n:'Preceptor stipend program',one:0,tail:700000,lag:0,t:['preceptor'],m:3,s:2,r:4,
-  d:'Competing schools are bidding for the same community preceptors. This is a defensive recurring commitment.'},
- {id:14,cat:'Clinical education',n:'Rural and underserved training track',one:500000,tail:250000,lag:1,t:['rural'],m:8,s:3,r:0,rest:true,
-  d:'Eligible for the restricted gift. Strong mission alignment and a prerequisite for capturing aligned philanthropy.'},
+ {id:9,cat:'Clinical education',n:'Preceptor stipend program',one:0,tail:700000,lag:0,t:['preceptor'],m:3,s:2,r:4,
+  d:'Funds ongoing payments to community preceptors to help retain clinical training sites as competing schools increase their payments.'},
+ {id:10,cat:'Clinical education',n:'Rural and underserved training track',one:500000,tail:250000,lag:1,t:['rural'],m:8,s:3,r:0,rest:true,
+  d:'Develops a clinical training track serving rural and underserved communities.'},
 
- {id:15,cat:'Technology and data',n:'AI governance framework and faculty upskilling',one:200000,tail:100000,lag:0,t:['aigov'],m:2,s:5,r:4,
-  d:'Policy, oversight structure, assessment integrity standards, and faculty capability. Cheap. Unglamorous. Gates the value of every other AI investment.'},
- {id:16,cat:'Technology and data',n:'AI-enabled early alert and student support',one:350000,tail:200000,lag:1,t:['ai','retention'],m:3,s:2,r:0,req:15,reqTxt:'60% value without card 15',
-  d:'Predictive identification of students at academic risk with a coordinated response protocol.'},
- {id:17,cat:'Technology and data',n:'Data infrastructure and institutional research capacity',one:450000,tail:250000,lag:1,t:['data','ai'],m:0,s:5,r:2,
-  d:'Warehouse, governance, and two analysts. Grants your team one additional intelligence line in every subsequent signals brief.'},
- {id:18,cat:'Technology and data',n:'ERP and student information system modernization',one:2200000,tail:400000,lag:2,t:['erp'],m:0,s:6,r:3,
-  d:'Expensive, disruptive, invisible to students, and the reason your financial reporting is currently three weeks late.'},
+ {id:11,cat:'Technology and data',n:'AI governance framework and faculty upskilling',one:200000,tail:100000,lag:0,t:['aigov'],m:2,s:5,r:4,
+  d:'Funds AI policies, oversight, assessment-integrity standards and faculty training to support the college’s use of AI.'},
+ {id:12,cat:'Technology and data',n:'Data infrastructure and institutional research capacity',one:450000,tail:250000,lag:1,t:['data','ai'],m:0,s:5,r:2,
+  d:'Funds a data warehouse, data governance and two analysts. Provides an additional institutional research finding in subsequent annual briefings.'},
 
- {id:19,cat:'Research and advancement',n:'Research startup packages, three faculty hires',one:1500000,tail:900000,lag:3,rev:300000,t:['research'],m:2,s:8,r:0,
-  d:'Will not return inside this planning horizon. The question is whether a dean should make bets that outlive their own tenure.'},
- {id:20,cat:'Research and advancement',n:'Advancement officer and campaign feasibility study',one:150000,tail:350000,lag:2,rev:600000,t:['adv'],m:0,s:3,r:0,
-  d:'Relationship capacity. Major gifts are cultivated over years and do not arrive at institutions with nobody to receive them.'},
- {id:21,cat:'Research and advancement',n:'Grant development office',one:200000,tail:300000,lag:1,rev:500000,t:['grants'],m:0,s:3,r:0,
-  d:'Proposal development, compliance, and post-award support. Raises capture rate on external opportunities.'},
+ {id:13,cat:'Research and advancement',n:'Advancement officer and campaign feasibility study',one:150000,tail:350000,lag:2,rev:600000,t:['adv'],m:0,s:3,r:0,
+  d:'Hires an advancement officer and assesses the feasibility of a fundraising campaign. Builds donor relationships over several years.'},
 
- {id:22,cat:'Financial and enrollment',n:'Scholarship and tuition discount pool',one:0,tail:800000,lag:0,t:['aid'],m:4,s:0,r:3,
-  d:'Protects yield when financing conditions tighten. Discounting is a permanent structural decision disguised as a temporary one.'},
- {id:23,cat:'Financial and enrollment',n:'Pipeline development and enrollment marketing',one:300000,tail:250000,lag:1,t:['pipeline'],m:2,s:2,r:3,
-  d:'Pre-health partnerships, advising outreach, and applicant funnel investment.'},
- {id:24,cat:'Financial and enrollment',n:'Debt prepayment, $1.0M principal',one:1000000,tail:-180000,lag:0,t:['debt'],m:0,s:1,r:2,
-  d:'Permanently reduces annual debt service by $180K. An 18% recurring return with no execution risk and no mission story.'},
- {id:25,cat:'Financial and enrollment',n:'Operating reserve transfer, $2.0M',one:2000000,tail:0,lag:0,t:['reserve'],m:0,s:0,r:3,resv:2000000,
-  d:'Moves one-time funds to liquid reserve. Buys days of cash and optionality. Buys nothing else.'}
-];
+ {id:14,cat:'Financial and enrollment',n:'Scholarship and tuition discount pool',one:0,tail:800000,lag:0,t:['aid'],m:4,s:0,r:3,
+  d:'Funds scholarships and tuition discounts to help maintain enrollment when students face tighter borrowing limits.'},
+].filter(card => REVIEW_CONTENT.cards || !card.review);
 const CARD = id => CARDS.find(c=>c.id===id);
 const CATS = [...new Set(CARDS.map(c=>c.cat))];
 
@@ -283,65 +277,59 @@ const EVENTS = {
   {n:'Professional Education Financing Act takes effect',sig:true,
    d:'Federal borrowing for professional programs is capped at $45,000 annually and $180,000 lifetime, effective for the coming cycle. Yield softens immediately across the out-of-state pool.',
    f:t=>{let drop=.06,x=[];
-     if(has(t,22)){drop/=2;x.push('Scholarship pool absorbed half the yield loss')}
-     if(has(t,23)){drop/=2;x.push('Pipeline investment absorbed half of what remained')}
-     if(!has(t,22)&&!has(t,23))x.push('No yield protection in place. Full impact.');
+     if(has(t,14)){drop/=2;x.push('Scholarship pool absorbed half the yield loss')}
+     if(!has(t,14))x.push('No yield protection in place. Full impact.');
      return{enroll:-drop,m:-Math.round(drop*100),notes:x,
        hd:'Entering class down '+(drop*100).toFixed(1)+'%. Effect persists as the cohort progresses.'}}},
   {n:'Ransomware campaign targets health-professions education',sig:true,
    d:'A coordinated campaign encrypts student records and assessment systems across the sector. Recovery cost, forensics, notification, and credit monitoring land in a single fiscal year.',
    f:t=>{let c,x=[];
-     if(has(t,4)){c=300000;x.push('Controls contained the intrusion to a single segment')}
+     if(has(t,3)){c=300000;x.push('Cybersecurity uplift (card 3) contained the intrusion to a single segment')}
      else{c=2400000;x.push('No controls. Full recovery, forensics, and notification cost.')}
-     if(has(t,5)&&has(t,4)){c-=250000;x.push('Carrier paid $250K under the policy')}
-     if(has(t,5)&&!has(t,4)){x.push('Claim denied. The policy warranted MFA that was not in place. You paid the premium and carried the loss.')}
-     return{cash:-c,s:has(t,4)?1:0,notes:x,hd:'Incident cost '+M(c)}}},
-  {n:'Teaching hospital acquired; forty core rotation slots eliminated',sig:false,
-   d:'Your primary partner is absorbed by a national system that consolidates education agreements. Forty core slots disappear ninety days before the block begins.',
-   f:t=>{let c=800000,m=-6,x=[];
-     if(has(t,12)){c=0;m=0;x.push('Second partnership absorbed the displacement with no interruption')}
-     else if(has(t,13)){c=400000;m=-3;x.push('Preceptor stipends retained roughly half the affected sites')}
-     else x.push('Students placed at distance and at cost. Two blocks rescheduled.');
-     if(has(t,9)&&!has(t,12)){c+=600000;m-=4;x.push('Twenty expansion seats had no placement capacity behind them. This is the compounding error.')}
-     return{cash:-c,m,notes:x,hd:c?'Placement disruption cost '+M(c):'No disruption'}}}],
+     if(has(t,4)&&has(t,3)){c-=250000;x.push('Carrier paid $250K under the policy')}
+     if(has(t,4)&&!has(t,3)){x.push('Claim denied. The policy warranted MFA that was not in place. You paid the premium and carried the loss.')}
+     return{cash:-c,s:has(t,3)?1:0,notes:x,hd:'Incident cost '+M(c)}}}],
  2:[
   {n:'Category 3 storm makes landfall',sig:true,
    d:'Sustained winds and eighteen inches of rain over thirty-six hours. Roof failure in two buildings, water intrusion in a third, campus closed eleven days.',
-   f:t=>{let c=3000000,x=[];const h1=has(t,1),h2=has(t,2);
-     if(h1&&h2){c=600000;x.push('Roof replacement and hardening held. Damage limited to grounds and one mechanical room.')}
-     else if(h1||h2){c=1500000;x.push('Partial mitigation. One system held; the other did not.')}
+   f:t=>{let c=3000000,x=[];
+     if(has(t,1)){c=1500000;x.push('Deferred maintenance (card 1) protected the repaired roofs. Damage limited to the remaining buildings and remediation.')}
      else x.push('Both roof systems failed. Full replacement plus remediation.');
-     let m=-5;if(has(t,3)){m=-1;x.push('Instruction and assessment continued off-site from day three')}
+     let m=-5;if(has(t,2)){m=-1;x.push('Business continuity (card 2) allowed instruction and assessment off-site from day three')}
      else x.push('Eleven instructional days lost with no continuity capability.');
      return{cash:-c,m,notes:x,hd:'Damage and remediation '+M(c)}}},
-  {n:'State ties professional-program support to in-state primary care placement',sig:true,
+  // REVIEW EVENT: rural-track mitigation remains available.
+  {review:true,n:'State ties professional-program support to in-state primary care placement',sig:true,
+   reviewNote:'Rural-track mitigation is available in the catalog.',
    d:'The bill passes. Institutions documenting rural and underserved placement receive supplemental support. Institutions that cannot document it absorb a reduction.',
-   f:t=>has(t,14)
-     ?{cash:1500000,m:5,s:2,notes:['Rural track produced the documentation the formula required'],hd:'Supplemental support +'+M(1500000)}
+   f:t=>has(t,10)
+     ?{cash:1500000,m:5,s:2,notes:['Rural and underserved training track (card 10) produced the documentation required'],hd:'Supplemental support +'+M(1500000)}
      :{cash:-500000,m:-4,notes:['No documented placement pathway. Reduction applied.'],hd:'Support reduced '+M(500000)}},
   {n:'OMM chair departs; clinical faculty attrition follows',sig:false,
    d:'Your OMM chair leaves for a named professorship. No one in the department is credentialed to succeed her. Twelve percent of clinical faculty follow within the cycle. The national pool of qualified OMM chairs is roughly forty people and eleven schools are searching.',
-   f:t=>{if(has(t,10))return{m:1,s:1,notes:['Designated successor was credentialed and stepped in without interruption.','You cannot buy your way out of an unfilled OMM chair on any timeline that matters. You bought your way out of it three years ago.'],hd:'Succession held'};
+   f:t=>{if(has(t,8))return{m:1,s:1,notes:['Designated successor was credentialed and stepped in without interruption.','Your earlier succession investment provided a qualified replacement.'],hd:'Succession held'};
+     // REVIEW CARD: removing the retention pool also removes this partial tier.
+     if(REVIEW_CONTENT.cards && has(t,7))return{cash:-700000,m:-3,notes:['Faculty development and retention (card 7) retained the clinical faculty. The chair line is still open.','National search entering month nine. Interim coverage by a non-credentialed acting chair.'],hd:'Partial · '+M(700000)+' and an open chair'};
      return{cash:-1400000,m:-7,cite:1,notes:['Search costs, interim coverage, relocation, and a startup package against a national pool of roughly forty candidates.','OMM instruction and supervision delivered by faculty the accreditor questions. Citation issued.'],hd:'Citation and '+M(1400000)}}}],
  3:[
   {n:'National scrutiny of AI in health-professions assessment',sig:true,
    d:'Coverage breaks on AI use in professional program assessment. Accreditors request institutional policies. Several schools discover they have deployed tools they cannot describe.',
-   f:t=>{const aiUse=has(t,16)||has(t,6)||has(t,17);
-     if(has(t,15))return{s:4,m:3,notes:['Governance framework produced on request. Coverage cited your institution favorably.'],hd:'Reputational gain'};
+   f:t=>{const aiUse=has(t,5)||has(t,12);
+     if(has(t,11))return{s:4,m:3,notes:['AI governance (card 11) documentation was provided on request. Coverage cited your institution favorably.'],hd:'Reputational gain'};
      if(aiUse)return{cash:-700000,m:-6,cite:1,notes:['AI deployed without governance capacity. Remediation, external review, and a citation.','Doing this badly cost more than not doing it at all.'],hd:'Citation and '+M(700000)+' remediation'};
-     return{m:-1,notes:['No exposure. Also no capability.'],hd:'No material effect'}}},
-  {n:'Accreditor schedules a focused site visit on clinical placement adequacy',sig:true,
-   d:'Complaints trigger a focused review of placement capacity, preceptor supervision, and curricular alignment.',
-   f:t=>(has(t,7)||has(t,13)||has(t,12))
-     ?{s:2,notes:['Documented placement capacity and curricular alignment. Visit closed with no findings.'],hd:'No findings'}
-     :{cash:-400000,m:-5,cite:1,notes:['Citation issued on placement adequacy. Response, monitoring report, and consultant costs.'],hd:'Citation and '+M(400000)},},
+     return{notes:['No AI-related investment requiring remediation. No financial or score change from this event.'],hd:'No material effect'}}},
   {n:'Estate gift, $4.0M, restricted to rural health',sig:false,
    d:'A donor of twenty years dies. The estate directs $4.0M to a COM with a rural health program and an established relationship.',
-   f:t=>{const a=has(t,20),b=has(t,14);
-     if(a&&b)return{cash:2500000,tail:-250000,m:8,s:3,notes:['Relationship in place and an aligned program to receive the gift.','Most of the corpus is restricted; $2.5M is spendable and $250K annually now funds the rural track.'],hd:'Gift captured in full'};
+   f:t=>{const a=has(t,13),b=has(t,10);
+     if(a&&b)return{cash:2500000,tail:-250000,m:8,s:3,notes:['Advancement officer (card 13) and rural track (card 10) provided the relationship and program required.','The $4.0M estate gift adds $2.5M to the operating reserve and reduces the rural track’s annual expense by $250K. It does not refill the starting restricted gift.'],hd:'Gift captured in full'};
      if(a||b)return{cash:1200000,m:3,notes:[a?'Relationship existed but no aligned program. The estate directed a partial gift and split the remainder.':'Program existed but nobody was managing the relationship. Partial gift.'],hd:'Partial capture '+M(1200000)};
      return{notes:['No relationship and no aligned program. The estate gave elsewhere.','Gifts are cultivated, not received.'],hd:'Not captured'}}}]
 };
+
+// REVIEW: independently exclude the retained state-support event without editing its resolver.
+Object.keys(EVENTS).forEach(year=>{
+  EVENTS[year]=EVENTS[year].filter(event=>REVIEW_CONTENT.events || !event.review);
+});
 
 /* ── Mid-year unbudgeted demands ─────────────────────────
    Read aloud in YEAR 1 ONLY, after decisions lock. Each table funds it, defers it,
@@ -350,7 +338,7 @@ const EVENTS = {
 const MIDYEAR = {
  1:{n:'Preceptor rates must rise now',cost:700000,
   d:'Two competing schools have raised community preceptor payments mid-cycle. Sixteen of your core sites have signalled they will not renew at current rates. The increase is permanent, it was not in the approved budget, and the board chair has already told your CFO that the budget was approved in April for a reason.',
-  opts:'FUND: −$700K reserve, permanent −$700K/yr tail. DEFER: no cost now, lose 12 sites at the Year 1 hospital event and take −4 mission. BOARD ASK: mentor rules. Tables holding card 13 have largely pre-absorbed this.'}
+  opts:'FUND: −$700K operating reserve, permanent $700K annual expense. DEFER: no cost now, lose 12 preceptor sites and take −4 mission (mentor ruling). BOARD ASK: mentor rules. Tables holding card 9 have largely pre-absorbed this.'}
 };
 
 const has = (t,id) => t.held.includes(id);
@@ -361,7 +349,7 @@ function boardCase(t){
   const d=daysCash(t), mg=revenueOf(t,Math.max(1,S?S.round:1))-expenseOf(t);
   const delivered=t.log.filter(l=>l.margin>0).length;
   let read;
-  if(d>85&&mg>0) read='Strong. Liquidity and margin support the ask. The board will want conditions, not a refusal.';
+  if(d>85&&mg>0) read='Strong. Liquidity and the operating result support the ask. The board will want conditions, not a refusal.';
   else if(d>65&&mg>-500000) read='Arguable. The board will ask what gets cut to fund it. Make them name the offset.';
   else read='Weak. Asking from this position invites a review of everything, not approval of one item.';
   return{d:Math.round(d),mg,delivered,read};}
@@ -379,9 +367,8 @@ function revenueOf(t,year){
   t.held.forEach(id=>{const c=CARD(id);if(!c.rev)return;
     if(year >= (t.bought[id]||0) + c.lag){
       let v=c.rev;
-      if(c.id===6 && !has(t,15)) v*=0.6;      // AI program without governance
-      if(c.id===16 && !has(t,15)) v*=0.6;
-      if(c.id===9 && !has(t,12)) v*=0.5;      // seats without placement
+      if(c.id===5 && !has(t,11)) v*=0.6;      // AI program without governance
+      if(c.id===6 && t.enroll<0.95) v*=0.85; // REVIEW CARD: bridge yield exposure
       r+=v;}});
   return r;}
 
@@ -393,10 +380,11 @@ function resolveRound(t,year){
 
   // 1. purchases
   t.pending.forEach(id=>{
-    const c=CARD(id);let src='Fund';
+    const c=CARD(id);let src='Investment fund';
     let cost=c.one;
-    if(c.rest && t.restricted>=cost){t.restricted-=cost;src='Restricted gift';}
-    else t.fund-=cost;
+    const restricted=c.rest?Math.min(t.restricted,cost):0;
+    t.restricted-=restricted;t.fund-=cost-restricted;
+    if(restricted)src=restricted===cost?'Starting restricted gift':`Starting restricted gift ${M(restricted)} + Investment fund ${M(cost-restricted)}`;
     if(c.resv){t.reserve+=c.resv;}
     t.tail+=c.tail;t.held.push(id);t.bought[id]=year;
     t.mPts+=c.m;t.sPts+=c.s;t.rPts+=c.r;
@@ -422,10 +410,10 @@ function resolveRound(t,year){
   // 4. liquidity check
   const d=daysCash(t);t.minDays=Math.min(t.minDays,d);
   out.days=d;out.reserve=t.reserve;
-  if(d<45)out.flags.push('Days cash below 45. Board has assumed direct budget authority. Financial health category forfeited.');
-  else if(d<60)out.flags.push('Days cash below 60. Covenant threshold breached; austerity measures imposed. Ten-point penalty.');
+  if(d<45)out.flags.push('Days cash on hand below 45. Board has assumed direct budget authority. Financial health category forfeited.');
+  else if(d<60)out.flags.push('Days cash on hand below 60. Covenant threshold breached; austerity measures imposed. Ten-point penalty.');
   if(t.cite>=2)out.flags.push('Second accreditation citation. Institution moved to probation. Financial health category forfeited.');
-  if(margin<0)out.flags.push('Structural operating deficit of '+M(-margin)+'. Recurring commitments now exceed recurring revenue.');
+  if(margin<0)out.flags.push('Structural operating deficit of '+M(-margin)+'. Annual operating expenses now exceed annual revenue.');
 
   t.log.push(out);
   return out;}
@@ -434,7 +422,8 @@ function resolveRound(t,year){
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function score(t){
   const d=daysCash(t);
-  let fin = clamp(t.reserve/20000000,0,1)*15
+  let fin = clamp(t.reserve/20000000,0,1)*10
+          + clamp(t.fund/BASE.fund,0,1)*5
           + clamp(d/120,0,1)*10
           + clamp((t.cumMargin+3000000)/6000000,0,1)*10;
   if(t.minDays<60)fin-=10;
@@ -452,7 +441,8 @@ function score(t){
    2) a server previously saved on this device
    3) if the page is served over http(s): the same origin it came from
    4) file:// with nothing set: LOCAL DEMO mode (this one browser only)   */
-const K={state:'mm:state',team:i=>'mm:team:'+i};
+// Separate catalog keys preserve sessions saved with the previous card IDs.
+const K={state:'mm:14-card:state',team:i=>'mm:14-card:team:'+i};
 function resolveServer(){
   try{
     const q=new URLSearchParams(location.search).get('server');
@@ -519,13 +509,13 @@ function render(){
 function renderPicker(){
   app.innerHTML=`<div class="picker">
     <h1>Margin<br><em>and Mission</em></h1>
-    <p>A three-year strategic budgeting simulation. AACOM Senior Leadership Development Program.</p>
+    <p>A three-year strategic budgeting simulation. Each round represents one year. AACOM Senior Leadership Development Program.</p>
     <div class="roles">
       <button class="role" onclick="pickTeam()"><b>I am a table CFO</b><span>Enter your table's investment decisions</span></button>
-      <button class="role" onclick="pickFac()"><b>I am the facilitator</b><span>Run rounds, reveal events, resolve, override</span></button>
+      <button class="role" onclick="pickFac()"><b>I am the facilitator</b><span>Run each simulated year, show events, calculate results, apply adjustments</span></button>
       <button class="role" onclick="pickProj()"><b>Projection display</b><span>Read-only screen for the room</span></button>
     </div>${serverBadge()}
-    <p class="mini" style="margin-top:10px">Version: CFO + trial · cards 1–25 · October 6, 2026</p></div>`;}
+    <p class="mini" style="margin-top:10px">Version: Financial clarity · ${CARDS.length} cards · ${Object.values(EVENTS).reduce((n,events)=>n+events.length,0)} events · November 2, 2026</p></div>`;}
 
 async function pickTeam(){
   const st=await sget(K.state);
@@ -582,31 +572,69 @@ function submitFacLogin(){
 function pickProj(){ROLE='proj';loop();}
 
 /* ── team console ────────────────────────────────────────── */
-function ledgerStrip(t,commitments=CART){
-  const yr=Math.max(1,S?S.round:1);
-  const rev=revenueOf(t,yr),exp=expenseOf(t),mg=rev-exp;
-  const cartTail=commitments.reduce((a,id)=>a+CARD(id).tail,0);
-  const projMg=mg-cartTail;
-  const cartOne=commitments.reduce((a,id)=>a+CARD(id).one,0);
-  const fill=projMg<0?clamp(-projMg/2000000,.08,1)*100:0;
-  return `<div class="ledgers">
-   <div class="ledger">
-    <h3>Strategic Investment Fund · one-time</h3>
-    <div class="big num">${Mk(t.fund-cartOne)}</div>
-     <div class="sub">${commitments.length?'after '+M(cartOne)+' committed this round':'uncommitted'}</div>
-    <div class="lrow"><span>Restricted gift, rural and community health</span><b class="num">${Mk(t.restricted)}</b></div>
-    <div class="lrow"><span>Liquid operating reserve</span><b class="num">${Mk(t.reserve)}</b></div>
-    <div class="lrow"><span>Days cash on hand</span><b class="num">${Math.round(daysCash(t))}</b></div>
-   </div>
-   <div class="ledger">
-    <div class="fill" style="height:${fill}%"></div>
-    <h3>Operating margin · recurring, every year</h3>
-    <div class="big num ${projMg<0?'neg':''}">${Mk(projMg)}</div>
-    <div class="sub">${projMg<0?'structural deficit — draws on reserve annually':'annual surplus'}</div>
-    <div class="lrow"><span>Operating revenue</span><b class="num">${Mk(rev)}</b></div>
-    <div class="lrow"><span>Base expense</span><b class="num">${Mk(BASE.expense)}</b></div>
-    <div class="lrow"><span>Committed recurring tails${cartTail?' incl. this round':''}</span><b class="num" style="color:${(t.tail+cartTail)>0?'#c1440e':'inherit'}">${Mk(t.tail+cartTail)}</b></div>
-   </div></div>`;}
+// Preview only known commitments. Never resolve or reveal future events here.
+function financialPreview(t, ids, year){
+  const draft=ids.filter(id=>CARD(id)&&!has(t,id));
+  const next={...t,held:[...t.held],bought:{...t.bought}};
+  let startup=0,fromRest=0,fromFund=0,newAnnual=0;
+  draft.forEach(id=>{
+    const c=CARD(id),restricted=c.rest?Math.min(next.restricted,c.one):0;
+    startup+=c.one;fromRest+=restricted;fromFund+=c.one-restricted;
+    next.restricted-=restricted;next.fund-=c.one-restricted;
+    next.tail+=c.tail;newAnnual+=c.tail;next.held.push(id);next.bought[id]=year;
+  });
+  const revenue=revenueOf(next,year),expense=expenseOf(next);
+  return {team:next,startup,fromRest,fromFund,newAnnual,revenue,expense,margin:revenue-expense};
+}
+
+function dependencyText(c){
+  if(!c.req)return '';
+  return c.id===4?`Pays out only alongside card ${c.req}`:`Requires card ${c.req} or delivers 60% revenue`;
+}
+
+function timingText(c,t,year){
+  const bought=has(t,c.id)?t.bought[c.id]:year;
+  if(c.rev){
+    const begins=bought+c.lag;
+    return `Annual revenue ${M(c.rev)} begins Year ${begins}${begins>3?' · after the three-year exercise':''}${c.id===5?' with governance':c.id===6?' before enrollment adjustment':''}`;
+  }
+  if(c.id===12)return `Adds additional findings in annual briefing starting Year ${bought+1}${bought+1>3?' · after the exercise':''}`;
+  return '';
+}
+
+function planningYears(t,ids,year){
+  const preview=financialPreview(t,ids,year);
+  return `<details class="planning"><summary>Three-year view of purchased and selected investments</summary>
+    <p class="mini">Existing investments plus these selections. Enrollment held at its current level. Excludes future events, board rulings and future investment purchases.</p>
+    <div class="plan-scroll"><table><caption>Operating plan before future events</caption><thead><tr><th>Year</th><th class="r">Annual operating revenue</th><th class="r">Annual operating expenses</th><th class="r">Operating result</th></tr></thead><tbody>
+    ${[1,2,3].map(y=>{
+      if(y<year){const l=t.log.find(x=>x.year===y);return l?`<tr><td>Year ${y} · complete</td><td class="r num">${Mk(l.rev)}</td><td class="r num">${Mk(l.exp)}</td><td class="r num">${Mk(l.margin)}</td></tr>`:'';}
+      const rev=revenueOf(preview.team,y),exp=expenseOf(preview.team);
+      return `<tr><td>Year ${y} · plan</td><td class="r num">${Mk(rev)}</td><td class="r num">${Mk(exp)}</td><td class="r num ${rev<exp?'neg':''}">${Mk(rev-exp)}</td></tr>`;
+    }).join('')}</tbody></table></div></details>`;
+}
+
+function ledgerStrip(t,commitments=[]){
+  const yr=Math.max(1,S?S.round:1),p=financialPreview(t,commitments,yr);
+  const isClosed=t.log.some(l=>l.year===yr);
+  return `<div class="ledgers" aria-label="Financial position">
+   <div class="ledger"><h3>Investment fund · one-time balance</h3><div class="big num">${Mk(p.team.fund)}</div>
+    <div class="sub">Carries forward. No automatic annual refill.</div>
+    <div class="lrow"><span>Startup cost paid from investment fund</span><b class="num">${M(p.fromFund)}</b></div></div>
+   <div class="ledger"><h3>Operating result · Year ${yr}</h3><div class="big num ${p.margin<0?'neg':''}">${Mk(p.margin)}</div>
+    <div class="sub">${p.margin<0?'Operating deficit':'Operating surplus'} · ${isClosed?'current annual position after events':'before this year’s events'}</div>
+    <div class="lrow"><span>Annual operating revenue</span><b class="num">${Mk(p.revenue)}</b></div>
+    <div class="lrow"><span>Base operating expenses</span><b class="num">${Mk(BASE.expense)}</b></div>
+    <div class="lrow"><span>Existing annual expenses</span><b class="num">${M(t.tail)}</b></div>
+    <div class="lrow"><span>Annual expenses added by selections</span><b class="num">${M(p.newAnnual)}</b></div></div>
+   <div class="ledger"><h3>Starting restricted gift · eligible startup only</h3><div class="big num">${Mk(p.team.restricted)}</div>
+    <div class="sub">Rural-track startup is eligible. Annual expenses reduce the operating result.</div>
+    <div class="lrow"><span>Startup cost paid from starting restricted gift</span><b class="num">${M(p.fromRest)}</b></div></div>
+   <div class="ledger"><h3>Operating reserve · cash held</h3><div class="big num">${Mk(t.reserve)}</div>
+    <div class="sub">Recorded cash balance. Operating results and events change this at close.</div>
+    <div class="lrow"><span>Current days cash on hand</span><b class="num">${Math.round(daysCash(t))}</b></div></div>
+   </div>`;
+}
 
 function renderTeam(){
   if(!S){app.innerHTML='<div class="picker"><p>Waiting for the facilitator…</p></div>';return}
@@ -618,75 +646,75 @@ function renderTeam(){
 
   if(S.phase==='resolved'&&t.log.length>=rd){
     app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t)}${resultPanel(t,t.log[rd-1])}${boardTable(t.id)}
-      <p class="mini">Round ${rd} is closed. The facilitator opens Year ${rd+1} when the room is ready.</p></div>`;return}
+      <p class="mini">Year ${rd} is complete. The facilitator opens Year ${rd+1} when the room is ready.</p></div>`;return}
 
   if(S.phase==='locked'||S.phase==='reveal'){
     app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t,t.locked[rd]||[])}
-      <div class="panel"><div class="eyebrow">Decisions locked</div>
-      <h2>Year ${rd} commitments recorded</h2>
-      <div style="margin-top:14px">${(t.locked[rd]||[]).map(id=>`<div class="cartrow"><span>${CARD(id).n}</span><b class="num">${M(CARD(id).one)}</b></div>`).join('')||'<p class="mini">No investments this round. That is a decision, and it will be scored as one.</p>'}</div>
+      <div class="panel"><div class="eyebrow">Investment selections submitted</div>
+      <h2>Year ${rd} investment selections submitted</h2>
+      <div style="margin-top:14px">${(t.locked[rd]||[]).map(id=>`<div class="cartrow"><span>${CARD(id).n}</span><b class="num">${M(CARD(id).one)}</b></div>`).join('')||'<p class="mini">No new investments submitted for this year. Existing investments remain in effect.</p>'}</div>
       </div>
       ${rd===1 ? `<div class="panel"><div class="eyebrow">Unbudgeted · arriving now</div>
         <h2>${MIDYEAR[rd].n}</h2>
         <p style="font-size:15px;line-height:1.65;color:#c6bfe0;margin:10px 0">${MIDYEAR[rd].d}</p>
-        <div class="notebox"><b>Your table has three moves.</b> Fund it from reserve. Defer it and carry the consequence.
+        <div class="notebox"><b>Your table has three moves.</b> Fund it from the operating reserve. Defer it and carry the consequence.
         Or take it to your board chair, who is sitting at your table. Decide, then send someone to make the case.</div>
-        <p class="mini">Your position going in: ${Math.round(daysCash(t))} days cash, operating margin ${Mk(revenueOf(t,rd)-expenseOf(t))}.
+        <p class="mini">Your position going in: ${Math.round(daysCash(t))} days cash on hand, operating result ${Mk(revenueOf(t,rd)-expenseOf(t))}.
         The board chair can see the same numbers.</p>
       </div>` : `<div class="panel"><div class="eyebrow">Mid-year</div>
         <h2>No mid-year demand</h2>
-        <p class="mini">Your commitments are recorded. Wait for the facilitator to reveal this year’s events.</p>
+        <p class="mini">Your investment selections are submitted. Wait for the facilitator to reveal this year’s events.</p>
       </div>`}</div>`;return}
 
   // deliberation
   const br=BRIEFS[rd];
-  const cartOne=commitments.reduce((a,id)=>a+CARD(id).one,0);
-  const cartTail=commitments.reduce((a,id)=>a+CARD(id).tail,0);
-  const restEligible=commitments.filter(id=>CARD(id).rest).reduce((a,id)=>a+CARD(id).one,0);
-  const fromRest=Math.min(restEligible,t.restricted);
-  const fromFund=cartOne-fromRest;
-  const over=fromFund>t.fund;
-  const mg=revenueOf(t,rd)-expenseOf(t)-cartTail;
+  const preview=financialPreview(t,commitments,rd);
+  const cartOne=preview.startup,cartTail=preview.newAnnual;
+  const fromRest=preview.fromRest,fromFund=preview.fromFund;
+  const over=preview.team.fund<0,mg=preview.margin;
 
   let warn='';
   commitments.forEach(id=>{const c=CARD(id);
     if(c.req&&!commitments.includes(c.req)&&!has(t,c.req))
-      warn+=`<div class="alertbox"><b>Card ${c.id}</b> — ${c.reqTxt}. You do not hold card ${c.req}. This is permitted. It is also the most common way institutions waste money.</div>`;});
-  if(mg<0)warn+=`<div class="alertbox"><b>Structural deficit.</b> These recurring tails put annual operating margin at ${M(mg)}. The Investment Fund cannot cover a recurring obligation. The reserve will absorb it every year from now on.</div>`;
-  if(over)warn+=`<div class="alertbox"><b>Insufficient one-time funds.</b> ${M(fromFund-t.fund)} over the available Fund balance.</div>`;
+      warn+=`<div class="alertbox"><b>Card ${c.id}</b> — ${dependencyText(c)}. This prerequisite is not purchased or selected. You may proceed with the stated consequence.</div>`;});
+  if(mg<0)warn+=`<div class="alertbox"><b>Structural deficit.</b> These annual expenses put this year’s expected operating result at ${M(mg)}. The investment fund pays startup costs; annual expenses are paid through operations. A continuing deficit draws on the operating reserve; future revenue and events can change the result.</div>`;
+  if(over)warn+=`<div class="alertbox"><b>Insufficient investment fund balance.</b> ${M(fromFund-t.fund)} over the available Fund balance.</div>`;
 
   app.innerHTML=chrome(t)+`<div class="wrap">
    ${rd>1?`<div class="panel" style="border-left:3px solid var(--orange);padding:16px 22px">
      <div class="eyebrow">You are taking the chair</div>
      <h2 style="font-size:17px;margin-top:4px">Year ${rd} opens on decisions you did not make</h2>
      <p class="mini" style="margin-top:8px">${t.deciders[rd-1]?`<b style="color:var(--paper)">${t.deciders[rd-1]}</b> decided Year ${rd-1}.`:`Year ${rd-1} was decided by your predecessor.`}
-     You inherit ${Mk(t.fund)} of remaining fund, ${Mk(t.tail)} per year of recurring obligation already committed,
+     You inherit ${Mk(t.fund)} of remaining investment fund, ${Mk(t.tail)} per year of existing annual expenses,
      and an enrollment index of ${(t.enroll*100).toFixed(1)}%. You may disagree with all of it. You cannot unspend it.</p>
    </div>`:''}
-   ${ledgerStrip(t,commitments)}
-   <div class="panel">
-     <div class="eyebrow">Environmental signals · Year ${rd}</div>
-     <h2>What your intelligence tells you</h2>
-     <p class="mini">Some of this will matter. Some of it will not. Investing against every signal will exhaust the Fund by Year 2.</p>
+   <section class="panel annual-briefing" aria-labelledby="annual-briefing-title">
+     <div class="eyebrow">Annual briefing · Year ${rd}</div>
+     <h2 id="annual-briefing-title">Environmental signals</h2>
+     <p class="mini">Responding to every signal can exhaust the investment fund by Year 2. Please discuss your available investment options below</p>
      <div style="margin-top:14px">
      ${br.sig.map((s,i)=>`<div class="sig"><i>${String(i+1).padStart(2,'0')}</i><span>${s}</span></div>`).join('')}
-     ${has(t,17)?`<div class="sig priv"><i style="color:var(--orange)">IR</i><span><b style="color:var(--orange)">Institutional research, available to you only:</b> ${br.priv}</span></div>`:''}
+     ${has(t,12)?`<div class="sig priv"><i style="color:var(--orange)">IR</i><span><b style="color:var(--orange)">Additional institutional research finding for your table:</b> ${br.priv}</span></div>`:''}
      </div>
-   </div>
+   </section>
+   ${ledgerStrip(t,commitments)}
+   ${planningYears(t,commitments,rd)}
+   <div class="finance-dock" aria-label="Selection totals" aria-live="polite"><span>Investment fund <b class="num">${Mk(preview.team.fund)}</b></span><span>Year ${rd} operating result <b class="num">${Mk(mg)}</b></span><span>Starting restricted gift <b class="num">${Mk(preview.team.restricted)}</b></span></div>
+   <p class="mini">${CARDS.length} investment cards across ${CATS.length} categories. Categories organize the menu; you do not need to choose from every category. Annual expenses continue in later rounds.</p>
    <div class="grid">
     <div>${CATS.map(cat=>`<div class="cat"><h2>${cat}</h2>
       ${CARDS.filter(c=>c.cat===cat).map(c=>cardEl(c,t,commitments,isLocked)).join('')}</div>`).join('')}</div>
     <div class="rail">
-      <h3>Year ${rd} commitments</h3>
+      <h3>Year ${rd} selected investments</h3>
       ${commitments.length?commitments.map(id=>`<div class="cartrow"><span>${CARD(id).n}</span>
         <span style="white-space:nowrap"><b class="num">${M(CARD(id).one)}</b>
         ${isLocked?'':`<button onclick="drop(${id})" aria-label="Remove">×</button>`}</span></div>`).join('')
-        :'<p class="mini">Nothing selected. Holding funds is a legitimate strategy and scores in exactly one of four categories.</p>'}
-      <div class="tot head"><span>One-time cost</span><b class="num">${M(cartOne)}</b></div>
-      ${fromRest?`<div class="tot"><span style="color:var(--orange)">…drawn from restricted gift</span><b class="num" style="color:var(--orange)">${M(fromRest)}</b></div>`:''}
-      <div class="tot"><span>Fund balance after</span><b class="num" style="color:${over?'var(--coral)':'inherit'}">${M(t.fund-fromFund)}</b></div>
-      <div class="tot"><span>New recurring tail</span><b class="num" style="color:var(--orange)">${M(cartTail)}/yr</b></div>
-      <div class="tot"><span>Resulting margin</span><b class="num ${mg<0?'neg':'pos'}">${M(mg)}/yr</b></div>
+        :'<p class="mini">Nothing selected. Unspent investment funds carry forward; existing annual expenses continue.</p>'}
+      <div class="tot head"><span>Startup cost</span><b class="num">${M(cartOne)}</b></div>
+      ${fromRest?`<div class="tot"><span style="color:var(--orange)">…paid from starting restricted gift</span><b class="num" style="color:var(--orange)">${M(fromRest)}</b></div>`:''}
+      <div class="tot"><span>Investment fund remaining</span><b class="num" style="color:${over?'var(--coral)':'inherit'}">${M(t.fund-fromFund)}</b></div>
+      <div class="tot"><span>New annual expense</span><b class="num" style="color:var(--orange)">${M(cartTail)}/yr</b></div>
+      <div class="tot"><span>Operating result before events</span><b class="num ${mg<0?'neg':'pos'}">${M(mg)}/yr</b></div>
       ${warn}
       <div style="margin-top:16px;border-top:2px solid var(--indigo-line);padding-top:14px">
         <h3 style="margin-bottom:4px">Who decided</h3>
@@ -698,27 +726,26 @@ function renderTeam(){
           oninput="ME.dissent[${rd}]=this.value">
       </div>
       ${isLocked
-        ?`<button class="btn locked" disabled>Locked In</button>
-          <button class="btn alert" onclick="unlockYear()">Unlock Year ${rd}</button>`
-        :`<button class="btn" ${over?'disabled':''} onclick="lockIn()">Lock in Year ${rd}</button>`}
-      <p class="mini">The decider states the reasoning aloud before this is entered. Locking is final for this round.</p>
+        ?`<button class="btn locked" disabled>Submitted</button>
+          <button class="btn alert" onclick="unlockYear()">Edit Year ${rd} submission</button>`
+        :`<button class="btn" ${over?'disabled':''} onclick="lockIn()">Submit Year ${rd} selections</button>`}
+      <p class="mini">The decider states the reasoning aloud before this is entered. You can reopen your submission while deliberation remains open.</p>
     </div>
    </div></div>`;}
 
 function cardEl(c,t,commitments=CART,isLocked=false){
-  const owned=has(t,c.id),on=commitments.includes(c.id);
+  const owned=has(t,c.id),on=commitments.includes(c.id),year=S.round;
   const cls=owned?'owned':on?'on':'';
-  let flags='';
-  if(c.req)flags+=`<span class="cflag req">${c.reqTxt}</span>`;
-  if(c.rest)flags+=`<span class="cflag rest">Restricted gift eligible</span>`;
-  if(c.rev)flags+=`<span class="cflag rev">+${M(c.rev)}/yr from year ${c.lag?'+'+c.lag:'1'}</span>`;
-  if(c.lag&&!c.rev)flags+=`<span class="cflag rest">${c.lag}-year lag to value</span>`;
-  return `<button class="card ${cls}" ${owned||isLocked?'disabled':''} onclick="pick(${c.id})">
+  return `<button class="card ${cls}" ${owned||isLocked?'disabled':''} onclick="pick(${c.id})" aria-pressed="${owned||on}">
     <span class="cnum num">${String(c.id).padStart(2,'0')}</span>
-    <span><span class="cname">${c.n}</span><span class="cdesc">${c.d}</span>${flags}
-      ${owned?'<span class="cflag rev">Held since Year '+t.bought[c.id]+'</span>':''}</span>
-    <span class="cprice"><span class="one num">${c.one?M(c.one):'—'}</span>
-      <span class="tail num ${c.tail<0?'credit':''}">${c.tail?M(c.tail)+'/yr':'no tail'}</span></span></button>`;}
+    <span><span class="cname">${c.n}</span><span class="cdesc">${c.d}</span>
+      ${c.req?`<span class="cflag req">${dependencyText(c)}</span>`:''}
+      ${c.rest?'<span class="cflag rest">Starting restricted gift eligible</span>':''}
+      ${timingText(c,t,year)?`<span class="${c.rev?'cflag rev':c.id===12?'cflag rest':'card-timing'}">${timingText(c,t,year)}</span>`:''}
+      ${owned?`<span class="cflag rev">Purchased Year ${t.bought[c.id]} · annual effect continues</span>`:''}</span>
+    <span class="cprice"><span class="cost-label">Startup cost · paid once</span><span class="one num">${M(c.one)}</span>
+      <span class="cost-label">${c.tail<0?'Annual savings':'Annual expense'}</span><span class="tail num ${c.tail<0?'credit':''}">${M(Math.abs(c.tail))}/yr</span></span></button>`;
+}
 
 function pick(id){
   if(ME&&S&&Object.prototype.hasOwnProperty.call(ME.locked,S.round))return;
@@ -730,7 +757,7 @@ function drop(id){if(ME&&S&&Object.prototype.hasOwnProperty.call(ME.locked,S.rou
 async function lockIn(){
   if(BUSY||Object.prototype.hasOwnProperty.call(ME.locked,S.round))return;
   const dn=($('decName')||{}).value||'';
-  if(!dn.trim()){alert('Name the decider for this year before locking in. A table decision needs someone who owns it.');return}
+  if(!dn.trim()){alert('Name the decider for this year before submitting. A table decision needs someone who owns it.');return}
   BUSY=true;
   const t=await sget(K.team(ME.id))||ME;
   t.pending=[...CART];t.locked[S.round]=[...CART];
@@ -774,21 +801,21 @@ async function unlockYear(){
 /* ── results ─────────────────────────────────────────────── */
 function resultPanel(t,L){
   return `<div class="panel">
-   <div class="eyebrow">Year ${L.year} closed</div><h2>What happened</h2>
+   <div class="eyebrow">Year ${L.year} complete</div><h2>What happened</h2>
    <div class="res">
-     <div class="line"><span>Operating revenue</span><b class="amt num">${M(L.rev)}</b></div>
-     <div class="line"><span>Operating expense including committed tails</span><b class="amt num">${M(L.exp)}</b></div>
+     <div class="line"><span>Annual operating revenue</span><b class="amt num">${M(L.rev)}</b></div>
+     <div class="line"><span>Annual operating expenses</span><b class="amt num">${M(L.exp)}</b></div>
      <div class="line" style="border-top:1px solid rgba(255,255,255,.14);padding-top:7px">
-       <span><b>Operating margin</b></span><b class="amt num ${L.margin<0?'neg':'pos'}">${M(L.margin)}</b></div>
+       <span><b>Operating result</b></span><b class="amt num ${L.margin<0?'neg':'pos'}">${M(L.margin)}</b></div>
    </div>
-   ${L.purchases.length?`<div class="res"><b>Investments made</b>
+   ${L.purchases.length?`<div class="res"><b>Investments purchased</b>
      ${L.purchases.map(p=>`<div class="line"><span>${p.n}<span style="color:#8f87b5"> · ${p.src}</span></span>
        <b class="amt num">${M(-p.cost)}${p.tail?' <span style="color:var(--orange)">'+M(p.tail)+'/yr</span>':''}</b></div>`).join('')}</div>`:''}
    ${L.events.map(e=>`<div class="ev"><h3>${e.n}</h3>
      <div class="res"><div class="line"><span><b>${e.hd}</b></span>
        ${e.cash?`<b class="amt num ${e.cash<0?'neg':'pos'}">${M(e.cash)}</b>`:''}</div>
        ${e.notes.map(n=>`<div style="color:#a79fc4;padding:3px 0">${n}</div>`).join('')}</div></div>`).join('')}
-   <div class="res"><div class="line"><span><b>Liquid reserve at close</b></span><b class="amt num">${M(L.reserve)}</b></div>
+   <div class="res"><div class="line"><span><b>Operating reserve at year-end</b></span><b class="amt num">${M(L.reserve)}</b></div>
      <div class="line"><span>Days cash on hand</span><b class="amt num ${L.days<60?'neg':''}">${Math.round(L.days)}</b></div></div>
    ${L.flags.map(f=>`<div class="alertbox">${f}</div>`).join('')}
   </div>`;}
@@ -796,43 +823,44 @@ function resultPanel(t,L){
 function finalCard(t){
   const s=score(t);
   return `<div class="panel"><div class="eyebrow">Final position · ${t.name}</div>
-   <h2>${s.total.toFixed(1)} of 100</h2>
+   <h2>Total score: ${s.total.toFixed(1)}</h2>
    <div class="scorecard">
     ${[['Financial health',s.fin,35],['Mission and outcomes',s.mis,30],['Strategic position',s.str,20],['Resilience',s.res,15]]
      .map(([l,v,m])=>`<div class="sc"><div class="lab">${l}</div><div class="val num">${v.toFixed(1)}</div>
       <div class="of num">of ${m}</div><div class="bar"><i style="width:${v/m*100}%"></i></div></div>`).join('')}
    </div>
    <div class="res" style="margin-top:16px">
-    <div class="line"><span>Liquid reserve</span><b class="amt num">${M(t.reserve)}</b></div>
-    <div class="line"><span>Days cash on hand · lowest reached</span><b class="amt num">${Math.round(daysCash(t))} · ${Math.round(t.minDays)}</b></div>
-    <div class="line"><span>Three-year cumulative margin</span><b class="amt num ${t.cumMargin<0?'neg':'pos'}">${M(t.cumMargin)}</b></div>
+    <div class="line"><span>Operating reserve</span><b class="amt num">${M(t.reserve)}</b></div>
+    <div class="line"><span>Days cash on hand · current / lowest recorded</span><b class="amt num">${Math.round(daysCash(t))} · ${Math.round(t.minDays)}</b></div>
+    <div class="line"><span>Cumulative operating result over three years</span><b class="amt num ${t.cumMargin<0?'neg':'pos'}">${M(t.cumMargin)}</b></div>
     <div class="line"><span>Enrollment index against Year 0</span><b class="amt num">${(t.enroll*100).toFixed(1)}%</b></div>
-    <div class="line"><span>Unspent Investment Fund</span><b class="amt num">${M(t.fund)}</b></div>
+    <div class="line"><span>Unspent investment fund</span><b class="amt num">${M(t.fund)}</b></div>
     <div class="line"><span>Accreditation citations</span><b class="amt num ${t.cite?'neg':''}">${t.cite}</b></div>
    </div>
    ${t.adj.length?`<div class="notebox"><b>Facilitator adjustments</b>${t.adj.map(a=>`<div>${a.pts>0?'+':''}${a.pts} pts · ${a.note}</div>`).join('')}</div>`:''}
    <div class="res" style="margin-top:16px"><b>Who decided what</b>
     ${[1,2,3].map(y=>t.deciders[y]?`<div class="line"><span>Year ${y} · ${t.deciders[y]}${t.dissent[y]?` <span style="color:#8f87b5">· argued against: ${t.dissent[y]}</span>`:''}</span>
-      <b class="amt num">${(t.locked[y]||[]).length} commitments</b></div>`:'').join('')}
+      <b class="amt num">${(t.locked[y]||[]).length} investments submitted</b></div>`:'').join('')}
     <div style="color:#a79fc4;padding-top:8px">Each decider inherited the year before it. Ask the table which inherited position was hardest to accept, and whether the person who argued against the consensus turned out to be right.</div>
    </div>
-   ${t.fund>2000000?`<div class="notebox">You closed with ${M(t.fund)} uncommitted. That balance scores in financial health and in none of the other three categories. Preserving capital is not the same as deploying it.</div>`:''}
+   ${t.fund>2000000?`<div class="notebox">You closed with ${M(t.fund)} uncommitted. That balance scores in financial health and in none of the other three categories. Unspent investment funds support financial health but do not add mission, strategic position or resilience points.</div>`:''}
   </div>`;}
 
 let BOARD=[];
 function boardTable(mine){
   if(!BOARD.length)return'';
   return `<div class="panel"><div class="eyebrow">Standings</div><h2>After Year ${S.round}</h2>
-   <table><thead><tr><th></th><th>Table</th><th class="r">Financial</th><th class="r">Mission</th>
-   <th class="r">Strategic</th><th class="r">Resilience</th><th class="r">Total</th></tr></thead><tbody>
+   <table><thead><tr><th></th><th>Table</th><th class="r">Financial health</th><th class="r">Mission and outcomes</th>
+   <th class="r">Strategic position</th><th class="r">Resilience</th><th class="r">Total</th></tr></thead><tbody>
    ${BOARD.map((b,i)=>`<tr class="${b.id===mine?'me':''}"><td class="rank">${i+1}</td><td>${b.name}</td>
     <td class="r num">${b.s.fin.toFixed(1)}</td><td class="r num">${b.s.mis.toFixed(1)}</td>
     <td class="r num">${b.s.str.toFixed(1)}</td><td class="r num">${b.s.res.toFixed(1)}</td>
     <td class="r num"><b>${b.s.total.toFixed(1)}</b></td></tr>`).join('')}
    </tbody></table></div>`;}
 
+function phaseLabel(phase){return {brief:'Deliberation open',locked:'Deliberation closed',reveal:'Events shown',resolved:'Year complete',final:'Final'}[phase]||phase;}
 function chrome(t){
-  const ph={brief:'Deliberation open',locked:'Locked',reveal:'Events revealing',resolved:'Round closed',final:'Final'}[S.phase]||S.phase;
+  const ph=phaseLabel(S.phase);
   return `<div class="topbar"><span class="brand">Margin <span>and Mission</span></span>
    <span class="pill">${t?t.name:'Facilitator'}</span>
    <span class="pill warn">Year ${S.round} of 3</span>
@@ -855,25 +883,25 @@ async function renderFac(){
   const submitted=TEAMS.filter(t=>t.locked[S.round]).length;
   app.innerHTML=chrome(null)+`<div class="wrap">
    <div class="panel"><div class="eyebrow">Facilitator console</div>
-    <h2>Year ${S.round} · ${S.phase}</h2>
+    <h2>Year ${S.round} · ${phaseLabel(S.phase)}</h2>
      <div class="fgrid">${TEAMS.map(t=>{const inn=!!t.locked[S.round];
       return `<div class="tstat"><b>${t.name}</b>
-        <span class="dot ${inn?'in':''}"></span>${inn?(t.locked[S.round].length+' committed'):'deliberating'}
+        <span class="dot ${inn?'in':''}"></span>${inn?(t.locked[S.round].length+' investments submitted'):'deliberating'}
         <div class="mini" style="margin-top:6px"><span class="dot ${t.joined?'in':''}"></span>${t.joined?(t.cfo?'CFO joined · '+t.cfo:'CFO joined'):'Waiting for CFO'}</div>
-        <div class="mini" style="margin-top:6px">Fund ${Mk(t.fund)} · margin ${Mk(revenueOf(t,S.round)-expenseOf(t))}
-        <br>${Math.round(daysCash(t))} days cash${t.cite?' · '+t.cite+' citation(s)':''}</div>
+        <div class="mini" style="margin-top:6px">Investment fund ${Mk(t.fund)} · operating result ${Mk(revenueOf(t,S.round)-expenseOf(t))}
+        <br>${Math.round(daysCash(t))} days cash on hand${t.cite?' · '+t.cite+' citation(s)':''}</div>
         <button class="btn ghost" style="margin-top:8px;padding:7px;font-size:12px" onclick="facEnter(${t.id})">Enter for this table</button></div>`}).join('')}
     </div>
     <div class="ctl">
-      ${S.phase==='brief'?`<button class="btn" onclick="setPhase('locked')">Lock all decisions (${submitted}/${S.tables} in)</button>`:''}
-      ${S.phase==='locked'?`<button class="btn alert" onclick="setPhase('reveal')">Reveal Year ${S.round} events</button>`:''}
-      ${S.phase==='reveal'?`<button class="btn" onclick="doResolve()">Resolve Year ${S.round}</button>`:''}
+      ${S.phase==='brief'?`<button class="btn" onclick="setPhase('locked')">Close deliberation (${submitted}/${S.tables} tables submitted)</button>`:''}
+      ${S.phase==='locked'?`<button class="btn alert" onclick="setPhase('reveal')">Show Year ${S.round} events</button>`:''}
+      ${S.phase==='reveal'?`<button class="btn" onclick="doResolve()">Calculate Year ${S.round} results</button>`:''}
       ${S.phase==='resolved'&&S.round<3?`<button class="btn" onclick="nextRound()">Open Year ${S.round+1}</button>`:''}
       ${S.phase==='resolved'&&S.round===3?`<button class="btn" onclick="setPhase('final')">Publish final standings</button>`:''}
       <button class="btn ghost" onclick="loadTeams().then(render)">Refresh</button>
       <button class="btn ghost" onclick="hardReset()">Reset session</button>
     </div>
-    <p class="mini">Locking with tables still out is fine. A table that has not locked commits nothing that year, which is itself a decision. Use "Enter for this table" if a device fails.</p>
+    <p class="mini">Closing deliberation with outstanding submissions records no new investments for those tables that year. Use "Enter for this table" if a device fails.</p>
    </div>
 
    ${S.phase==='locked' && S.round===1?`<div class="panel"><div class="eyebrow">Mid-year · read aloud now, before events</div>
@@ -882,8 +910,8 @@ async function renderFac(){
      <div class="notebox">${MIDYEAR[S.round].opts}</div>
      <h3 style="font-size:14px;margin-top:22px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)">Board Ask · what each mentor should know before ruling</h3>
      <p class="mini">The mentor plays the board chair. Fellows must come to them in person. Credibility is a balance-sheet phenomenon before it is a rhetorical one, and these are the numbers that decide it. Apply the ruling through the override panel below.</p>
-     <table style="margin-top:10px"><thead><tr><th>Table</th><th class="r">Days cash</th><th class="r">Margin</th>
-       <th class="r">Profitable years</th><th>Board's read</th></tr></thead><tbody>
+     <table style="margin-top:10px"><thead><tr><th>Table</th><th class="r">Days cash on hand</th><th class="r">Operating result</th>
+       <th class="r">Years with operating surplus</th><th>Board's read</th></tr></thead><tbody>
        ${TEAMS.map(t=>{const b=boardCase(t);return `<tr><td>${t.name}</td><td class="r num">${b.d}</td>
          <td class="r num ${b.mg<0?'neg':'pos'}">${Mk(b.mg)}</td><td class="r num">${b.delivered}/${S.round-1}</td>
          <td style="font-size:13px;color:#a79fc4">${b.read}</td></tr>`}).join('')}
@@ -903,8 +931,8 @@ async function renderFac(){
     </div>
     <div style="display:grid;grid-template-columns:1fr 160px auto;gap:10px;align-items:end;margin-top:10px">
      <select id="cashT">${TEAMS.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select>
-     <input id="cashV" type="number" placeholder="± reserve $">
-     <button class="btn ghost" style="width:auto;padding:11px 18px;margin:0" onclick="applyCash()">Adjust reserve</button>
+     <input id="cashV" type="number" placeholder="± operating reserve $">
+     <button class="btn ghost" style="width:auto;padding:11px 18px;margin:0" onclick="applyCash()">Adjust operating reserve</button>
     </div>
    </div>
 
@@ -941,12 +969,12 @@ async function applyAdj(){
 async function applyCash(){
   const id=+$('cashT').value,v=+$('cashV').value;
   if(!v)return;
-  const t=await sget(K.team(id));t.reserve+=v;t.adj.push({pts:0,note:'Reserve adjusted '+M(v)});
+  const t=await sget(K.team(id));t.reserve+=v;t.adj.push({pts:0,note:'Operating reserve adjusted '+M(v)});
   await sset(K.team(id),t);await loadTeams();render();}
 
 async function facEnter(id){
   const t=await sget(K.team(id));
-  const picks=prompt(`Enter card numbers for ${t.name}, Year ${S.round}, comma separated.\n\nExample: 4, 12, 15`,'');
+  const picks=prompt(`Enter card numbers for ${t.name}, Year ${S.round}, comma separated.\n\nExample: 3, 10, 12`,'');
   if(picks===null)return;
   const ids=picks.split(',').map(x=>parseInt(x.trim())).filter(x=>CARD(x)&&!t.held.includes(x));
   t.pending=ids;t.locked[S.round]=ids;
@@ -966,8 +994,8 @@ function renderProj(){
      ${EVENTS[S.round].map(e=>`<div class="ev"><h3 style="font-size:26px">${e.n}</h3><p style="font-size:18px">${e.d}</p></div>`).join('')}</div>`;return}
   app.innerHTML=`<div class="proj"><div class="eyebrow">${S.phase==='final'?'Final standings':'After Year '+S.round}</div>
    <h1>Margin and Mission</h1>
-   <table><thead><tr><th></th><th>Table</th><th class="r">Fin</th><th class="r">Mission</th>
-   <th class="r">Strategic</th><th class="r">Resil.</th><th class="r">Total</th></tr></thead><tbody>
+   <table><thead><tr><th></th><th>Table</th><th class="r">Financial health</th><th class="r">Mission and outcomes</th>
+   <th class="r">Strategic position</th><th class="r">Resilience</th><th class="r">Total</th></tr></thead><tbody>
    ${BOARD.map((b,i)=>`<tr><td class="rank">${i+1}</td><td>${b.name}</td>
     <td class="r num">${b.s.fin.toFixed(1)}</td><td class="r num">${b.s.mis.toFixed(1)}</td>
     <td class="r num">${b.s.str.toFixed(1)}</td><td class="r num">${b.s.res.toFixed(1)}</td>
