@@ -5,8 +5,8 @@
 
 <style>
 :root{
-  --indigo:#231262; --indigo-deep:#170b42; --indigo-line:#3a2a7a;
-  --cyan:#54C8E8; --orange:#FFA300; --coral:#FF5959;
+  --indigo:#211261; --indigo-deep:#170b42; --indigo-line:#3a2a7a;
+  --cyan:#54C8E8; --orange:#ffa400; --coral:#ff595a;
   --paper:#F7F4EC; --paper-rule:#ddd6c4; --ink:#1a1526; --ink-soft:#5d5670;
   --ok:#3FBF8F;
 }
@@ -57,7 +57,7 @@ h1,h2,h3{font-weight:800;letter-spacing:-.02em;margin:0}
 .card:hover:not(:disabled){background:rgba(84,200,232,.06)}
 .card:disabled{opacity:.34;cursor:not-allowed}
 .card.on{background:rgba(84,200,232,.11);box-shadow:inset 3px 0 0 var(--cyan)}
-.card.owned{background:rgba(63,191,143,.08);box-shadow:inset 3px 0 0 var(--ok);opacity:.72;cursor:default}
+.card.owned{background:rgba(63,191,143,.08);box-shadow:inset 3px 0 0 var(--ok);opacity:1;cursor:default}
 .cnum{font-size:12px;color:var(--indigo-line);font-weight:600;padding-top:3px}
 .card.on .cnum,.card.owned .cnum{color:var(--cyan)}
 .cname{display:block;font-size:15px;font-weight:600;line-height:1.25}
@@ -160,6 +160,12 @@ select,input{background:var(--indigo-deep);border:1px solid var(--indigo-line);c
 @media(max-width:960px){.grid{grid-template-columns:1fr}
   .ledgers{grid-template-columns:1fr}.scorecard{grid-template-columns:repeat(2,1fr)}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.cost-label{display:block;font-size:12px;color:#d5cfea;margin-top:6px}
+.card-timing{display:block;font-size:13px;color:#d5cfea;line-height:1.5;margin-top:7px}
+.cdesc{color:#c6bfe0}.cnum{color:#b1b1b1}.card:disabled.owned{opacity:1}
+.finance-dock{position:sticky;top:64px;z-index:40;display:flex;flex-wrap:wrap;gap:10px 24px;background:var(--indigo);border:1px solid var(--cyan);padding:12px;margin:18px 0;font-size:14px}
+.finance-dock b{display:block;margin-top:3px}.planning{padding:16px;background:var(--indigo);border:1px solid var(--indigo-line);margin:18px 0}.planning summary{cursor:pointer;font-weight:600}.planning caption{text-align:left;padding:10px 0}.plan-scroll{overflow-x:auto}
+@media(max-width:600px){.card{grid-template-columns:24px 1fr;gap:8px}.cprice{grid-column:2;text-align:left;white-space:normal}.cost-label{display:inline-block;margin-right:8px}.cprice .tail{display:inline;margin-right:12px}.finance-dock{top:0;font-size:12px}.ledger .lrow{gap:12px}.wrap{padding:0 12px 40px}}
 </style>
 
 <div id="app"></div>
@@ -373,8 +379,9 @@ function resolveRound(t,year){
   t.pending.forEach(id=>{
     const c=CARD(id);let src='Fund';
     let cost=c.one;
-    if(c.rest && t.restricted>=cost){t.restricted-=cost;src='Restricted gift';}
-    else t.fund-=cost;
+    const restricted=c.rest?Math.min(t.restricted,cost):0;
+    t.restricted-=restricted;t.fund-=cost-restricted;
+    if(restricted)src=restricted===cost?'Restricted gift':`Restricted gift ${M(restricted)} + Fund ${M(cost-restricted)}`;
     if(c.resv){t.reserve+=c.resv;}
     t.tail+=c.tail;t.held.push(id);t.bought[id]=year;
     t.mPts+=c.m;t.sPts+=c.s;t.rPts+=c.r;
@@ -503,7 +510,7 @@ function renderPicker(){
       <button class="role" onclick="pickFac()"><b>I am the facilitator</b><span>Run rounds, reveal events, resolve, override</span></button>
       <button class="role" onclick="pickProj()"><b>Projection display</b><span>Read-only screen for the room</span></button>
     </div>${serverBadge()}
-    <p class="mini" style="margin-top:10px">Version: Trial revision · ${CARDS.length} cards · ${Object.values(EVENTS).reduce((n,events)=>n+events.length,0)} events · October 16, 2026</p></div>`;}
+    <p class="mini" style="margin-top:10px">Version: Financial clarity · ${CARDS.length} cards · ${Object.values(EVENTS).reduce((n,events)=>n+events.length,0)} events · November 2, 2026</p></div>`;}
 
 async function pickTeam(){
   const st=await sget(K.state);
@@ -560,31 +567,70 @@ function submitFacLogin(){
 function pickProj(){ROLE='proj';loop();}
 
 /* ── team console ────────────────────────────────────────── */
-function ledgerStrip(t,commitments=CART){
-  const yr=Math.max(1,S?S.round:1);
-  const rev=revenueOf(t,yr),exp=expenseOf(t),mg=rev-exp;
-  const cartTail=commitments.reduce((a,id)=>a+CARD(id).tail,0);
-  const projMg=mg-cartTail;
-  const cartOne=commitments.reduce((a,id)=>a+CARD(id).one,0);
-  const fill=projMg<0?clamp(-projMg/2000000,.08,1)*100:0;
-  return `<div class="ledgers">
-   <div class="ledger">
-    <h3>Strategic Investment Fund · one-time</h3>
-    <div class="big num">${Mk(t.fund-cartOne)}</div>
-     <div class="sub">${commitments.length?'after '+M(cartOne)+' committed this round':'uncommitted'}</div>
-    <div class="lrow"><span>Restricted gift, rural and community health</span><b class="num">${Mk(t.restricted)}</b></div>
-    <div class="lrow"><span>Liquid operating reserve</span><b class="num">${Mk(t.reserve)}</b></div>
-    <div class="lrow"><span>Days cash on hand</span><b class="num">${Math.round(daysCash(t))}</b></div>
-   </div>
-   <div class="ledger">
-    <div class="fill" style="height:${fill}%"></div>
-    <h3>Operating margin · recurring, every year</h3>
-    <div class="big num ${projMg<0?'neg':''}">${Mk(projMg)}</div>
-    <div class="sub">${projMg<0?'structural deficit — draws on reserve annually':'annual surplus'}</div>
-    <div class="lrow"><span>Operating revenue</span><b class="num">${Mk(rev)}</b></div>
-    <div class="lrow"><span>Base expense</span><b class="num">${Mk(BASE.expense)}</b></div>
-    <div class="lrow"><span>Committed recurring tails${cartTail?' incl. this round':''}</span><b class="num" style="color:${(t.tail+cartTail)>0?'#c1440e':'inherit'}">${Mk(t.tail+cartTail)}</b></div>
-   </div></div>`;}
+// Preview only known commitments. Never resolve or reveal future events here.
+function financialPreview(t, ids, year){
+  const draft=ids.filter(id=>CARD(id)&&!has(t,id));
+  const next={...t,held:[...t.held],bought:{...t.bought}};
+  let startup=0,fromRest=0,fromFund=0,newAnnual=0;
+  draft.forEach(id=>{
+    const c=CARD(id),restricted=c.rest?Math.min(next.restricted,c.one):0;
+    startup+=c.one;fromRest+=restricted;fromFund+=c.one-restricted;
+    next.restricted-=restricted;next.fund-=c.one-restricted;
+    next.tail+=c.tail;newAnnual+=c.tail;next.held.push(id);next.bought[id]=year;
+  });
+  const revenue=revenueOf(next,year),expense=expenseOf(next);
+  return {team:next,startup,fromRest,fromFund,newAnnual,revenue,expense,margin:revenue-expense};
+}
+
+function dependencyText(c){
+  if(!c.req)return '';
+  const name=CARD(c.req).n;
+  return c.id===4?`Insurance pays only with ${name}`:`Full program revenue requires ${name}; otherwise 60% of stated revenue`;
+}
+
+function timingText(c,t,year){
+  const bought=has(t,c.id)?t.bought[c.id]:year;
+  if(c.rev){
+    const begins=bought+c.lag;
+    return `Annual revenue ${M(c.rev)} begins Year ${begins}${begins>3?' · after the three-round exercise':''}${c.id===5?' with governance':c.id===6?' before enrollment adjustment':''}`;
+  }
+  if(c.id===13)return `Additional intelligence from Year ${bought+1}${bought+1>3?' · after the exercise':''}. Points and event protection apply when purchased.`;
+  return 'No annual revenue modeled. Points and event protection apply when purchased.';
+}
+
+function planningYears(t,ids,year){
+  const preview=financialPreview(t,ids,year);
+  return `<details class="planning"><summary>Three-year view of known commitments</summary>
+    <p class="mini">Existing investments plus these selections. Enrollment held at its current level. Excludes future events, board rulings and future purchases.</p>
+    <div class="plan-scroll"><table><caption>Operating plan before future events</caption><thead><tr><th>Year</th><th class="r">Revenue</th><th class="r">Annual expenses</th><th class="r">Surplus / deficit</th></tr></thead><tbody>
+    ${[1,2,3].map(y=>{
+      if(y<year){const l=t.log.find(x=>x.year===y);return l?`<tr><td>Year ${y} · closed</td><td class="r num">${Mk(l.rev)}</td><td class="r num">${Mk(l.exp)}</td><td class="r num">${Mk(l.margin)}</td></tr>`:'';}
+      const rev=revenueOf(preview.team,y),exp=expenseOf(preview.team);
+      return `<tr><td>Year ${y} · plan</td><td class="r num">${Mk(rev)}</td><td class="r num">${Mk(exp)}</td><td class="r num ${rev<exp?'neg':''}">${Mk(rev-exp)}</td></tr>`;
+    }).join('')}</tbody></table></div></details>`;
+}
+
+function ledgerStrip(t,commitments=[]){
+  const yr=Math.max(1,S?S.round:1),p=financialPreview(t,commitments,yr);
+  const isClosed=t.log.some(l=>l.year===yr);
+  return `<div class="ledgers" aria-label="Financial position">
+   <div class="ledger"><h3>Investment fund · one-time balance</h3><div class="big num">${Mk(p.team.fund)}</div>
+    <div class="sub">Carries forward. No automatic annual refill.</div>
+    <div class="lrow"><span>Startup from this fund</span><b class="num">${M(p.fromFund)}</b></div></div>
+   <div class="ledger"><h3>Operating result · Year ${yr}</h3><div class="big num ${p.margin<0?'neg':''}">${Mk(p.margin)}</div>
+    <div class="sub">${p.margin<0?'Annual deficit':'Annual surplus'} · ${isClosed?'current annual position after events':'before this year’s events'}</div>
+    <div class="lrow"><span>Annual revenue</span><b class="num">${Mk(p.revenue)}</b></div>
+    <div class="lrow"><span>Base annual expenses</span><b class="num">${Mk(BASE.expense)}</b></div>
+    <div class="lrow"><span>Existing annual commitments</span><b class="num">${M(t.tail)}</b></div>
+    <div class="lrow"><span>Annual expense added by selections</span><b class="num">${M(p.newAnnual)}</b></div></div>
+   <div class="ledger"><h3>Restricted gift · eligible startup only</h3><div class="big num">${Mk(p.team.restricted)}</div>
+    <div class="sub">Rural-track startup is eligible. Annual expenses remain in operations.</div>
+    <div class="lrow"><span>Startup from restricted gift</span><b class="num">${M(p.fromRest)}</b></div></div>
+   <div class="ledger"><h3>Operating reserve · cash held</h3><div class="big num">${Mk(t.reserve)}</div>
+    <div class="sub">Recorded cash balance. Operating results and events change this at close.</div>
+    <div class="lrow"><span>Recorded days cash on hand</span><b class="num">${Math.round(daysCash(t))}</b></div></div>
+   </div>`;
+}
 
 function renderTeam(){
   if(!S){app.innerHTML='<div class="picker"><p>Waiting for the facilitator…</p></div>';return}
@@ -618,19 +664,16 @@ function renderTeam(){
 
   // deliberation
   const br=BRIEFS[rd];
-  const cartOne=commitments.reduce((a,id)=>a+CARD(id).one,0);
-  const cartTail=commitments.reduce((a,id)=>a+CARD(id).tail,0);
-  const restEligible=commitments.filter(id=>CARD(id).rest).reduce((a,id)=>a+CARD(id).one,0);
-  const fromRest=Math.min(restEligible,t.restricted);
-  const fromFund=cartOne-fromRest;
-  const over=fromFund>t.fund;
-  const mg=revenueOf(t,rd)-expenseOf(t)-cartTail;
+  const preview=financialPreview(t,commitments,rd);
+  const cartOne=preview.startup,cartTail=preview.newAnnual;
+  const fromRest=preview.fromRest,fromFund=preview.fromFund;
+  const over=preview.team.fund<0,mg=preview.margin;
 
   let warn='';
   commitments.forEach(id=>{const c=CARD(id);
     if(c.req&&!commitments.includes(c.req)&&!has(t,c.req))
-      warn+=`<div class="alertbox"><b>Card ${c.id}</b> — ${c.reqTxt}. You do not hold card ${c.req}. This is permitted. It is also the most common way institutions waste money.</div>`;});
-  if(mg<0)warn+=`<div class="alertbox"><b>Structural deficit.</b> These recurring tails put annual operating margin at ${M(mg)}. The Investment Fund cannot cover a recurring obligation. The reserve will absorb it every year from now on.</div>`;
+      warn+=`<div class="alertbox"><b>Card ${c.id}</b> — ${dependencyText(c)}. This prerequisite is not held or selected. You may proceed with the stated consequence.</div>`;});
+  if(mg<0)warn+=`<div class="alertbox"><b>Structural deficit.</b> These annual commitments put this year’s expected operating result at ${M(mg)}. The Investment Fund cannot cover a recurring obligation. A continuing deficit draws on reserves; future revenue and events can change the result.</div>`;
   if(over)warn+=`<div class="alertbox"><b>Insufficient one-time funds.</b> ${M(fromFund-t.fund)} over the available Fund balance.</div>`;
 
   app.innerHTML=chrome(t)+`<div class="wrap">
@@ -642,6 +685,9 @@ function renderTeam(){
      and an enrollment index of ${(t.enroll*100).toFixed(1)}%. You may disagree with all of it. You cannot unspend it.</p>
    </div>`:''}
    ${ledgerStrip(t,commitments)}
+   ${planningYears(t,commitments,rd)}
+   <div class="finance-dock" aria-label="Selection totals" aria-live="polite"><span>Investment fund <b class="num">${Mk(preview.team.fund)}</b></span><span>Year ${rd} operating result <b class="num">${Mk(mg)}</b></span><span>Restricted gift <b class="num">${Mk(preview.team.restricted)}</b></span></div>
+   <p class="mini">${CARDS.length} choices across ${CATS.length} categories. Categories organize the menu; you do not need to choose from every category. Annual expenses continue in later rounds.</p>
    <div class="panel">
      <div class="eyebrow">Environmental signals · Year ${rd}</div>
      <h2>What your intelligence tells you</h2>
@@ -659,12 +705,12 @@ function renderTeam(){
       ${commitments.length?commitments.map(id=>`<div class="cartrow"><span>${CARD(id).n}</span>
         <span style="white-space:nowrap"><b class="num">${M(CARD(id).one)}</b>
         ${isLocked?'':`<button onclick="drop(${id})" aria-label="Remove">×</button>`}</span></div>`).join('')
-        :'<p class="mini">Nothing selected. Holding funds is a legitimate strategy and scores in exactly one of four categories.</p>'}
-      <div class="tot head"><span>One-time cost</span><b class="num">${M(cartOne)}</b></div>
+        :'<p class="mini">Nothing selected. Unspent investment funds carry forward; existing annual commitments continue.</p>'}
+      <div class="tot head"><span>Startup cost</span><b class="num">${M(cartOne)}</b></div>
       ${fromRest?`<div class="tot"><span style="color:var(--orange)">…drawn from restricted gift</span><b class="num" style="color:var(--orange)">${M(fromRest)}</b></div>`:''}
-      <div class="tot"><span>Fund balance after</span><b class="num" style="color:${over?'var(--coral)':'inherit'}">${M(t.fund-fromFund)}</b></div>
-      <div class="tot"><span>New recurring tail</span><b class="num" style="color:var(--orange)">${M(cartTail)}/yr</b></div>
-      <div class="tot"><span>Resulting margin</span><b class="num ${mg<0?'neg':'pos'}">${M(mg)}/yr</b></div>
+      <div class="tot"><span>Investment fund remaining</span><b class="num" style="color:${over?'var(--coral)':'inherit'}">${M(t.fund-fromFund)}</b></div>
+      <div class="tot"><span>New annual expense</span><b class="num" style="color:var(--orange)">${M(cartTail)}/yr</b></div>
+      <div class="tot"><span>Operating result before events</span><b class="num ${mg<0?'neg':'pos'}">${M(mg)}/yr</b></div>
       ${warn}
       <div style="margin-top:16px;border-top:2px solid var(--indigo-line);padding-top:14px">
         <h3 style="margin-bottom:4px">Who decided</h3>
@@ -679,24 +725,25 @@ function renderTeam(){
         ?`<button class="btn locked" disabled>Locked In</button>
           <button class="btn alert" onclick="unlockYear()">Unlock Year ${rd}</button>`
         :`<button class="btn" ${over?'disabled':''} onclick="lockIn()">Lock in Year ${rd}</button>`}
-      <p class="mini">The decider states the reasoning aloud before this is entered. Locking is final for this round.</p>
+      <p class="mini">The decider states the reasoning aloud before this is entered. You can reopen your submission while deliberation remains open.</p>
     </div>
    </div></div>`;}
 
 function cardEl(c,t,commitments=CART,isLocked=false){
-  const owned=has(t,c.id),on=commitments.includes(c.id);
+  const owned=has(t,c.id),on=commitments.includes(c.id),year=S.round;
   const cls=owned?'owned':on?'on':'';
-  let flags='';
-  if(c.req)flags+=`<span class="cflag req">${c.reqTxt}</span>`;
-  if(c.rest)flags+=`<span class="cflag rest">Restricted gift eligible</span>`;
-  if(c.rev)flags+=`<span class="cflag rev">+${M(c.rev)}/yr from year ${c.lag?'+'+c.lag:'1'}</span>`;
-  if(c.lag&&!c.rev)flags+=`<span class="cflag rest">${c.lag}-year lag to value</span>`;
-  return `<button class="card ${cls}" ${owned||isLocked?'disabled':''} onclick="pick(${c.id})">
+  const gift=c.rest?Math.min(t.restricted,c.one):0;
+  const source=gift===c.one&&gift?'Restricted gift':gift?`Restricted gift ${M(gift)} + investment fund ${M(c.one-gift)}`:'Investment fund';
+  return `<button class="card ${cls}" ${owned||isLocked?'disabled':''} onclick="pick(${c.id})" aria-pressed="${owned||on}">
     <span class="cnum num">${String(c.id).padStart(2,'0')}</span>
-    <span><span class="cname">${c.n}</span><span class="cdesc">${c.d}</span>${flags}
-      ${owned?'<span class="cflag rev">Held since Year '+t.bought[c.id]+'</span>':''}</span>
-    <span class="cprice"><span class="one num">${c.one?M(c.one):'—'}</span>
-      <span class="tail num ${c.tail<0?'credit':''}">${c.tail?M(c.tail)+'/yr':'no tail'}</span></span></button>`;}
+    <span><span class="cname">${c.n}</span><span class="cdesc">${c.d}</span>
+      ${c.req?`<span class="cflag req">${dependencyText(c)}</span>`:''}
+      <span class="card-timing">${timingText(c,t,year)}</span>
+      ${c.one?`<span class="card-timing">Startup paid from: ${owned?'funding source recorded in purchase results':source}</span>`:''}
+      ${owned?`<span class="cflag rev">Purchased Year ${t.bought[c.id]} · annual expense continues</span>`:''}</span>
+    <span class="cprice"><span class="cost-label">Startup · paid once</span><span class="one num">${M(c.one)}</span>
+      <span class="cost-label">${c.tail<0?'Annual savings':'Annual expense'}</span><span class="tail num ${c.tail<0?'credit':''}">${M(Math.abs(c.tail))}/yr</span></span></button>`;
+}
 
 function pick(id){
   if(ME&&S&&Object.prototype.hasOwnProperty.call(ME.locked,S.round))return;

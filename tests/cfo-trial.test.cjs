@@ -326,3 +326,58 @@ test('CFO selection, locking, unlocking, and polling preserve renumbered IDs', a
   assert.deepEqual(json('ME.locked[1]'), [5, 12]);
   assert.match(app.innerHTML, /MS in Clinical AI and Health Informatics/);
 });
+
+
+test('restricted startup preview agrees with purchases and never changes the team', () => {
+  for (const gift of [1500000,250000,0]) {
+    const {run,json}=appContext();
+    run(`const t=newTeam(1); t.restricted=${gift}; const before=JSON.stringify(t); const p=financialPreview(t,[11],1);`);
+    assert.equal(run('JSON.stringify(t)===before'),true);
+    assert.equal(run('p.team.fund'),5000000-Math.max(0,500000-gift));
+    assert.equal(run('p.team.restricted'),Math.max(0,gift-500000));
+    assert.equal(run('p.margin'),2250000);
+    run('t.pending=[11]; resolveRound(t,1);');
+    assert.equal(run('t.fund'),run('p.team.fund'));
+    assert.equal(run('t.restricted'),run('p.team.restricted'));
+    assert.equal(run('t.log[0].margin'),run('p.margin'));
+    assert.equal(json('t.held').length,1);
+    // Previously purchased commitments must not be charged again in a preview.
+    assert.equal(run('financialPreview(t,[11],2).startup'),0);
+  }
+});
+
+test('three-year plan includes delayed revenue and does not leak future events', () => {
+  const {run}=appContext();
+  run("S={round:1,phase:'brief',tables:1}; const t=newTeam(1); const p=financialPreview(t,[5,12],1);");
+  assert.equal(run('p.team.fund'),3900000);
+  assert.equal(run('p.margin'),200000);
+  assert.equal(run('revenueOf(p.team,2)-expenseOf(p.team)'),3400000);
+  assert.equal(run('revenueOf(p.team,3)-expenseOf(p.team)'),3400000);
+  assert.match(run('timingText(CARD(14),t,1)'),/begins Year 3/);
+  assert.match(run('timingText(CARD(14),t,2)'),/begins Year 4.*after/);
+  assert.match(run('timingText(CARD(9),t,1)'),/begins Year 4.*after/);
+  assert.match(run('timingText(CARD(8),t,2)'),/protection apply when purchased/);
+  const html=run('planningYears(t,[5,12],1)');
+  assert.match(html,/Year 1/);assert.match(html,/Year 2/);assert.match(html,/Year 3/);
+  assert.doesNotMatch(html,/storm|Ransomware|Estate gift|OMM chair departs/);
+  assert.equal(run('t.log.length'),0);
+  run('t.enroll=.94;');
+  assert.equal(run('financialPreview(t,[6],1).revenue'),47040000*.94+3960000);
+  assert.equal(run('revenueOf(financialPreview(t,[6],1).team,2)'),47040000*.94+3960000+1400000*.85);
+});
+
+test('financial labels and named prerequisites cover all retained cards', () => {
+  const {app,run}=appContext();
+  run("S={round:1,phase:'brief',tables:1}; ME=newTeam(1); ROLE='team'; CART=[11]; renderTeam();");
+  assert.match(app.innerHTML,/15 choices/);
+  assert.match(app.innerHTML,/Investment fund.*one-time balance/);
+  assert.match(app.innerHTML,/No automatic annual refill/);
+  assert.match(app.innerHTML,/Restricted gift.*eligible startup only/);
+  assert.match(app.innerHTML,/Operating reserve.*cash held/);
+  assert.match(app.innerHTML,/Startup.*paid once/);
+  assert.match(app.innerHTML,/Annual expense/);
+  assert.match(app.innerHTML,/Full program revenue requires AI governance/);
+  assert.doesNotMatch(app.innerHTML,/lag to value|New recurring tail/);
+  assert.equal((app.innerHTML.match(/class="card /g)||[]).length,15);
+  assert.match(run('cardEl(CARD(4),ME)'),/Startup.*paid once.*\$0/s);
+});
