@@ -691,7 +691,7 @@ function renderTeam(){
    <section class="panel annual-briefing" aria-labelledby="annual-briefing-title">
      <div class="eyebrow">Annual briefing · Year ${rd}</div>
      <h2 id="annual-briefing-title">Environmental signals</h2>
-     <p class="mini">Some of this will matter. Some of it will not. Responding to every signal can exhaust the investment fund by Year 2.</p>
+     <p class="mini">Responding to every signal can exhaust the investment fund by Year 2. Please discuss your available investment options below</p>
      <div style="margin-top:14px">
      ${br.sig.map((s,i)=>`<div class="sig"><i>${String(i+1).padStart(2,'0')}</i><span>${s}</span></div>`).join('')}
      ${has(t,12)?`<div class="sig priv"><i style="color:var(--orange)">IR</i><span><b style="color:var(--orange)">Additional institutional research finding for your table:</b> ${br.priv}</span></div>`:''}
