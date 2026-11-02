@@ -356,7 +356,7 @@ test('three-year plan includes delayed revenue and does not leak future events',
   assert.match(run('timingText(CARD(14),t,1)'),/begins Year 3/);
   assert.match(run('timingText(CARD(14),t,2)'),/begins Year 4.*after/);
   assert.match(run('timingText(CARD(9),t,1)'),/begins Year 4.*after/);
-  assert.match(run('timingText(CARD(8),t,2)'),/protection apply when purchased/);
+  assert.equal(run('timingText(CARD(8),t,2)'),'');
   const html=run('planningYears(t,[5,12],1)');
   assert.match(html,/Year 1/);assert.match(html,/Year 2/);assert.match(html,/Year 3/);
   assert.doesNotMatch(html,/storm|Ransomware|Estate gift|OMM chair departs/);
@@ -366,7 +366,7 @@ test('three-year plan includes delayed revenue and does not leak future events',
   assert.equal(run('revenueOf(financialPreview(t,[6],1).team,2)'),47040000*.94+3960000+1400000*.85);
 });
 
-test('financial labels and named prerequisites cover all retained cards', () => {
+test('financial labels and compact interaction flags cover all retained cards', () => {
   const {app,run}=appContext();
   run("S={round:1,phase:'brief',tables:1}; ME=newTeam(1); ROLE='team'; CART=[11]; renderTeam();");
   assert.match(app.innerHTML,/15 choices/);
@@ -376,7 +376,12 @@ test('financial labels and named prerequisites cover all retained cards', () => 
   assert.match(app.innerHTML,/Operating reserve.*cash held/);
   assert.match(app.innerHTML,/Startup.*paid once/);
   assert.match(app.innerHTML,/Annual expense/);
-  assert.match(app.innerHTML,/Full program revenue requires AI governance/);
+  assert.match(app.innerHTML,/class="cflag req">Requires card 12 or delivers 60% revenue/);
+  assert.match(app.innerHTML,/class="cflag req">Pays out only alongside card 3/);
+  assert.match(app.innerHTML,/class="cflag rest">Restricted gift eligible/);
+  assert.match(app.innerHTML,/class="cflag rev">Annual revenue \$3,200,000 begins Year 2/);
+  assert.doesNotMatch(app.innerHTML,/Startup paid from:|Points and event protection apply|No annual revenue modeled/);
+  assert.equal((app.innerHTML.match(/Restricted gift eligible/g)||[]).length,1);
   assert.doesNotMatch(app.innerHTML,/lag to value|New recurring tail/);
   assert.equal((app.innerHTML.match(/class="card /g)||[]).length,15);
   assert.match(run('cardEl(CARD(4),ME)'),/Startup.*paid once.*\$0/s);

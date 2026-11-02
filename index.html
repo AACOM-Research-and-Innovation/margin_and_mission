@@ -584,8 +584,7 @@ function financialPreview(t, ids, year){
 
 function dependencyText(c){
   if(!c.req)return '';
-  const name=CARD(c.req).n;
-  return c.id===4?`Insurance pays only with ${name}`:`Full program revenue requires ${name}; otherwise 60% of stated revenue`;
+  return c.id===4?`Pays out only alongside card ${c.req}`:`Requires card ${c.req} or delivers 60% revenue`;
 }
 
 function timingText(c,t,year){
@@ -594,8 +593,8 @@ function timingText(c,t,year){
     const begins=bought+c.lag;
     return `Annual revenue ${M(c.rev)} begins Year ${begins}${begins>3?' · after the three-round exercise':''}${c.id===5?' with governance':c.id===6?' before enrollment adjustment':''}`;
   }
-  if(c.id===13)return `Additional intelligence from Year ${bought+1}${bought+1>3?' · after the exercise':''}. Points and event protection apply when purchased.`;
-  return 'No annual revenue modeled. Points and event protection apply when purchased.';
+  if(c.id===13)return `Additional intelligence from Year ${bought+1}${bought+1>3?' · after the exercise':''}`;
+  return '';
 }
 
 function planningYears(t,ids,year){
@@ -732,14 +731,12 @@ function renderTeam(){
 function cardEl(c,t,commitments=CART,isLocked=false){
   const owned=has(t,c.id),on=commitments.includes(c.id),year=S.round;
   const cls=owned?'owned':on?'on':'';
-  const gift=c.rest?Math.min(t.restricted,c.one):0;
-  const source=gift===c.one&&gift?'Restricted gift':gift?`Restricted gift ${M(gift)} + investment fund ${M(c.one-gift)}`:'Investment fund';
   return `<button class="card ${cls}" ${owned||isLocked?'disabled':''} onclick="pick(${c.id})" aria-pressed="${owned||on}">
     <span class="cnum num">${String(c.id).padStart(2,'0')}</span>
     <span><span class="cname">${c.n}</span><span class="cdesc">${c.d}</span>
       ${c.req?`<span class="cflag req">${dependencyText(c)}</span>`:''}
-      <span class="card-timing">${timingText(c,t,year)}</span>
-      ${c.one?`<span class="card-timing">Startup paid from: ${owned?'funding source recorded in purchase results':source}</span>`:''}
+      ${c.rest?'<span class="cflag rest">Restricted gift eligible</span>':''}
+      ${timingText(c,t,year)?`<span class="${c.rev?'cflag rev':'card-timing'}">${timingText(c,t,year)}</span>`:''}
       ${owned?`<span class="cflag rev">Purchased Year ${t.bought[c.id]} · annual expense continues</span>`:''}</span>
     <span class="cprice"><span class="cost-label">Startup · paid once</span><span class="one num">${M(c.one)}</span>
       <span class="cost-label">${c.tail<0?'Annual savings':'Annual expense'}</span><span class="tail num ${c.tail<0?'credit':''}">${M(Math.abs(c.tail))}/yr</span></span></button>`;
