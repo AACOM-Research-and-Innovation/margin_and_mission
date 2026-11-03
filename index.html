@@ -34,18 +34,23 @@ h1,h2,h3{font-weight:800;letter-spacing:-.02em;margin:0}
 /* ledger strip — the signature */
 .ledgers{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--indigo-line);
   border:1px solid var(--indigo-line);margin:22px 0}
-.ledger{background:var(--paper);color:var(--ink);padding:18px 22px;position:relative;overflow:hidden}
+.ledger{background:var(--paper);color:var(--ink);padding:14px 18px;position:relative;overflow:hidden}
 .ledger .fill{position:absolute;left:0;bottom:0;width:100%;background:rgba(255,89,89,.16);
   transition:height .6s cubic-bezier(.3,0,.2,1);pointer-events:none}
 .ledger h3{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);
   font-weight:600;position:relative}
-.ledger .big{font-size:clamp(30px,4.2vw,46px);font-weight:600;margin:6px 0 2px;position:relative;line-height:1}
+.ledger .big{font-size:clamp(26px,3.4vw,36px);font-weight:600;margin:5px 0 2px;position:relative;line-height:1}
 .ledger .big.neg{color:var(--coral)}
 .ledger .sub{font-size:13px;color:var(--ink-soft);position:relative}
 .lrow{display:flex;justify-content:space-between;border-top:1px solid var(--paper-rule);
   padding:5px 0;font-size:13px;position:relative}
 .lrow b{font-weight:600}
 
+.purchase-history{margin-top:8px;font-size:13px;min-width:230px}
+.purchase-history summary{cursor:pointer;color:var(--cyan);padding:5px 0}
+.purchase-history details{margin-left:12px;border-top:1px solid var(--indigo-line)}
+.purchase-history li{margin:7px 0;line-height:1.4}
+.purchase-history ul{padding-left:18px}
 /* catalog */
 .grid{display:grid;grid-template-columns:1fr 380px;gap:22px;align-items:start}
 .cat{margin-bottom:26px}
@@ -56,6 +61,7 @@ h1,h2,h3{font-weight:800;letter-spacing:-.02em;margin:0}
   background:none;color:var(--paper);transition:background .15s}
 .card:hover:not(:disabled){background:rgba(84,200,232,.06)}
 .card:disabled{opacity:.34;cursor:not-allowed}
+.card.on:disabled{opacity:1;cursor:default}
 .card.on{background:rgba(84,200,232,.11);box-shadow:inset 3px 0 0 var(--cyan)}
 .card.owned{background:rgba(63,191,143,.08);box-shadow:inset 3px 0 0 var(--ok);opacity:1;cursor:default}
 .cnum{font-size:12px;color:var(--indigo-line);font-weight:600;padding-top:3px}
@@ -64,6 +70,7 @@ h1,h2,h3{font-weight:800;letter-spacing:-.02em;margin:0}
 .cdesc{display:block;font-size:12.5px;color:#a79fc4;line-height:1.45;margin-top:4px}
 .cflag{display:inline-block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
   font-weight:600;padding:2px 6px;margin-top:6px;margin-right:5px;border-radius:2px}
+.cflag.selected{background:rgba(84,200,232,.16);color:var(--cyan)}
 .cflag.req{background:rgba(255,89,89,.15);color:var(--coral)}
 .cflag.rest{background:rgba(255,163,0,.15);color:var(--orange)}
 .cflag.rev{background:rgba(63,191,143,.15);color:var(--ok)}
@@ -602,16 +609,36 @@ function timingText(c,t,year){
   return '';
 }
 
+function financialOutlook(t,ids,year){
+  const preview=financialPreview(t,ids,year),endYear=year+6;
+  let reserve=t.reserve,cumulative=0,selectionImpact=0;
+  const rows=[];
+  for(let y=1;y<=endYear;y++){
+    const recorded=t.log.find(l=>l.year===y);
+    if(recorded){
+      rows.push({year:y,recorded:true,revenue:recorded.rev,expense:recorded.exp,
+        margin:recorded.margin,reserve:recorded.reserve});
+      continue;
+    }
+    if(y<year)continue;
+    const revenue=revenueOf(preview.team,y),expense=expenseOf(preview.team),margin=revenue-expense;
+    reserve+=margin;cumulative+=margin;
+    selectionImpact+=margin-(revenueOf(t,y)-expenseOf(t));
+    rows.push({year:y,recorded:false,revenue,expense,margin,reserve,fund:preview.team.fund});
+  }
+  return {preview,rows,endYear,cumulative,selectionImpact};
+}
+
 function planningYears(t,ids,year){
-  const preview=financialPreview(t,ids,year);
-  return `<details class="planning"><summary>Three-year view of purchased and selected investments</summary>
-    <p class="mini">Existing investments plus these selections. Enrollment held at its current level. Excludes future events, board rulings and future investment purchases.</p>
-    <div class="plan-scroll"><table><caption>Operating plan before future events</caption><thead><tr><th>Year</th><th class="r">Annual operating revenue</th><th class="r">Annual operating expenses</th><th class="r">Operating result</th></tr></thead><tbody>
-    ${[1,2,3].map(y=>{
-      if(y<year){const l=t.log.find(x=>x.year===y);return l?`<tr><td>Year ${y} · complete</td><td class="r num">${Mk(l.rev)}</td><td class="r num">${Mk(l.exp)}</td><td class="r num">${Mk(l.margin)}</td></tr>`:'';}
-      const rev=revenueOf(preview.team,y),exp=expenseOf(preview.team);
-      return `<tr><td>Year ${y} · plan</td><td class="r num">${Mk(rev)}</td><td class="r num">${Mk(exp)}</td><td class="r num ${rev<exp?'neg':''}">${Mk(rev-exp)}</td></tr>`;
-    }).join('')}</tbody></table></div></details>`;
+  const plan=financialOutlook(t,ids,year),p=plan.preview;
+  return `<details class="planning"><summary>Seven-year financial outlook · Years ${year}–${plan.endYear}</summary>
+    <p class="mini">Purchased investments plus selected or submitted investments. Earlier recorded years are shown for context. Years after Year 3 extend beyond the exercise.</p>
+    <p class="mini">Enrollment held at its current level (${(t.enroll*100).toFixed(1)}%). Revenue begins in each investment's stated year; annual expenses continue. Excludes inflation, future events, board rulings and additional purchases. This is a scenario, not a forecast.</p>
+    <p class="mini">Startup paid once: <b>${M(p.fromFund)}</b> from the investment fund and <b>${M(p.fromRest)}</b> from the starting restricted gift. Remaining restricted gift: <b>${M(p.team.restricted)}</b>.</p>
+    <p class="mini">Projected cumulative operating result: <b>${M(plan.cumulative)}</b>. Current selections change this by <b>${M(plan.selectionImpact)}</b> compared with purchased investments alone. These totals cover projected rows only; startup costs are separate.</p>
+    <div class="plan-scroll" tabindex="0" role="region" aria-label="Seven-year financial outlook"><table><caption>Recorded results and financial projections</caption><thead><tr><th>Year and status</th><th class="r">Annual operating revenue</th><th class="r">Annual operating expenses</th><th class="r">Operating result</th><th class="r">Operating reserve at year-end</th><th class="r">Investment fund remaining</th></tr></thead><tbody>
+    ${plan.rows.map(r=>`<tr><td>Year ${r.year} · ${r.recorded?'recorded':r.year>3?'projected · after exercise':'projected'}</td><td class="r num">${Mk(r.revenue)}</td><td class="r num">${Mk(r.expense)}</td><td class="r num ${r.margin<0?'neg':''}">${Mk(r.margin)}</td><td class="r num ${r.reserve<0?'neg':''}">${Mk(r.reserve)}</td><td class="r num">${r.recorded?'—':Mk(r.fund)}</td></tr>`).join('')}
+    </tbody></table></div><p class="mini">Projected reserves start from recorded cash and add operating results only. Historical investment fund balances are unavailable. Investment funds carry forward without an annual refill.</p></details>`;
 }
 
 function ledgerStrip(t,commitments=[]){
@@ -645,11 +672,12 @@ function renderTeam(){
   if(S.phase==='final'){app.innerHTML=chrome(t)+`<div class="wrap">${finalCard(t)}${boardTable(t.id)}</div>`;return}
 
   if(S.phase==='resolved'&&t.log.length>=rd){
-    app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t)}${resultPanel(t,t.log[rd-1])}${boardTable(t.id)}
+    app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t)}${planningYears(t,[],rd)}${resultPanel(t,t.log[rd-1])}${boardTable(t.id)}
       <p class="mini">Year ${rd} is complete. The facilitator opens Year ${rd+1} when the room is ready.</p></div>`;return}
 
   if(S.phase==='locked'||S.phase==='reveal'){
     app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t,t.locked[rd]||[])}
+      ${planningYears(t,t.locked[rd]||[],rd)}
       <div class="panel"><div class="eyebrow">Investment selections submitted</div>
       <h2>Year ${rd} investment selections submitted</h2>
       <div style="margin-top:14px">${(t.locked[rd]||[]).map(id=>`<div class="cartrow"><span>${CARD(id).n}</span><b class="num">${M(CARD(id).one)}</b></div>`).join('')||'<p class="mini">No new investments submitted for this year. Existing investments remain in effect.</p>'}</div>
@@ -681,13 +709,6 @@ function renderTeam(){
   if(over)warn+=`<div class="alertbox"><b>Insufficient investment fund balance.</b> ${M(fromFund-t.fund)} over the available Fund balance.</div>`;
 
   app.innerHTML=chrome(t)+`<div class="wrap">
-   ${rd>1?`<div class="panel" style="border-left:3px solid var(--orange);padding:16px 22px">
-     <div class="eyebrow">You are taking the chair</div>
-     <h2 style="font-size:17px;margin-top:4px">Year ${rd} opens on decisions you did not make</h2>
-     <p class="mini" style="margin-top:8px">${t.deciders[rd-1]?`<b style="color:var(--paper)">${t.deciders[rd-1]}</b> decided Year ${rd-1}.`:`Year ${rd-1} was decided by your predecessor.`}
-     You inherit ${Mk(t.fund)} of remaining investment fund, ${Mk(t.tail)} per year of existing annual expenses,
-     and an enrollment index of ${(t.enroll*100).toFixed(1)}%. You may disagree with all of it. You cannot unspend it.</p>
-   </div>`:''}
    <section class="panel annual-briefing" aria-labelledby="annual-briefing-title">
      <div class="eyebrow">Annual briefing · Year ${rd}</div>
      <h2 id="annual-briefing-title">Environmental signals</h2>
@@ -705,7 +726,7 @@ function renderTeam(){
     <div>${CATS.map(cat=>`<div class="cat"><h2>${cat}</h2>
       ${CARDS.filter(c=>c.cat===cat).map(c=>cardEl(c,t,commitments,isLocked)).join('')}</div>`).join('')}</div>
     <div class="rail">
-      <h3>Year ${rd} selected investments</h3>
+      <h3>Year ${rd} ${isLocked?'submitted':'selected'} investments</h3>
       ${commitments.length?commitments.map(id=>`<div class="cartrow"><span>${CARD(id).n}</span>
         <span style="white-space:nowrap"><b class="num">${M(CARD(id).one)}</b>
         ${isLocked?'':`<button onclick="drop(${id})" aria-label="Remove">×</button>`}</span></div>`).join('')
@@ -742,6 +763,7 @@ function cardEl(c,t,commitments=CART,isLocked=false){
       ${c.req?`<span class="cflag req">${dependencyText(c)}</span>`:''}
       ${c.rest?'<span class="cflag rest">Starting restricted gift eligible</span>':''}
       ${timingText(c,t,year)?`<span class="${c.rev?'cflag rev':c.id===12?'cflag rest':'card-timing'}">${timingText(c,t,year)}</span>`:''}
+      ${on&&!owned?`<span class="cflag selected">${isLocked?'Submitted':'Selected'} investment · Year ${year}${isLocked?' · awaiting implementation':''}</span>`:''}
       ${owned?`<span class="cflag rev">Purchased Year ${t.bought[c.id]} · annual effect continues</span>`:''}</span>
     <span class="cprice"><span class="cost-label">Startup cost · paid once</span><span class="one num">${M(c.one)}</span>
       <span class="cost-label">${c.tail<0?'Annual savings':'Annual expense'}</span><span class="tail num ${c.tail<0?'credit':''}">${M(Math.abs(c.tail))}/yr</span></span></button>`;
@@ -847,12 +869,22 @@ function finalCard(t){
   </div>`;}
 
 let BOARD=[];
-function boardTable(mine){
+function purchaseHistory(t){
+  return `<details class="purchase-history"><summary>Purchased investments by year</summary>
+    ${[1,2,3].map(year=>{
+      const record=t.log.find(l=>l.year===year);
+      const purchases=record?record.purchases:[];
+      return `<details><summary>Year ${year} · ${record?purchases.length+' purchased':'not closed'}</summary>
+        ${record?(purchases.length?`<ul>${purchases.map(p=>`<li>${p.n} · <span class="num">${M(p.cost)}</span><span class="mini"> · ${p.src}</span></li>`).join('')}</ul>`:'<p class="mini">No investments purchased.</p>'):'<p class="mini">Purchases are recorded when the year closes.</p>'}</details>`;
+    }).join('')}</details>`;
+}
+
+function boardTable(mine,showPurchases=false){
   if(!BOARD.length)return'';
   return `<div class="panel"><div class="eyebrow">Standings</div><h2>After Year ${S.round}</h2>
    <table><thead><tr><th></th><th>Table</th><th class="r">Financial health</th><th class="r">Mission and outcomes</th>
    <th class="r">Strategic position</th><th class="r">Resilience</th><th class="r">Total</th></tr></thead><tbody>
-   ${BOARD.map((b,i)=>`<tr class="${b.id===mine?'me':''}"><td class="rank">${i+1}</td><td>${b.name}</td>
+   ${BOARD.map((b,i)=>`<tr class="${b.id===mine?'me':''}"><td class="rank">${i+1}</td><td>${b.name}${showPurchases&&TEAMS.find(t=>t.id===b.id)?purchaseHistory(TEAMS.find(t=>t.id===b.id)):''}</td>
     <td class="r num">${b.s.fin.toFixed(1)}</td><td class="r num">${b.s.mis.toFixed(1)}</td>
     <td class="r num">${b.s.str.toFixed(1)}</td><td class="r num">${b.s.res.toFixed(1)}</td>
     <td class="r num"><b>${b.s.total.toFixed(1)}</b></td></tr>`).join('')}
@@ -936,7 +968,7 @@ async function renderFac(){
     </div>
    </div>
 
-   ${boardTable(0)}
+   ${boardTable(0,true)}
    ${S.phase==='final'?TEAMS.map(t=>finalCard(t)).join(''):''}
   </div>`;}
 
