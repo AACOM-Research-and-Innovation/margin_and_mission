@@ -473,9 +473,9 @@ test('five-year outlook respects revenue timing, cash and recorded results', () 
   const html=run('planningYears(t,[13],2)');
   assert.match(html,/Five-year financial outlook/);
   assert.doesNotMatch(html,/<p |<caption>|NaN|Infinity|scenario, not a forecast/);
-  assert.equal((html.match(/<svg /g)||[]).length,2);
+  assert.equal((html.match(/<svg /g)||[]).length,1);
   assert.equal((html.match(/<tr>/g)||[]).length,6);
-  assert.match(html,/Operating revenue and expenses/);
+  assert.doesNotMatch(html,/Operating revenue and expenses/);
   assert.match(html,/Operating reserve at year-end/);
 });
 
@@ -506,4 +506,34 @@ test('facilitator standings show actual purchases grouped by year', async () => 
   run('first.locked[2]=[5];');
   assert.doesNotMatch(run('purchaseHistory(first)'),/MS in Clinical AI/);
   assert.doesNotMatch(run('boardTable(1)'),/Purchased investments by year/);
+});
+
+test('reserve graph stays anchored to Year 1 while the five-year outlook advances', () => {
+  const {run}=appContext();
+  run('const team=newTeam(1);');
+  for(let year=1;year<=3;year++){
+    const html=run(`planningYears(team,[],${year})`);
+    assert.equal((html.match(/<svg /g)||[]).length,1);
+    assert.equal((html.match(/<tr>/g)||[]).length,6);
+    assert.equal((html.match(/data-year=/g)||[]).length,year+4);
+    assert.match(html,/data-year="1"/);
+    assert.match(html,new RegExp(`data-year="${year+4}"`));
+    assert.equal((html.match(/data-status="recorded"/g)||[]).length,year-1);
+    assert.equal((html.match(/data-status="projected"/g)||[]).length,5);
+    assert.doesNotMatch(html,/NaN|Infinity|Operating revenue and expenses/);
+    run(`team.pending=[];resolveRound(team,${year});`);
+    const closed=run(`planningYears(team,[],${year})`);
+    assert.equal((closed.match(/data-status="recorded"/g)||[]).length,year);
+    assert.equal((closed.match(/data-status="projected"/g)||[]).length,4);
+    assert.match(closed,new RegExp(`Year ${year} · recorded · Reserve: `));
+  }
+});
+test('reserve graph handles negative and zero balances', () => {
+  const {run}=appContext();
+  for(const reserve of [0,-10000000,13000000]){
+    const html=run(`outlookGraph(Array.from({length:5},(_,i)=>({year:i+1,reserve:${reserve},recorded:i===0})))`);
+    assert.doesNotMatch(html,/NaN|Infinity/);
+    assert.match(html,/reserve-recorded/);
+    assert.match(html,/reserve-projected/);
+  }
 });

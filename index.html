@@ -178,14 +178,21 @@ select,input{background:var(--indigo-deep);border:1px solid var(--indigo-line);c
 .finance-dock{position:sticky;top:64px;z-index:40;display:flex;flex-wrap:wrap;gap:10px 24px;background:var(--indigo);border:1px solid var(--cyan);padding:12px;margin:18px 0;font-size:14px}
 .finance-dock b{display:block;margin-top:3px}.planning{padding:16px;background:var(--indigo);border:1px solid var(--indigo-line);margin:18px 0}.planning summary{cursor:pointer;font-weight:600}.planning caption{text-align:left;padding:10px 0}.plan-scroll{overflow-x:auto}
 @media(max-width:600px){.card{grid-template-columns:24px 1fr;gap:8px}.cprice{grid-column:2;text-align:left;white-space:normal}.cost-label{display:inline-block;margin-right:8px}.cprice .tail{display:inline;margin-right:12px}.finance-dock{top:0;font-size:12px}.ledger .lrow{gap:12px}.wrap{padding:0 12px 40px}}
-.outlook-graphs{display:grid;gap:20px;margin-top:22px}
-.outlook-chart{min-width:0}
-.outlook-chart h3{font-size:14px;color:var(--paper);margin:0 0 8px}
-.outlook-chart svg{display:block;width:100%;height:auto}
-.outlook-chart svg text{fill:#c6bfe0;font-size:12px;font-family:'IBM Plex Mono',monospace}
-.outlook-legend{display:flex;justify-content:center;gap:20px;font-size:12px;color:#c6bfe0}
-.outlook-legend span{display:flex;align-items:center;gap:7px}
-.outlook-legend i{display:inline-block;width:22px;border-top:3px solid}
+.outlook-chart{margin-top:24px;padding:24px 22px 16px;border:1px solid rgba(84,200,232,.16);border-radius:14px;background:linear-gradient(145deg,rgba(84,200,232,.045),rgba(0,0,0,.16));min-width:0}
+.outlook-chart-heading{display:flex;justify-content:space-between;align-items:start;gap:16px}
+.outlook-chart h3{font-size:18px;letter-spacing:-.02em;color:var(--paper);margin:0 0 5px}
+.outlook-chart-subtitle{font-size:12px;color:#a79fc4}
+.outlook-chart-value{text-align:right}
+.outlook-chart-value strong{display:block;font-size:24px;font-weight:500;color:var(--cyan)}
+.outlook-chart-value span{display:block;margin-top:4px;font-size:11px;color:#a79fc4}
+.outlook-chart-scroll{overflow-x:auto;margin-top:12px}
+.outlook-chart svg{display:block;width:100%;height:auto;min-width:540px}
+.outlook-chart svg text{fill:#aaa3c4;font-size:12px;font-family:'IBM Plex Mono',monospace}
+.outlook-legend{display:flex;justify-content:center;gap:24px;font-size:11px;color:#b8b0d0;margin-top:4px}
+.outlook-legend span{display:flex;align-items:center;gap:8px}
+.outlook-legend i{display:inline-block;width:24px;border-top:2px solid var(--cyan)}
+.outlook-legend i.projected{border-top-style:dashed}
+@media(max-width:600px){.outlook-chart{padding:18px 12px 14px}.outlook-chart h3{font-size:16px}.outlook-chart-value strong{font-size:20px}}
 </style>
 
 <div id="app"></div>
@@ -638,37 +645,50 @@ function financialOutlook(t,ids,year){
 }
 
 
+
 function outlookGraph(rows){
-  const width=760,height=240,left=76,right=24,top=20,bottom=42;
-  const colors=['#54C8E8','#ffa400','#3FBF8F'];
-  function panel(title,series){
-    const values=rows.flatMap(r=>series.map(s=>r[s.key]));
-    const low=Math.min(0,...values),high=Math.max(0,...values);
-    const range=high-low||1;
-    const min=low-range*.08,max=high+range*.08;
-    const x=i=>left+i*(width-left-right)/(rows.length-1);
-    const y=v=>top+(max-v)*(height-top-bottom)/(max-min);
-    const ticks=Array.from({length:5},(_,i)=>min+(max-min)*i/4);
-    return `<section class="outlook-chart"><h3>${title}</h3>
-      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${title}, Years ${rows[0].year} through ${rows[rows.length-1].year}. Values shown in the table.">
-        ${ticks.map(v=>`<line x1="${left}" y1="${y(v)}" x2="${width-right}" y2="${y(v)}" stroke="#3a2a7a"/><text x="${left-10}" y="${y(v)+4}" text-anchor="end">${Mk(v)}</text>`).join('')}
-        ${min<0&&max>0?`<line x1="${left}" y1="${y(0)}" x2="${width-right}" y2="${y(0)}" stroke="#a79fc4"/>`:''}
-        ${rows.map((r,i)=>`<text x="${x(i)}" y="${height-14}" text-anchor="middle">Year ${r.year}</text>`).join('')}
-        ${series.map((s,j)=>`<polyline points="${rows.map((r,i)=>x(i)+','+y(r[s.key])).join(' ')}" fill="none" stroke="${colors[j]}" stroke-width="3" stroke-dasharray="${j===1?'8 5':'none'}"/>
-          ${rows.map((r,i)=>`<circle cx="${x(i)}" cy="${y(r[s.key])}" r="4" fill="${colors[j]}"><title>Year ${r.year} · ${r.recorded?'recorded':'projected'} · ${s.label}: ${M(r[s.key])}</title></circle>`).join('')}`).join('')}
-      </svg>
-      <div class="outlook-legend">${series.map((s,j)=>`<span><i style="border-color:${colors[j]};border-top-style:${j===1?'dashed':'solid'}"></i>${s.label}</span>`).join('')}</div>
-    </section>`;
-  }
-  return `<div class="outlook-graphs">${panel('Operating revenue and expenses',[{key:'revenue',label:'Revenue'},{key:'expense',label:'Expenses'}])}${panel('Operating reserve at year-end',[{key:'reserve',label:'Reserve'}])}</div>`;
+  const width=900,height=300,left=78,right=36,top=30,bottom=48;
+  const values=rows.map(r=>r.reserve),low=Math.min(0,...values),high=Math.max(0,...values);
+  const rough=(high-low||1e6)/4;
+  const power=10**Math.floor(Math.log10(rough)),fraction=rough/power;
+  const step=(fraction<=1?1:fraction<=2?2:fraction<=5?5:10)*power;
+  const min=Math.floor(low/step)*step,max=Math.ceil(high/step)*step||step;
+  const x=i=>left+i*(width-left-right)/Math.max(1,rows.length-1);
+  const y=v=>top+(max-v)*(height-top-bottom)/(max-min);
+  const ticks=Array.from({length:Math.round((max-min)/step)+1},(_,i)=>min+i*step);
+  const lastRecorded=rows.reduce((last,r,i)=>r.recorded?i:last,-1);
+  const firstProjected=rows.findIndex(r=>!r.recorded);
+  const points=rs=>rs.map(r=>x(rows.indexOf(r))+','+y(r.reserve)).join(' ');
+  const actual=rows.filter(r=>r.recorded);
+  const projected=firstProjected<0?[]:rows.slice(Math.max(0,firstProjected-1));
+  const allPoints=points(rows),last=rows[rows.length-1];
+  const forecastX=firstProjected<0?width-right:x(Math.max(0,lastRecorded));
+  return `<section class="outlook-chart">
+    <div class="outlook-chart-heading"><div><h3>Operating reserve</h3><span class="outlook-chart-subtitle">Year-end balance</span></div>
+      <div class="outlook-chart-value"><strong class="num">${Mk(last.reserve)}</strong><span>Year ${last.year} ${last.recorded?'recorded':'projected'}</span></div></div>
+    <div class="outlook-chart-scroll"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Operating reserve at year-end, Years ${rows[0].year} through ${last.year}. Solid line shows recorded results; dashed line shows projections.">
+      <defs><linearGradient id="reserve-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#54C8E8" stop-opacity=".18"/><stop offset="100%" stop-color="#54C8E8" stop-opacity="0"/></linearGradient></defs>
+      ${firstProjected>=0?`<rect x="${forecastX}" y="${top}" width="${width-right-forecastX}" height="${height-top-bottom}" fill="#54C8E8" opacity=".025"/>`:''}
+      ${ticks.map(v=>`<line x1="${left}" y1="${y(v)}" x2="${width-right}" y2="${y(v)}" stroke="${v===0?'#5d5670':'#ffffff'}" stroke-opacity="${v===0?'.65':'.08'}"/><text x="${left-14}" y="${y(v)+4}" text-anchor="end">${Mk(v)}</text>`).join('')}
+      <polygon points="${x(0)},${y(0)} ${allPoints} ${x(rows.length-1)},${y(0)}" fill="url(#reserve-fill)"/>
+      ${lastRecorded>=0&&firstProjected>=0?`<line x1="${forecastX}" y1="${top}" x2="${forecastX}" y2="${height-bottom}" stroke="#54C8E8" stroke-opacity=".22" stroke-dasharray="3 6"/>`:''}
+      <polyline class="reserve-recorded" points="${points(actual)}" fill="none" stroke="#54C8E8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+      <polyline class="reserve-projected" points="${points(projected)}" fill="none" stroke="#54C8E8" stroke-width="2.5" stroke-dasharray="7 6" stroke-linejoin="round" stroke-linecap="round"/>
+      ${rows.map((r,i)=>`<circle data-year="${r.year}" data-status="${r.recorded?'recorded':'projected'}" cx="${x(i)}" cy="${y(r.reserve)}" r="${r.recorded?5:4}" fill="${r.recorded?'#54C8E8':'#1b1046'}" stroke="#54C8E8" stroke-width="2"><title>Year ${r.year} · ${r.recorded?'recorded':'projected'} · Reserve: ${M(r.reserve)}</title></circle>
+        <text x="${x(i)}" y="${height-18}" text-anchor="middle">Year ${r.year}</text>`).join('')}
+    </svg></div>
+    <div class="outlook-legend"><span><i></i>Recorded</span><span><i class="projected"></i>Projected</span></div>
+  </section>`;
 }
 
 function planningYears(t,ids,year){
   const plan=financialOutlook(t,ids,year);
+  const history=t.log.filter(r=>r.year<year).map(r=>({year:r.year,recorded:true,reserve:r.reserve}));
+  const graphRows=[...history,...plan.rows].sort((a,b)=>a.year-b.year);
   return `<details class="planning"><summary>Five-year financial outlook · Years ${year}–${plan.endYear}</summary>
     <div class="plan-scroll" tabindex="0" role="region" aria-label="Five-year financial outlook"><table><thead><tr><th>Year and status</th><th class="r">Annual operating revenue</th><th class="r">Annual operating expenses</th><th class="r">Operating result</th><th class="r">Operating reserve at year-end</th><th class="r">Investment fund remaining</th></tr></thead><tbody>
     ${plan.rows.map(r=>`<tr><td>Year ${r.year} · ${r.recorded?'recorded':'projected'}</td><td class="r num">${Mk(r.revenue)}</td><td class="r num">${Mk(r.expense)}</td><td class="r num ${r.margin<0?'neg':''}">${Mk(r.margin)}</td><td class="r num ${r.reserve<0?'neg':''}">${Mk(r.reserve)}</td><td class="r num">${r.recorded?'—':Mk(r.fund)}</td></tr>`).join('')}
-    </tbody></table></div>${outlookGraph(plan.rows)}</details>`;
+    </tbody></table></div>${outlookGraph(graphRows)}</details>`;
 }
 
 function ledgerStrip(t,commitments=[]){
