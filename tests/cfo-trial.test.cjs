@@ -450,39 +450,47 @@ test('renumbered catalog does not reuse previous session keys', async () => {
   assert.equal(await run("sget('mm:state').then(s=>s.round)"),2);
 });
 
-test('seven-year outlook respects revenue timing, cash and recorded results', () => {
+test('five-year outlook respects revenue timing, cash and recorded results', () => {
   const {run}=appContext();
   run('const t=newTeam(1);const before=JSON.stringify(t);const plan=financialOutlook(t,[5,11,13],1);');
   assert.equal(run('JSON.stringify(t)'),run('before'));
-  assert.equal(run('plan.rows.length'),7);
+  assert.equal(run('plan.rows.length'),5);
   assert.equal(run('plan.rows[0].margin'),-150000);
   assert.equal(run('plan.rows[1].margin'),3050000);
   assert.equal(run('plan.rows[2].margin'),3650000);
-  assert.equal(run('plan.cumulative'),21150000);
-  assert.equal(run('plan.selectionImpact'),3650000);
-  assert.equal(run('plan.rows[6].reserve'),34150000);
-  assert.equal(run('plan.rows[6].fund'),3750000);
+  assert.equal(run('plan.cumulative'),13850000);
+  assert.equal(run('plan.selectionImpact'),1350000);
+  assert.equal(run('plan.rows[4].reserve'),26850000);
+  assert.equal(run('plan.rows[4].fund'),3750000);
   run('t.pending=[5,11];resolveRound(t,1);const later=financialOutlook(t,[13],2);');
-  assert.equal(run('later.endYear'),8);
-  assert.equal(run('later.rows.filter(r=>!r.recorded).length'),7);
-  assert.equal(run('later.rows[0].reserve'),run('t.log[0].reserve'));
-  assert.equal(run('later.rows[1].reserve'),run('t.reserve+later.rows[1].margin'));
+  assert.equal(run('later.endYear'),6);
+  assert.equal(run('later.rows.filter(r=>!r.recorded).length'),5);
+  assert.equal(run('later.rows.length'),5);
+  assert.equal(run('later.rows[0].year'),2);
+  assert.equal(run('later.rows[0].reserve'),run('t.reserve+later.rows[0].margin'));
+  assert.equal(run('later.rows[1].reserve'),run('later.rows[0].reserve+later.rows[1].margin'));
   assert.equal(run('financialOutlook(t,[],1).rows[1].reserve'),run('t.reserve+revenueOf(t,2)-expenseOf(t)'));
-  assert.match(run('planningYears(t,[13],2)'),/scenario, not a forecast/);
+  const html=run('planningYears(t,[13],2)');
+  assert.match(html,/Five-year financial outlook/);
+  assert.doesNotMatch(html,/<p |<caption>|NaN|Infinity|scenario, not a forecast/);
+  assert.equal((html.match(/<svg /g)||[]).length,2);
+  assert.equal((html.match(/<tr>/g)||[]).length,6);
+  assert.match(html,/Operating revenue and expenses/);
+  assert.match(html,/Operating reserve at year-end/);
 });
 
 test('submitted cards remain highlighted, with a year-specific status', async () => {
   const {app,run}=appContext({inputs:{decName:{value:'Gev'},disName:{value:''}}});
   run("S={round:2,phase:'brief',tables:1};ME=newTeam(1);ME.held=[3];ME.bought={3:1};ROLE='team';CART=[5];renderTeam();");
-  assert.match(app.innerHTML,/Selected investment · Year 2/);
+  assert.match(app.innerHTML,/Selected - Year 2/);
   await run('sset(K.state,S)');await run('sset(K.team(1),ME)');await run('lockIn()');
   assert.match(app.innerHTML,/Year 2 submitted investments/);
-  assert.match(app.innerHTML,/Submitted investment · Year 2 · awaiting implementation/);
-  assert.match(app.innerHTML,/Purchased Year 1/);
+  assert.match(app.innerHTML,/Submitted - Year 2/);
+  assert.match(app.innerHTML,/Purchased - Year 1/);
   assert.match(run('cardEl(CARD(5),ME,ME.locked[2],true)'),/class="card on" disabled/);
   for(const phase of ['locked','reveal']){
     run(`S.phase='${phase}';renderTeam();`);
-    assert.match(app.innerHTML,/Seven-year financial outlook/);
+    assert.match(app.innerHTML,/Five-year financial outlook/);
   }
 });
 
