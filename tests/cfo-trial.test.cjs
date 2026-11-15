@@ -655,3 +655,50 @@ test('failed submissions retain drafts and selections, and reset removes drafts'
   assert.equal(field('decName').value,'');
   assert.equal(field('disName').value,'');
 });
+
+test('projection toggles between leaderboard and current public signals during deliberation', () => {
+  const {app,run}=appContext();
+  for(const year of [1,2,3]){
+    run(`S={round:${year},phase:'brief',tables:8};BOARD=[{id:1,name:'Table 1',s:score(newTeam(1))}];renderProj();`);
+    assert.match(app.innerHTML,/Show environmental signals/);
+    assert.match(app.innerHTML,/<table>/);
+    run('toggleProjection()');
+    assert.match(app.innerHTML,/Show leaderboard/);
+    assert.match(app.innerHTML,/aria-pressed="true"/);
+    assert.doesNotMatch(app.innerHTML,/<table>/);
+    for(const signal of JSON.parse(run(`JSON.stringify(BRIEFS[${year}].sig)`)))assert(app.innerHTML.includes(signal));
+    for(const otherYear of [1,2,3]){
+      assert(!app.innerHTML.includes(run(`BRIEFS[${otherYear}].priv`)));
+      if(otherYear!==year)assert(!app.innerHTML.includes(run(`BRIEFS[${otherYear}].sig[0]`)));
+    }
+    run('renderProj()');assert.match(app.innerHTML,/Show leaderboard/);
+    run('toggleProjection()');assert.match(app.innerHTML,/<table>/);
+  }
+});
+
+test('projection signal view survives polling and yields to events and later stages', async () => {
+  const {app,run}=appContext();
+  run("ROLE='proj';S={round:1,phase:'brief',tables:8};");
+  await run('sset(K.state,S)');
+  for(let id=1;id<=8;id++)await run(`sset(K.team(${id}),newTeam(${id}))`);
+  await run('loop()');run('toggleProjection()');
+  await run("(async()=>{const team=await sget(K.team(8));team.locked[1]=[3];await sset(K.team(8),team)})()");
+  await run('loop()');
+  assert.match(app.innerHTML,/Show leaderboard/);
+  assert.equal(run('PROJ_SIGNALS'),true);
+  await run("sset(K.state,{round:1,phase:'reveal',tables:8})");await run('loop()');
+  assert.match(app.innerHTML,/What happened/);
+  assert.doesNotMatch(app.innerHTML,/toggleProjection/);
+  run('toggleProjection()');assert.match(app.innerHTML,/What happened/);
+  for(const phase of ['locked','resolved','final']){
+    run(`S.phase='${phase}';renderProj();`);
+    assert.doesNotMatch(app.innerHTML,/toggleProjection/);
+    assert.match(app.innerHTML,/<table>/);
+  }
+  run("S={round:2,phase:'brief',tables:8};renderProj();");
+  assert.match(app.innerHTML,/Show environmental signals/);
+  assert.match(app.innerHTML,/<table>/);
+  run('toggleProjection();S=null;renderProj();');
+  assert.match(app.innerHTML,/Waiting for the facilitator/);
+  assert.equal(run('PROJ_SIGNALS'),false);
+});

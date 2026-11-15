@@ -193,6 +193,13 @@ select,input{background:var(--indigo-deep);border:1px solid var(--indigo-line);c
 .outlook-legend i{display:inline-block;width:24px;border-top:2px solid var(--cyan)}
 .outlook-legend i.projected{border-top-style:dashed}
 @media(max-width:600px){.outlook-chart{padding:18px 12px 14px}.outlook-chart h3{font-size:16px}.outlook-chart-value strong{font-size:20px}}
+.projection-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:24px}
+.projection-heading h1{margin-bottom:0}
+.projection-toggle{width:auto;margin:0;padding:12px 18px;font-size:15px;flex-shrink:0}
+.projection-signals{max-width:1500px;margin:0 auto}
+.projection-signal-list .sig{grid-template-columns:38px 1fr;gap:20px;padding:18px 0;font-size:clamp(21px,2.2vw,30px);line-height:1.5}
+.projection-signal-list .sig i{font-size:16px;padding-top:7px}
+@media(max-width:600px){.proj{padding:24px 18px}.projection-signal-list .sig{gap:10px;grid-template-columns:28px 1fr}}
 </style>
 
 <div id="app"></div>
@@ -1124,13 +1131,28 @@ async function hardReset(){
   S=null;TEAMS=[];BOARD=[];render();}
 
 /* ── projection ──────────────────────────────────────────── */
+// Display choice is local to the projection device; it does not change the game.
+let PROJ_SIGNALS=false,PROJ_ROUND=null;
+function toggleProjection(){
+  if(!S||S.phase!=='brief')return;
+  PROJ_SIGNALS=!PROJ_SIGNALS;
+  renderProj();
+}
 function renderProj(){
+  if(!S||S.phase!=='brief'||PROJ_ROUND!==S.round)PROJ_SIGNALS=false;
+  PROJ_ROUND=S?S.round:null;
   if(!S){app.innerHTML='<div class="proj"><h1>Margin and Mission</h1><p class="mini">Waiting for the facilitator.</p></div>';return}
   if(S.phase==='reveal'){
     app.innerHTML=`<div class="proj"><div class="eyebrow">Year ${S.round}</div><h1>What happened</h1>
      ${EVENTS[S.round].map(e=>`<div class="ev"><h3 style="font-size:26px">${e.n}</h3><p style="font-size:18px">${e.d}</p></div>`).join('')}</div>`;return}
-  app.innerHTML=`<div class="proj"><div class="eyebrow">${S.phase==='final'?'Final standings':'After Year '+S.round}</div>
-   <h1>Margin and Mission</h1>
+  const toggle=S.phase==='brief'?`<button type="button" class="btn ghost projection-toggle" onclick="toggleProjection()" aria-pressed="${PROJ_SIGNALS}">${PROJ_SIGNALS?'Show leaderboard':'Show environmental signals'}</button>`:'';
+  if(S.phase==='brief'&&PROJ_SIGNALS){
+    app.innerHTML=`<div class="proj projection-signals"><div class="projection-heading"><div><div class="eyebrow">Annual briefing · Year ${S.round} · Deliberation open</div><h1>Environmental signals</h1></div>${toggle}</div>
+      <div class="projection-signal-list">${BRIEFS[S.round].sig.map((signal,i)=>`<div class="sig"><i>${String(i+1).padStart(2,'0')}</i><span>${signal}</span></div>`).join('')}</div></div>`;
+    return;
+  }
+  app.innerHTML=`<div class="proj"><div class="projection-heading"><div><div class="eyebrow">${S.phase==='final'?'Final standings':S.phase==='brief'?'Year '+S.round+' · Deliberation open':'After Year '+S.round}</div>
+   <h1>Margin and Mission</h1></div>${toggle}</div>
    <table><thead><tr><th></th><th>Table</th><th class="r">Financial health</th><th class="r">Mission and outcomes</th>
    <th class="r">Strategic position</th><th class="r">Resilience</th><th class="r">Total</th></tr></thead><tbody>
    ${BOARD.map((b,i)=>`<tr><td class="rank">${i+1}</td><td>${b.name}</td>
