@@ -300,7 +300,8 @@ test('host enters new card numbers, resolves three rounds, adjusts tables, and r
     await run("setPhase('reveal')");
     assert.match(app.innerHTML, /Read these aloud/);
     await run('doResolve()');
-    assert.equal(run('S.phase'), 'resolved');
+    assert.equal(run('S.phase'), 'calculated');
+    await run("setPhase('resolved')");
     assert.equal(run('TEAMS[0].log.length'), year);
     assert.equal(run('TEAMS[1].log.length'), year);
     assert.deepEqual(json('TEAMS[0].log[S.round-1].purchases.map(p=>p.n)'),
@@ -464,7 +465,7 @@ test('annual briefing precedes finances and orange research notice follows purch
     run(`S={round:${year},phase:'brief',tables:1}; ME=newTeam(1); ROLE='team'; CART=[]; renderTeam();`);
     const html=app.innerHTML;
     assert(html.indexOf('annual-briefing-title') < html.indexOf('class="ledgers"'));
-    assert.doesNotMatch(html,/class="planning"|Five-year financial outlook/);
+    assert.match(html,/class="planning"/);
     assert(html.indexOf('class="ledgers"') < html.indexOf('class="finance-dock"'));
     assert(html.indexOf('class="finance-dock"') < html.indexOf('class="grid"'));
     assert.doesNotMatch(html,/You are taking the chair|opens on decisions you did not make/);
@@ -526,7 +527,7 @@ test('submitted cards remain highlighted, with a year-specific status', async ()
   assert.match(run('cardEl(CARD(5),ME,ME.locked[2],true)'),/class="card on" disabled/);
   for(const phase of ['locked','reveal']){
     run(`S.phase='${phase}';renderTeam();`);
-    assert.doesNotMatch(app.innerHTML,/Five-year financial outlook/);
+    assert.match(app.innerHTML,/Five-year financial outlook/);
   }
 });
 
@@ -701,4 +702,109 @@ test('projection signal view survives polling and yields to events and later sta
   run('toggleProjection();S=null;renderProj();');
   assert.match(app.innerHTML,/Waiting for the facilitator/);
   assert.equal(run('PROJ_SIGNALS'),false);
+});
+
+
+test('rollback traverses stages and years, preserves decisions and rulings, and recalculates once', async () => {
+  const {run,json,app}=appContext();
+  run("ROLE='fac';S={round:1,phase:'brief',tables:2};const original=newTeam(1);original.locked[1]=[3,14];original.pending=[3,14];original.deciders[1]='Alex';original.dissent[1]='Save cash';");
+  await run('sset(K.state,S)');await run('sset(K.team(1),original)');await run('sset(K.team(2),newTeam(2))');
+  const before=json('ledgerSnapshot(original)');
+  await run("setPhase('locked')");await run("setPhase('reveal')");await run('doResolve()');
+  const calculated=json('ledgerSnapshot(TEAMS[0])');
+  assert.equal(run('S.phase'),'calculated');
+  assert.deepEqual(json('ledgerSnapshot(visibleTeam(TEAMS[0]))'),before);
+  assert.match(app.innerHTML,/Show Year 1 results/);
+  assert(app.innerHTML.indexOf('Roll back one stage')<app.innerHTML.indexOf('>Refresh<'));
+  await run("setPhase('resolved')");
+  await run("(async()=>{const t=await sget(K.team(1));t.reserve+=1234;t.adj.push({pts:2,note:'Ruling'});await sset(K.team(1),t)})()");
+  await run('nextRound()');
+  await run("facEnter(1)"); // Cancelled prompt keeps Year 2 untouched.
+  await run('rollbackStage()');assert.equal(run('S.round'),1);assert.equal(run('S.phase'),'resolved');
+  await run('rollbackStage()');assert.equal(run('S.phase'),'calculated');
+  await run('rollbackStage()');assert.equal(run('S.phase'),'reveal');
+  const restored=json('ledgerSnapshot(TEAMS[0])');assert.equal(restored.reserve,before.reserve+1234);
+  restored.reserve-=1234;assert.deepEqual(restored,before);
+  assert.equal(run('TEAMS[0].adj[0].pts'),2);
+  await run('rollbackStage()');await run('rollbackStage()');assert.equal(run('S.phase'),'brief');
+  assert.deepEqual(json('TEAMS[0].locked[1]'),[3,14]);assert.equal(run("TEAMS[0].deciders[1]"),'Alex');assert.equal(run("TEAMS[0].dissent[1]"),'Save cash');
+  await run('rollbackStage()');assert.equal(run('S.phase'),'brief');
+  await run("setPhase('locked')");await run("setPhase('reveal')");await run('doResolve()');
+  const again=json('ledgerSnapshot(TEAMS[0])');again.reserve-=1234;assert.deepEqual(again,calculated);
+  await run('doResolve()');assert.equal(run('TEAMS[0].log.length'),1);
+  await run("setPhase('resolved')");await run('nextRound()');
+  await run("(async()=>{const t=await sget(K.team(1));t.locked[2]=[1,2];t.pending=[1,2];t.deciders[2]='Jamie';await sset(K.team(1),t)})()");
+  await run("setPhase('locked')");await run("setPhase('reveal')");await run('doResolve()');await run("setPhase('resolved')");
+  for(let i=0;i<5;i++)await run('rollbackStage()');
+  assert.equal(run('S.round'),1);assert.equal(run('S.phase'),'resolved');
+  assert.deepEqual(json('TEAMS[0].locked[2]'),[1,2]);
+  await run('nextRound()');await run("setPhase('locked')");await run("setPhase('reveal')");await run('doResolve()');
+  assert.equal(run('TEAMS[0].log.length'),2);assert.equal(run('TEAMS[0].held.filter(id=>id===1).length'),1);
+});
+
+test('card differentials distinguish storm costs, mission benefits, and conditional insurance', () => {
+  const {run,json}=appContext();
+  run("const storm=EVENTS[2][0],team=newTeam(1);team.held=[1,2];const result=storm.f(team);");
+  const diffs=json('eventDifferentials(storm,team,result)');
+  assert.equal(diffs.length,2);
+  assert.match(diffs[0].text,/card 1.*\$1,500,000 instead of \$3,000,000/);
+  assert.match(diffs[1].text,/card 2.*raw mission point change was -1 instead of -5/);
+  run('team.held=[3,4];const cyber=EVENTS[1][1];');
+  const cyber=json('eventDifferentials(cyber,team,cyber.f(team))');
+  assert.match(cyber.find(d=>d.id===4).text,/\$50,000 instead of \$300,000/);
+  assert.match(cyber.find(d=>d.id===3).text,/\$50,000 instead of \$2,400,000/);
+  run('team.held=[4]');assert.equal(run('eventDifferentials(cyber,team,cyber.f(team)).length'),0);
+});
+
+test('projection shows all category deltas, recorded score trends and five projected years without mutating teams', () => {
+  const {run,json,app}=appContext();
+  run("S={round:3,phase:'resolved',tables:2};const active=newTeam(1),idle=newTeam(2);active.locked={1:[3,14],2:[1,2],3:[11]};for(let y=1;y<=3;y++){active.pending=active.locked[y];resolveRound(active,y);resolveRound(idle,y)}TEAMS=[active,idle];BOARD=TEAMS.map(t=>({id:t.id,name:t.name,s:score(t)}));const saved=JSON.stringify(TEAMS);renderProj();");
+  assert.equal((app.innerHTML.match(/class="score-change/g)||[]).length,10);
+  assert.match(app.innerHTML,/Score over the years/);assert.match(app.innerHTML,/Year 8/);assert.doesNotMatch(app.innerHTML,/NaN|Infinity/);
+  const rows=json('scoreSeries(active)');assert.equal(rows.filter(r=>!r.recorded).length,5);
+  assert.equal(rows.find(r=>r.year===3).total,run('score(active).total'));
+  assert.equal(run('JSON.stringify(TEAMS)'),run('saved'));
+  run("S.phase='calculated';renderProj()");assert.doesNotMatch(app.innerHTML,/Year 8/);
+  assert.equal(run('scoreSeries(active).at(-1).year'),2);
+});
+
+test('final reports name actual purchases and differentials, include download links, and escape participant names', () => {
+  const {run,app}=appContext();
+  run("const t=newTeam(1);for(let y=1;y<=3;y++){t.pending=y===1?[1,2]:[];resolveRound(t,y)}t.deciders[2]='<img onerror=evil>';S={round:3,phase:'final',tables:1};TEAMS=[t];ME=t;BOARD=[];renderTeam();");
+  assert.match(app.innerHTML,/Download full scoring guide/);assert.match(app.innerHTML,/downloadDecisionReport\(1\)/);
+  assert.match(app.innerHTML,/card 1/);assert.match(app.innerHTML,/&lt;img onerror=evil&gt;/);
+  const report=run('decisionMarkdown(t)');assert.match(report,/Card 1:/);assert.match(report,/\$1,500,000 instead of \$3,000,000/);
+});
+
+test('failed calculation and rollback writes are retryable without duplicate purchases', async () => {
+  const {run}=appContext();
+  run("ROLE='fac';S={round:1,phase:'reveal',tables:2};const t=newTeam(1);t.locked[1]=[3];const original=sset;");
+  await run('sset(K.state,S)');await run('sset(K.team(1),t)');await run('sset(K.team(2),newTeam(2))');
+  run('let fail=true;sset=async(k,v)=>k===K.team(2)&&fail?false:original(k,v)');
+  await run('doResolve()');assert.equal(run('S.phase'),'reveal');assert.equal(run('BUSY'),false);
+  run('fail=false');await run('doResolve()');assert.equal(run('S.phase'),'calculated');assert.equal(run('TEAMS[0].held.length'),1);
+  run('fail=true');await run('rollbackStage()');assert.equal(run('S.phase'),'calculated');assert.equal(run('BUSY'),false);
+  run('fail=false');await run('rollbackStage()');assert.equal(run('S.phase'),'reveal');assert.equal(run('TEAMS[0].held.length'),0);
+});
+
+
+test('retained future decisions cannot repurchase an investment moved into an earlier year', async () => {
+  const {run,json}=appContext();
+  run("ROLE='fac';S={round:1,phase:'reveal',tables:1};const t=newTeam(1);t.locked={1:[1],2:[1,2]};");
+  await run('sset(K.state,S)');await run('sset(K.team(1),t)');
+  await run('doResolve()');await run("setPhase('resolved')");await run('nextRound()');
+  await run("setPhase('locked')");await run("setPhase('reveal')");await run('doResolve()');
+  assert.deepEqual(json('TEAMS[0].locked[2]'),[1,2]);
+  assert.deepEqual(json('TEAMS[0].log[1].purchases.map(p=>p.id)'),[2]);
+  assert.equal(run('TEAMS[0].held.filter(id=>id===1).length'),1);
+  assert.equal(run('TEAMS[0].bought[1]'),1);
+});
+
+test('legacy saved ledgers rewind without snapshots and retain cash rulings', async () => {
+  const {run,json}=appContext();
+  run("ROLE='fac';S={round:2,phase:'calculated',tables:1};const t=newTeam(1);t.locked={1:[3,14],2:[1,2]};t.pending=t.locked[1];resolveRound(t,1);const before=ledgerSnapshot(t);t.pending=t.locked[2];resolveRound(t,2);for(const l of t.log){delete l.before;delete l.scoreBefore;delete l.scoreAfter}t.reserve+=1234;");
+  await run('sset(K.state,S)');await run('sset(K.team(1),t)');await run('rollbackStage()');
+  const restored=json('ledgerSnapshot(TEAMS[0])');restored.reserve-=1234;
+  assert.deepEqual(restored,json('before'));
+  assert.deepEqual(json('TEAMS[0].locked[2]'),[1,2]);
 });

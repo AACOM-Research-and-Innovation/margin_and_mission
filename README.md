@@ -31,8 +31,8 @@ This 14-card catalog uses separate saved-session keys so old card numbers cannot
 be interpreted as different investments. Start a fresh session and refresh every
 device when switching to this revision. Previous session records remain untouched.
 
-Participant order: inherited-commitments handover in Years 2–3 → annual briefing →
-four financial cards and three-year plan → sticky financial summary → investments.
+Participant order: annual briefing → four financial cards and expandable five-year
+financial outlook → sticky financial summary → investments.
 The briefing uses larger headings and text. Data/IR (now card 12) has an orange
 notice showing the first subsequent annual briefing, based on purchase year.
 
@@ -73,7 +73,7 @@ The other thirteen larger-catalog options remain excluded.
 | 3 | AI scrutiny; estate gift | — |
 
 Event flow: signals brief → lock investments → Year 1 Board Ask if applicable →
-reveal events → resolve outcomes → open the next year. Events occur within each
+reveal events → calculate outcomes → show results → open the next year. Events occur within each
 round, after choices lock; these are restored scenarios, not newly invented ones.
 
 ### Review dependencies and removal switches
@@ -238,3 +238,28 @@ Load is trivial: ~8 devices, each polling once every 6 seconds (~1–2 requests/
 
 Cost is minimal: the in-house Node option runs on existing hardware for free;
 a small cloud VM for the remote demo is a few dollars for the month.
+
+
+### Facilitator rollback and decision reports
+
+The red **Roll back one stage** button sits between the current action and Refresh.
+It steps back through publication, results, calculation, events and deliberation,
+including across year boundaries. Rolling back past calculation restores the ledger
+before that year. Submitted cards, decider names, dissent and facilitator rulings
+remain saved. To change a retained submission, the CFO uses **Edit Year N submission**
+after deliberation reopens. Recalculation applies purchases and events once.
+
+Calculation and **Show Year N results** are separate actions. CFO and projection
+screens retain the preceding published financial position until results are shown.
+
+Year-end result cards explain each held card's conditional event impact by comparing
+the outcome with the same portfolio minus that card. The final CFO screen includes
+a decision summary with expandable yearly details, a personal Markdown report and
+the [full scoring guide](docs/card-impact-differential-explanations.md). The build
+copies that guide into `dist/docs/` so its download works on Netlify.
+
+The projection adds colored category and total-score changes and a total-score line
+for each table. After Year 3, five projected years extend the graph to Year 8. Dashed
+projections preserve current enrollment, investments, expenses and rulings; they
+respect delayed revenue and assume no additional events or purchases. The CFO's
+separate financial outlook remains a rolling five-year view.
