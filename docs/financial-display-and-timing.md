@@ -18,4 +18,17 @@ The no-exposure AI event no longer deducts a mission point. Financial-health sco
 
 ## November 2 follow-up: briefing first and 14-card catalog
 
-The annual briefing now precedes the financial cards, with a larger heading and signal text. Years 2 and 3 retain the inherited-commitments handover first. The financial plan stays with the financial cards and the compact summary remains sticky. Branch campus development was removed; previous cards 10–15 are now 9–14. Dependencies, events, Board Ask and research checks use the new IDs. The data/IR card now uses the existing orange flag style for its findings notice and shows the actual next briefing year. Separate session keys preserve old records without interpreting their card IDs under the revised catalog.
+The annual briefing now precedes the financial cards, with a larger heading and signal text. The financial plan stays with the financial cards and the compact summary remains sticky. Branch campus development was removed; previous cards 10–15 are now 9–14. Dependencies, events, Board Ask and research checks use the new IDs. The data/IR card now uses the existing orange flag style for its findings notice and shows the actual next briefing year. Separate session keys preserve old records without interpreting their card IDs under the revised catalog.
+
+
+## November 3: long-term outlook and facilitator purchase history
+
+The financial cards use smaller padding and headline values to keep the environmental signals prominent. Later years begin with the annual briefing; the inherited-commitments header is removed.
+
+The seven-year financial outlook replaces the three-year plan. It covers the current decision year and six subsequent years, showing earlier recorded results for context. Projections hold enrollment fixed, respect investment revenue-start years and continuing annual expenses, and exclude inflation, future events, board rulings and additional purchases. Startup funding is separate from operating results. Projected reserves start from current recorded cash and add unrecorded operating results once. The view includes the cumulative projected operating result and the incremental effect of current selections. Historical investment-fund balances are unavailable. This is a scenario, not a forecast.
+
+Selected investments carry a blue year-specific status. Submitted cards stay fully highlighted and read “Submitted investment · Year N · awaiting implementation.” Purchased cards retain their green status. The outlook remains accessible after deliberation closes and alongside year-end results.
+
+Facilitator standings include a Purchased investments by year expander for each table, with separate year expanders listing actual recorded purchases, startup amounts and funding sources. Empty closed years and years not yet closed are distinguished. Drafts and submissions are not labeled as purchases.
+
+Validation: 20 Node tests pass, including revenue timing, cash roll-forward, preview immutability, submitted status and purchase-history rendering. Exercise rules and scoring remain unchanged.

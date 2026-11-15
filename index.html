@@ -34,18 +34,23 @@ h1,h2,h3{font-weight:800;letter-spacing:-.02em;margin:0}
 /* ledger strip — the signature */
 .ledgers{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--indigo-line);
   border:1px solid var(--indigo-line);margin:22px 0}
-.ledger{background:var(--paper);color:var(--ink);padding:18px 22px;position:relative;overflow:hidden}
+.ledger{background:var(--paper);color:var(--ink);padding:14px 18px;position:relative;overflow:hidden}
 .ledger .fill{position:absolute;left:0;bottom:0;width:100%;background:rgba(255,89,89,.16);
   transition:height .6s cubic-bezier(.3,0,.2,1);pointer-events:none}
 .ledger h3{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);
   font-weight:600;position:relative}
-.ledger .big{font-size:clamp(30px,4.2vw,46px);font-weight:600;margin:6px 0 2px;position:relative;line-height:1}
+.ledger .big{font-size:clamp(26px,3.4vw,36px);font-weight:600;margin:5px 0 2px;position:relative;line-height:1}
 .ledger .big.neg{color:var(--coral)}
 .ledger .sub{font-size:13px;color:var(--ink-soft);position:relative}
 .lrow{display:flex;justify-content:space-between;border-top:1px solid var(--paper-rule);
   padding:5px 0;font-size:13px;position:relative}
 .lrow b{font-weight:600}
 
+.purchase-history{margin-top:8px;font-size:13px;min-width:230px}
+.purchase-history summary{cursor:pointer;color:var(--cyan);padding:5px 0}
+.purchase-history details{margin-left:12px;border-top:1px solid var(--indigo-line)}
+.purchase-history li{margin:7px 0;line-height:1.4}
+.purchase-history ul{padding-left:18px}
 /* catalog */
 .grid{display:grid;grid-template-columns:1fr 380px;gap:22px;align-items:start}
 .cat{margin-bottom:26px}
@@ -56,6 +61,7 @@ h1,h2,h3{font-weight:800;letter-spacing:-.02em;margin:0}
   background:none;color:var(--paper);transition:background .15s}
 .card:hover:not(:disabled){background:rgba(84,200,232,.06)}
 .card:disabled{opacity:.34;cursor:not-allowed}
+.card.on:disabled{opacity:1;cursor:default}
 .card.on{background:rgba(84,200,232,.11);box-shadow:inset 3px 0 0 var(--cyan)}
 .card.owned{background:rgba(63,191,143,.08);box-shadow:inset 3px 0 0 var(--ok);opacity:1;cursor:default}
 .cnum{font-size:12px;color:var(--indigo-line);font-weight:600;padding-top:3px}
@@ -64,6 +70,7 @@ h1,h2,h3{font-weight:800;letter-spacing:-.02em;margin:0}
 .cdesc{display:block;font-size:12.5px;color:#a79fc4;line-height:1.45;margin-top:4px}
 .cflag{display:inline-block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
   font-weight:600;padding:2px 6px;margin-top:6px;margin-right:5px;border-radius:2px}
+.cflag.selected{background:rgba(84,200,232,.16);color:var(--cyan)}
 .cflag.req{background:rgba(255,89,89,.15);color:var(--coral)}
 .cflag.rest{background:rgba(255,163,0,.15);color:var(--orange)}
 .cflag.rev{background:rgba(63,191,143,.15);color:var(--ok)}
@@ -171,6 +178,21 @@ select,input{background:var(--indigo-deep);border:1px solid var(--indigo-line);c
 .finance-dock{position:sticky;top:64px;z-index:40;display:flex;flex-wrap:wrap;gap:10px 24px;background:var(--indigo);border:1px solid var(--cyan);padding:12px;margin:18px 0;font-size:14px}
 .finance-dock b{display:block;margin-top:3px}.planning{padding:16px;background:var(--indigo);border:1px solid var(--indigo-line);margin:18px 0}.planning summary{cursor:pointer;font-weight:600}.planning caption{text-align:left;padding:10px 0}.plan-scroll{overflow-x:auto}
 @media(max-width:600px){.card{grid-template-columns:24px 1fr;gap:8px}.cprice{grid-column:2;text-align:left;white-space:normal}.cost-label{display:inline-block;margin-right:8px}.cprice .tail{display:inline;margin-right:12px}.finance-dock{top:0;font-size:12px}.ledger .lrow{gap:12px}.wrap{padding:0 12px 40px}}
+.outlook-chart{margin-top:24px;padding:24px 22px 16px;border:1px solid rgba(84,200,232,.16);border-radius:14px;background:linear-gradient(145deg,rgba(84,200,232,.045),rgba(0,0,0,.16));min-width:0}
+.outlook-chart-heading{display:flex;justify-content:space-between;align-items:start;gap:16px}
+.outlook-chart h3{font-size:18px;letter-spacing:-.02em;color:var(--paper);margin:0 0 5px}
+.outlook-chart-subtitle{font-size:12px;color:#a79fc4}
+.outlook-chart-value{text-align:right}
+.outlook-chart-value strong{display:block;font-size:24px;font-weight:500;color:var(--cyan)}
+.outlook-chart-value span{display:block;margin-top:4px;font-size:11px;color:#a79fc4}
+.outlook-chart-scroll{overflow-x:auto;margin-top:12px}
+.outlook-chart svg{display:block;width:100%;height:auto;min-width:540px}
+.outlook-chart svg text{fill:#aaa3c4;font-size:12px;font-family:'IBM Plex Mono',monospace}
+.outlook-legend{display:flex;justify-content:center;gap:24px;font-size:11px;color:#b8b0d0;margin-top:4px}
+.outlook-legend span{display:flex;align-items:center;gap:8px}
+.outlook-legend i{display:inline-block;width:24px;border-top:2px solid var(--cyan)}
+.outlook-legend i.projected{border-top-style:dashed}
+@media(max-width:600px){.outlook-chart{padding:18px 12px 14px}.outlook-chart h3{font-size:16px}.outlook-chart-value strong{font-size:20px}}
 </style>
 
 <div id="app"></div>
@@ -515,7 +537,7 @@ function renderPicker(){
       <button class="role" onclick="pickFac()"><b>I am the facilitator</b><span>Run each simulated year, show events, calculate results, apply adjustments</span></button>
       <button class="role" onclick="pickProj()"><b>Projection display</b><span>Read-only screen for the room</span></button>
     </div>${serverBadge()}
-    <p class="mini" style="margin-top:10px">Version: Financial clarity · ${CARDS.length} cards · ${Object.values(EVENTS).reduce((n,events)=>n+events.length,0)} events · November 2, 2026</p></div>`;}
+    <p class="mini" style="margin-top:10px">Version: Conference Version · ${CARDS.length} cards · ${Object.values(EVENTS).reduce((n,events)=>n+events.length,0)} events</p></div>`;}
 
 async function pickTeam(){
   const st=await sget(K.state);
@@ -602,16 +624,71 @@ function timingText(c,t,year){
   return '';
 }
 
+function financialOutlook(t,ids,year){
+  const preview=financialPreview(t,ids,year),endYear=year+4;
+  let reserve=t.reserve,cumulative=0,selectionImpact=0;
+  const rows=[];
+  for(let y=year;y<=endYear;y++){
+    const recorded=t.log.find(l=>l.year===y);
+    if(recorded){
+      rows.push({year:y,recorded:true,revenue:recorded.rev,expense:recorded.exp,
+        margin:recorded.margin,reserve:recorded.reserve});
+      continue;
+    }
+    if(y<year)continue;
+    const revenue=revenueOf(preview.team,y),expense=expenseOf(preview.team),margin=revenue-expense;
+    reserve+=margin;cumulative+=margin;
+    selectionImpact+=margin-(revenueOf(t,y)-expenseOf(t));
+    rows.push({year:y,recorded:false,revenue,expense,margin,reserve,fund:preview.team.fund});
+  }
+  return {preview,rows,endYear,cumulative,selectionImpact};
+}
+
+
+
+function outlookGraph(rows){
+  const width=900,height=300,left=78,right=36,top=30,bottom=48;
+  const values=rows.map(r=>r.reserve),low=Math.min(0,...values),high=Math.max(0,...values);
+  const rough=(high-low||1e6)/4;
+  const power=10**Math.floor(Math.log10(rough)),fraction=rough/power;
+  const step=(fraction<=1?1:fraction<=2?2:fraction<=5?5:10)*power;
+  const min=Math.floor(low/step)*step,max=Math.ceil(high/step)*step||step;
+  const x=i=>left+i*(width-left-right)/Math.max(1,rows.length-1);
+  const y=v=>top+(max-v)*(height-top-bottom)/(max-min);
+  const ticks=Array.from({length:Math.round((max-min)/step)+1},(_,i)=>min+i*step);
+  const lastRecorded=rows.reduce((last,r,i)=>r.recorded?i:last,-1);
+  const firstProjected=rows.findIndex(r=>!r.recorded);
+  const points=rs=>rs.map(r=>x(rows.indexOf(r))+','+y(r.reserve)).join(' ');
+  const actual=rows.filter(r=>r.recorded);
+  const projected=firstProjected<0?[]:rows.slice(Math.max(0,firstProjected-1));
+  const allPoints=points(rows),last=rows[rows.length-1];
+  const forecastX=firstProjected<0?width-right:x(Math.max(0,lastRecorded));
+  return `<section class="outlook-chart">
+    <div class="outlook-chart-heading"><div><h3>Operating reserve</h3><span class="outlook-chart-subtitle">Year-end balance</span></div>
+      <div class="outlook-chart-value"><strong class="num">${Mk(last.reserve)}</strong><span>Year ${last.year} ${last.recorded?'recorded':'projected'}</span></div></div>
+    <div class="outlook-chart-scroll"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Operating reserve at year-end, Years ${rows[0].year} through ${last.year}. Solid line shows recorded results; dashed line shows projections.">
+      <defs><linearGradient id="reserve-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#54C8E8" stop-opacity=".18"/><stop offset="100%" stop-color="#54C8E8" stop-opacity="0"/></linearGradient></defs>
+      ${firstProjected>=0?`<rect x="${forecastX}" y="${top}" width="${width-right-forecastX}" height="${height-top-bottom}" fill="#54C8E8" opacity=".025"/>`:''}
+      ${ticks.map(v=>`<line x1="${left}" y1="${y(v)}" x2="${width-right}" y2="${y(v)}" stroke="${v===0?'#5d5670':'#ffffff'}" stroke-opacity="${v===0?'.65':'.08'}"/><text x="${left-14}" y="${y(v)+4}" text-anchor="end">${Mk(v)}</text>`).join('')}
+      <polygon points="${x(0)},${y(0)} ${allPoints} ${x(rows.length-1)},${y(0)}" fill="url(#reserve-fill)"/>
+      ${lastRecorded>=0&&firstProjected>=0?`<line x1="${forecastX}" y1="${top}" x2="${forecastX}" y2="${height-bottom}" stroke="#54C8E8" stroke-opacity=".22" stroke-dasharray="3 6"/>`:''}
+      <polyline class="reserve-recorded" points="${points(actual)}" fill="none" stroke="#54C8E8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+      <polyline class="reserve-projected" points="${points(projected)}" fill="none" stroke="#54C8E8" stroke-width="2.5" stroke-dasharray="7 6" stroke-linejoin="round" stroke-linecap="round"/>
+      ${rows.map((r,i)=>`<circle data-year="${r.year}" data-status="${r.recorded?'recorded':'projected'}" cx="${x(i)}" cy="${y(r.reserve)}" r="${r.recorded?5:4}" fill="${r.recorded?'#54C8E8':'#1b1046'}" stroke="#54C8E8" stroke-width="2"><title>Year ${r.year} · ${r.recorded?'recorded':'projected'} · Reserve: ${M(r.reserve)}</title></circle>
+        <text x="${x(i)}" y="${height-18}" text-anchor="middle">Year ${r.year}</text>`).join('')}
+    </svg></div>
+    <div class="outlook-legend"><span><i></i>Recorded</span><span><i class="projected"></i>Projected</span></div>
+  </section>`;
+}
+
 function planningYears(t,ids,year){
-  const preview=financialPreview(t,ids,year);
-  return `<details class="planning"><summary>Three-year view of purchased and selected investments</summary>
-    <p class="mini">Existing investments plus these selections. Enrollment held at its current level. Excludes future events, board rulings and future investment purchases.</p>
-    <div class="plan-scroll"><table><caption>Operating plan before future events</caption><thead><tr><th>Year</th><th class="r">Annual operating revenue</th><th class="r">Annual operating expenses</th><th class="r">Operating result</th></tr></thead><tbody>
-    ${[1,2,3].map(y=>{
-      if(y<year){const l=t.log.find(x=>x.year===y);return l?`<tr><td>Year ${y} · complete</td><td class="r num">${Mk(l.rev)}</td><td class="r num">${Mk(l.exp)}</td><td class="r num">${Mk(l.margin)}</td></tr>`:'';}
-      const rev=revenueOf(preview.team,y),exp=expenseOf(preview.team);
-      return `<tr><td>Year ${y} · plan</td><td class="r num">${Mk(rev)}</td><td class="r num">${Mk(exp)}</td><td class="r num ${rev<exp?'neg':''}">${Mk(rev-exp)}</td></tr>`;
-    }).join('')}</tbody></table></div></details>`;
+  const plan=financialOutlook(t,ids,year);
+  const history=t.log.filter(r=>r.year<year).map(r=>({year:r.year,recorded:true,reserve:r.reserve}));
+  const graphRows=[...history,...plan.rows].sort((a,b)=>a.year-b.year);
+  return `<details class="planning"><summary>Five-year financial outlook · Years ${year}–${plan.endYear}</summary>
+    <div class="plan-scroll" tabindex="0" role="region" aria-label="Five-year financial outlook"><table><thead><tr><th>Year and status</th><th class="r">Annual operating revenue</th><th class="r">Annual operating expenses</th><th class="r">Operating result</th><th class="r">Operating reserve at year-end</th><th class="r">Investment fund remaining</th></tr></thead><tbody>
+    ${plan.rows.map(r=>`<tr><td>Year ${r.year} · ${r.recorded?'recorded':'projected'}</td><td class="r num">${Mk(r.revenue)}</td><td class="r num">${Mk(r.expense)}</td><td class="r num ${r.margin<0?'neg':''}">${Mk(r.margin)}</td><td class="r num ${r.reserve<0?'neg':''}">${Mk(r.reserve)}</td><td class="r num">${r.recorded?'—':Mk(r.fund)}</td></tr>`).join('')}
+    </tbody></table></div>${outlookGraph(graphRows)}</details>`;
 }
 
 function ledgerStrip(t,commitments=[]){
@@ -645,11 +722,12 @@ function renderTeam(){
   if(S.phase==='final'){app.innerHTML=chrome(t)+`<div class="wrap">${finalCard(t)}${boardTable(t.id)}</div>`;return}
 
   if(S.phase==='resolved'&&t.log.length>=rd){
-    app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t)}${resultPanel(t,t.log[rd-1])}${boardTable(t.id)}
+    app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t)}${/* Outlook temporarily disabled; restore this call to re-enable: planningYears(t,[],rd) */''}${resultPanel(t,t.log[rd-1])}${boardTable(t.id)}
       <p class="mini">Year ${rd} is complete. The facilitator opens Year ${rd+1} when the room is ready.</p></div>`;return}
 
   if(S.phase==='locked'||S.phase==='reveal'){
     app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t,t.locked[rd]||[])}
+      ${/* Outlook temporarily disabled; restore this call to re-enable: planningYears(t,t.locked[rd]||[],rd) */''}
       <div class="panel"><div class="eyebrow">Investment selections submitted</div>
       <h2>Year ${rd} investment selections submitted</h2>
       <div style="margin-top:14px">${(t.locked[rd]||[]).map(id=>`<div class="cartrow"><span>${CARD(id).n}</span><b class="num">${M(CARD(id).one)}</b></div>`).join('')||'<p class="mini">No new investments submitted for this year. Existing investments remain in effect.</p>'}</div>
@@ -681,13 +759,6 @@ function renderTeam(){
   if(over)warn+=`<div class="alertbox"><b>Insufficient investment fund balance.</b> ${M(fromFund-t.fund)} over the available Fund balance.</div>`;
 
   app.innerHTML=chrome(t)+`<div class="wrap">
-   ${rd>1?`<div class="panel" style="border-left:3px solid var(--orange);padding:16px 22px">
-     <div class="eyebrow">You are taking the chair</div>
-     <h2 style="font-size:17px;margin-top:4px">Year ${rd} opens on decisions you did not make</h2>
-     <p class="mini" style="margin-top:8px">${t.deciders[rd-1]?`<b style="color:var(--paper)">${t.deciders[rd-1]}</b> decided Year ${rd-1}.`:`Year ${rd-1} was decided by your predecessor.`}
-     You inherit ${Mk(t.fund)} of remaining investment fund, ${Mk(t.tail)} per year of existing annual expenses,
-     and an enrollment index of ${(t.enroll*100).toFixed(1)}%. You may disagree with all of it. You cannot unspend it.</p>
-   </div>`:''}
    <section class="panel annual-briefing" aria-labelledby="annual-briefing-title">
      <div class="eyebrow">Annual briefing · Year ${rd}</div>
      <h2 id="annual-briefing-title">Environmental signals</h2>
@@ -698,14 +769,14 @@ function renderTeam(){
      </div>
    </section>
    ${ledgerStrip(t,commitments)}
-   ${planningYears(t,commitments,rd)}
+   ${/* Outlook temporarily disabled; restore this call to re-enable: planningYears(t,commitments,rd) */''}
    <div class="finance-dock" aria-label="Selection totals" aria-live="polite"><span>Investment fund <b class="num">${Mk(preview.team.fund)}</b></span><span>Year ${rd} operating result <b class="num">${Mk(mg)}</b></span><span>Starting restricted gift <b class="num">${Mk(preview.team.restricted)}</b></span></div>
    <p class="mini">${CARDS.length} investment cards across ${CATS.length} categories. Categories organize the menu; you do not need to choose from every category. Annual expenses continue in later rounds.</p>
    <div class="grid">
     <div>${CATS.map(cat=>`<div class="cat"><h2>${cat}</h2>
       ${CARDS.filter(c=>c.cat===cat).map(c=>cardEl(c,t,commitments,isLocked)).join('')}</div>`).join('')}</div>
     <div class="rail">
-      <h3>Year ${rd} selected investments</h3>
+      <h3>Year ${rd} ${isLocked?'submitted':'selected'} investments</h3>
       ${commitments.length?commitments.map(id=>`<div class="cartrow"><span>${CARD(id).n}</span>
         <span style="white-space:nowrap"><b class="num">${M(CARD(id).one)}</b>
         ${isLocked?'':`<button onclick="drop(${id})" aria-label="Remove">×</button>`}</span></div>`).join('')
@@ -742,7 +813,8 @@ function cardEl(c,t,commitments=CART,isLocked=false){
       ${c.req?`<span class="cflag req">${dependencyText(c)}</span>`:''}
       ${c.rest?'<span class="cflag rest">Starting restricted gift eligible</span>':''}
       ${timingText(c,t,year)?`<span class="${c.rev?'cflag rev':c.id===12?'cflag rest':'card-timing'}">${timingText(c,t,year)}</span>`:''}
-      ${owned?`<span class="cflag rev">Purchased Year ${t.bought[c.id]} · annual effect continues</span>`:''}</span>
+      ${on&&!owned?`<span class="cflag selected">${isLocked?'Submitted':'Selected'} - Year ${year}</span>`:''}
+      ${owned?`<span class="cflag rev">Purchased - Year ${t.bought[c.id]}</span>`:''}</span>
     <span class="cprice"><span class="cost-label">Startup cost · paid once</span><span class="one num">${M(c.one)}</span>
       <span class="cost-label">${c.tail<0?'Annual savings':'Annual expense'}</span><span class="tail num ${c.tail<0?'credit':''}">${M(Math.abs(c.tail))}/yr</span></span></button>`;
 }
@@ -847,12 +919,22 @@ function finalCard(t){
   </div>`;}
 
 let BOARD=[];
-function boardTable(mine){
+function purchaseHistory(t){
+  return `<details class="purchase-history"><summary>Purchased investments by year</summary>
+    ${[1,2,3].map(year=>{
+      const record=t.log.find(l=>l.year===year);
+      const purchases=record?record.purchases:[];
+      return `<details><summary>Year ${year} · ${record?purchases.length+' purchased':'not closed'}</summary>
+        ${record?(purchases.length?`<ul>${purchases.map(p=>`<li>${p.n} · <span class="num">${M(p.cost)}</span><span class="mini"> · ${p.src}</span></li>`).join('')}</ul>`:'<p class="mini">No investments purchased.</p>'):'<p class="mini">Purchases are recorded when the year closes.</p>'}</details>`;
+    }).join('')}</details>`;
+}
+
+function boardTable(mine,showPurchases=false){
   if(!BOARD.length)return'';
   return `<div class="panel"><div class="eyebrow">Standings</div><h2>After Year ${S.round}</h2>
    <table><thead><tr><th></th><th>Table</th><th class="r">Financial health</th><th class="r">Mission and outcomes</th>
    <th class="r">Strategic position</th><th class="r">Resilience</th><th class="r">Total</th></tr></thead><tbody>
-   ${BOARD.map((b,i)=>`<tr class="${b.id===mine?'me':''}"><td class="rank">${i+1}</td><td>${b.name}</td>
+   ${BOARD.map((b,i)=>`<tr class="${b.id===mine?'me':''}"><td class="rank">${i+1}</td><td>${b.name}${showPurchases&&TEAMS.find(t=>t.id===b.id)?purchaseHistory(TEAMS.find(t=>t.id===b.id)):''}</td>
     <td class="r num">${b.s.fin.toFixed(1)}</td><td class="r num">${b.s.mis.toFixed(1)}</td>
     <td class="r num">${b.s.str.toFixed(1)}</td><td class="r num">${b.s.res.toFixed(1)}</td>
     <td class="r num"><b>${b.s.total.toFixed(1)}</b></td></tr>`).join('')}
@@ -936,7 +1018,7 @@ async function renderFac(){
     </div>
    </div>
 
-   ${boardTable(0)}
+   ${boardTable(0,true)}
    ${S.phase==='final'?TEAMS.map(t=>finalCard(t)).join(''):''}
   </div>`;}
 
