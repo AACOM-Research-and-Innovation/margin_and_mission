@@ -537,7 +537,7 @@ function renderPicker(){
       <button class="role" onclick="pickFac()"><b>I am the facilitator</b><span>Run each simulated year, show events, calculate results, apply adjustments</span></button>
       <button class="role" onclick="pickProj()"><b>Projection display</b><span>Read-only screen for the room</span></button>
     </div>${serverBadge()}
-    <p class="mini" style="margin-top:10px">Version: "Nov 10" · ${CARDS.length} cards · ${Object.values(EVENTS).reduce((n,events)=>n+events.length,0)} events</p></div>`;}
+    <p class="mini" style="margin-top:10px">Version: Conference Version · ${CARDS.length} cards · ${Object.values(EVENTS).reduce((n,events)=>n+events.length,0)} events</p></div>`;}
 
 async function pickTeam(){
   const st=await sget(K.state);
