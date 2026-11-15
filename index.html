@@ -521,11 +521,57 @@ async function pull(){
   render();}
 
 /* ══════════════ RENDER ══════════════ */
+// Drafts belong to this screen, table and year, separate from polled server data.
+// Keep them in memory only; a full browser reload still starts from saved data.
+let FORM_SCOPE=null;
+const FORM_DRAFT={};
+function formScope(){
+  if(!S)return null;
+  if(ROLE==='team'&&ME)return 'team:'+ME.id+':'+S.round;
+  if(ROLE==='fac')return 'fac:'+S.round;
+  return null;
+}
+function formFields(){
+  return ROLE==='team'?['decName','disName']:
+    ROLE==='fac'?['adjT','adjP','adjN','cashT','cashV']:[];
+}
+function clearFormDraft(){
+  for(const id of Object.keys(FORM_DRAFT))delete FORM_DRAFT[id];
+}
 function render(){
-  if(!ROLE)return renderPicker();
-  if(ROLE==='team')return renderTeam();
-  if(ROLE==='fac')return renderFac();
-  if(ROLE==='proj')return renderProj();}
+  const scope=formScope();
+  const locked=ROLE==='team'&&ME&&S&&Object.prototype.hasOwnProperty.call(ME.locked,S.round);
+  let focus=null;
+  if(scope&&scope===FORM_SCOPE&&!locked){
+    for(const id of formFields()){
+      const field=$(id);
+      if(!field||field.disabled)continue;
+      FORM_DRAFT[id]=field.value;
+      if(document.activeElement===field){
+        focus={id,start:field.selectionStart,end:field.selectionEnd,direction:field.selectionDirection};
+      }
+    }
+  }else clearFormDraft();
+  FORM_SCOPE=scope;
+  let result;
+  if(!ROLE)result=renderPicker();
+  else if(ROLE==='team')result=renderTeam();
+  else if(ROLE==='fac')result=renderFac();
+  else if(ROLE==='proj')result=renderProj();
+  for(const [id,value] of Object.entries(FORM_DRAFT)){
+    const field=$(id);
+    if(field&&!field.disabled)field.value=value;
+  }
+  if(focus){
+    const field=$(focus.id);
+    if(field&&!field.disabled){
+      field.focus();
+      if(typeof focus.start==='number'&&field.setSelectionRange)
+        field.setSelectionRange(focus.start,focus.end,focus.direction);
+    }
+  }
+  return result;
+}
 
 /* ── role picker ─────────────────────────────────────────── */
 function renderPicker(){
@@ -836,7 +882,11 @@ async function lockIn(){
   t.deciders[S.round]=dn.trim();
   t.dissent[S.round]=(($('disName')||{}).value||'').trim();
   t.cfo=ME.cfo;t.mentor=ME.mentor;
-  await sset(K.team(t.id),t);
+  if(!await sset(K.team(t.id),t)){
+    BUSY=false;
+    alert('Your submission could not be saved. Your entries are still here; please try again.');
+    return;
+  }
   ME=t;CART=[];BUSY=false;render();}
 
 async function unlockYear(){
@@ -1046,13 +1096,18 @@ async function applyAdj(){
   const id=+$('adjT').value,p=+$('adjP').value,n=$('adjN').value||'Facilitator ruling';
   if(!p)return;
   const t=await sget(K.team(id));t.adj.push({pts:p,note:n});
-  await sset(K.team(id),t);await loadTeams();render();}
+  if(!await sset(K.team(id),t))return;
+  // Clear only the successfully submitted adjustment, preserving the other form.
+  for(const field of ['adjP','adjN']){delete FORM_DRAFT[field];if($(field))$(field).value='';}
+  await loadTeams();render();}
 
 async function applyCash(){
   const id=+$('cashT').value,v=+$('cashV').value;
   if(!v)return;
   const t=await sget(K.team(id));t.reserve+=v;t.adj.push({pts:0,note:'Operating reserve adjusted '+M(v)});
-  await sset(K.team(id),t);await loadTeams();render();}
+  if(!await sset(K.team(id),t))return;
+  delete FORM_DRAFT.cashV;if($('cashV'))$('cashV').value='';
+  await loadTeams();render();}
 
 async function facEnter(id){
   const t=await sget(K.team(id));

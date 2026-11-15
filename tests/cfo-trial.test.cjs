@@ -15,12 +15,47 @@ function appContext(options = {}) {
     source = source.replace(setting, `const REVIEW_CONTENT = ${JSON.stringify(options.review)};`);
   }
   const app = { innerHTML: '' };
+  const fields = new Map();
+  const browserDocument = {
+    activeElement: null,
+    getElementById: id => id === 'app' ? app : options.liveDOM ? fields.get(id) ?? null : options.inputs?.[id] ?? null,
+  };
+  if (options.liveDOM) {
+    let markup = '';
+    Object.defineProperty(app, 'innerHTML', {
+      get: () => markup,
+      set: html => {
+        markup = html;
+        fields.clear();
+        browserDocument.activeElement = null;
+        const attr = (tag, name) => tag.match(new RegExp(name + '="([^"]*)"'))?.[1] ?? '';
+        const add = (tag, value) => {
+          const id = attr(tag, 'id');
+          if (!id) return;
+          const field = { value, disabled: /\sdisabled(?:\s|>|$)/.test(tag),
+            selectionStart: null, selectionEnd: null, selectionDirection: 'none',
+            focus() { browserDocument.activeElement = field; },
+            setSelectionRange(start, end, direction) {
+              this.selectionStart = start; this.selectionEnd = end; this.selectionDirection = direction;
+            },
+          };
+          fields.set(id, field);
+        };
+        for (const tag of html.match(/<input\b[^>]*>/g) || []) add(tag, attr(tag, 'value'));
+        for (const match of html.matchAll(/<select\b([^>]*)>([\s\S]*?)<\/select>/g)) {
+          const firstOption = match[2].match(/<option[^>]*>/)?.[0] ?? '';
+          add('<select ' + match[1] + '>', attr(firstOption, 'value'));
+        }
+      },
+    });
+  }
   const values = new Map();
   const context = vm.createContext({
     console, URLSearchParams,
     location: { search: '', protocol: 'file:', pathname: '/index.html' },
     window: {},
-    document: { getElementById: id => id === 'app' ? app : options.inputs?.[id] ?? null },
+    document: browserDocument,
+    alert: message => options.alert?.(message),
     prompt: (...args) => options.prompt?.(...args) ?? null,
     confirm: () => true,
     localStorage: {
@@ -33,6 +68,7 @@ function appContext(options = {}) {
   vm.runInContext(source, context, { filename: 'index.html inline script' });
   return {
     app,
+    field: id => browserDocument.getElementById(id),
     run: code => vm.runInContext(code, context),
     json: code => JSON.parse(vm.runInContext(`JSON.stringify(${code})`, context)),
   };
@@ -536,4 +572,86 @@ test('reserve graph handles negative and zero balances', () => {
     assert.match(html,/reserve-recorded/);
     assert.match(html,/reserve-projected/);
   }
+});
+
+test('eight-table polling and card changes preserve CFO drafts, focus and selection', async () => {
+  const {run,field,json}=appContext({liveDOM:true});
+  run("S={round:1,phase:'brief',tables:8};ME=newTeam(1);ROLE='team';");
+  await run('sset(K.state,S)');
+  for(let i=1;i<=8;i++)await run(`sset(K.team(${i}),newTeam(${i}))`);
+  await run('loop()');
+  field('decName').value='Gev';
+  field('disName').value='Draft argument';
+  run("ME.deciders[1]='Gev';ME.dissent[1]='Draft argument';");
+  field('disName').focus();field('disName').setSelectionRange(2,7,'forward');
+  await run('loop()'); // An idle poll replaces ME, but does not replace the DOM.
+  assert.equal(run("ME.deciders[1]||''"),'');
+  run('pick(5)');
+  assert.equal(field('decName').value,'Gev');
+  assert.equal(field('disName').value,'Draft argument');
+  assert.equal(run('document.activeElement===document.getElementById("disName")'),true);
+  assert.equal(field('disName').selectionStart,2);
+  assert.equal(field('disName').selectionEnd,7);
+  for(let id=2;id<=8;id++){
+    await run(`(async()=>{const other=await sget(K.team(${id}));other.locked[1]=[3];await sset(K.team(${id}),other)})()`);
+    await run('loop()');
+    assert.equal(field('decName').value,'Gev');
+    assert.equal(field('disName').value,'Draft argument');
+    assert.deepEqual(json('CART'),[5]);
+  }
+  await run('lockIn()');
+  assert.equal(run('ME.deciders[1]'),'Gev');
+  assert.equal(run('ME.dissent[1]'),'Draft argument');
+  assert.equal(field('decName').disabled,true);
+  assert.deepEqual(json('FORM_DRAFT'),{});
+  await run('unlockYear()');
+  assert.equal(field('decName').value,'Gev');
+  await run("sset(K.state,{round:2,phase:'brief',tables:8})");
+  await run('loop()');
+  assert.equal(field('decName').value,'');
+  assert.equal(field('disName').value,'');
+});
+
+test('facilitator drafts survive team updates and clear only after the matching action succeeds', async () => {
+  const {run,field}=appContext({liveDOM:true});
+  run("ROLE='fac';S={round:1,phase:'brief',tables:8};");
+  await run('sset(K.state,S)');
+  for(let i=1;i<=8;i++)await run(`sset(K.team(${i}),newTeam(${i}))`);
+  await run('loop()');
+  field('adjT').value='2';field('adjP').value='3';field('adjN').value='Mentor ruling';
+  field('cashT').value='3';field('cashV').value='25000';
+  await run("(async()=>{const other=await sget(K.team(8));other.cfo='Another CFO';await sset(K.team(8),other)})()");
+  await run('loop()');
+  assert.equal(field('adjT').value,'2');assert.equal(field('adjN').value,'Mentor ruling');
+  assert.equal(field('cashT').value,'3');assert.equal(field('cashV').value,'25000');
+  await run('applyAdj()');
+  assert.equal(field('adjP').value,'');assert.equal(field('adjN').value,'');
+  assert.equal(field('cashV').value,'25000');
+  assert.equal(await run('sget(K.team(2)).then(t=>t.adj[0].pts)'),3);
+  await run('applyCash()');
+  assert.equal(field('cashV').value,'');
+  assert.equal(await run('sget(K.team(3)).then(t=>t.reserve)'),13025000);
+});
+
+test('failed submissions retain drafts and selections, and reset removes drafts', async () => {
+  const messages=[];
+  const {run,field,json}=appContext({liveDOM:true,alert:message=>messages.push(message)});
+  run("ROLE='team';S={round:1,phase:'brief',tables:1};ME=newTeam(1);CART=[5];");
+  await run('sset(K.state,S)');await run('sset(K.team(1),ME)');
+  await run('loop()');
+  field('decName').value='Gev';field('disName').value='Keep this';
+  run('const originalSet=sset;sset=async()=>false;');
+  await run('lockIn()');
+  assert.equal(messages.length,1);
+  assert.deepEqual(json('CART'),[5]);
+  assert.equal(run('Object.hasOwn(ME.locked,1)'),false);
+  run('render()');
+  assert.equal(field('decName').value,'Gev');assert.equal(field('disName').value,'Keep this');
+  run('sset=originalSet;');
+  await run('sdel(K.state)');await run('loop()');
+  assert.deepEqual(json('FORM_DRAFT'),{});
+  await run('sset(K.state,{round:1,phase:"brief",tables:1})');
+  await run('loop()');
+  assert.equal(field('decName').value,'');
+  assert.equal(field('disName').value,'');
 });
