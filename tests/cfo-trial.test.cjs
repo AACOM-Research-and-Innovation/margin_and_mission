@@ -753,7 +753,7 @@ test('card differentials distinguish storm costs, mission benefits, and conditio
   const cyber=json('eventDifferentials(cyber,team,cyber.f(team))');
   assert.match(cyber.find(d=>d.id===4).text,/\$50,000 instead of \$300,000/);
   assert.match(cyber.find(d=>d.id===3).text,/\$50,000 instead of \$2,400,000/);
-  run('team.held=[4]');assert.equal(run('eventDifferentials(cyber,team,cyber.f(team)).length'),0);
+  run('team.held=[4]');assert.match(run('eventDifferentials(cyber,team,cyber.f(team))[0].text'),/no event payout.*annual premium still applies/);
 });
 
 test('projection shows all category deltas, recorded score trends and five projected years without mutating teams', () => {
@@ -807,4 +807,42 @@ test('legacy saved ledgers rewind without snapshots and retain cash rulings', as
   const restored=json('ledgerSnapshot(TEAMS[0])');restored.reserve-=1234;
   assert.deepEqual(restored,json('before'));
   assert.deepEqual(json('TEAMS[0].locked[2]'),[1,2]);
+});
+
+
+test('scholarship explanations match next-year tuition and mature bridge margin protection', () => {
+  const {run}=appContext();
+  run('const protectedTeam=newTeam(1),exposedTeam=newTeam(2);protectedTeam.pending=[6,14];exposedTeam.pending=[6];resolveRound(protectedTeam,1);resolveRound(exposedTeam,1);');
+  const explanation=run('protectedTeam.log[0].events[0].differential.find(d=>d.id===14).text');
+  assert.match(explanation,/From Year 2.*\$1,411,200 per year/);
+  assert.match(explanation,/margin benefit is \$611,200/);
+  assert.match(explanation,/\$1,400,000 instead of \$1,190,000/);
+  assert.match(explanation,/revenue protection is \$1,621,200/);
+  assert.match(explanation,/margin benefit after card 14’s expense is \$821,200/);
+  assert.equal(run('protectedTeam.log[0].margin-exposedTeam.log[0].margin'),-800000);
+  run('resolveRound(protectedTeam,2);resolveRound(exposedTeam,2);');
+  assert.equal(run('protectedTeam.log[1].margin-exposedTeam.log[1].margin'),821200);
+});
+
+test('AI revenue explanation respects maturity and succession explains redundant protection', () => {
+  const {run}=appContext();
+  run("const t=newTeam(1);t.held=[5,11];t.bought={5:3,11:3};const ai=EVENTS[3][0];");
+  const explanation=run('eventDifferentials(ai,t,ai.f(t),3).find(d=>d.id===11).text');
+  assert.match(explanation,/from Year 4.*\$3,200,000 instead of \$1,920,000/);
+  assert.match(explanation,/margin benefit is \$1,180,000/);
+  assert.match(explanation,/Earlier lost revenue is not restored/);
+  run('t.held=[7,8];const omm=EVENTS[2].find(e=>e.n.startsWith("OMM chair"));');
+  assert.match(run('eventDifferentials(omm,t,omm.f(t),2).find(d=>d.id===7).text'),/no additional protection.*takes precedence/);
+  run('t.held=[5,12]');
+  assert.match(run('eventDifferentials(ai,t,ai.f(t),3).find(d=>d.id===5).text'),/card 12 remains.*does not double/);
+});
+
+test('downloadable guide includes supplied event sections, manual limits and completed card 14 values', () => {
+  const guide=fs.readFileSync(path.join(__dirname,'..','docs','card-impact-differential-explanations.md'),'utf8');
+  assert.equal((guide.match(/^## Year [123]:/gm)||[]).length,7);
+  assert.match(guide,/Combined citation consequence/);
+  assert.match(guide,/points override subtracts four total points/);
+  assert.match(guide,/Existing override controls do not add a recurring expense/);
+  assert.match(guide,/\*\*\$821,200\*\*/);
+  assert.match(guide,/\| 14 \| Scholarship and tuition discount pool .*\| 4 \| 0 \| 3 \|/);
 });

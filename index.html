@@ -432,7 +432,7 @@ function resolveRound(t,year){
   // 3. events
   EVENTS[year].forEach(e=>{
     const r=e.f(t);
-    const differential=eventDifferentials(e,t,r);
+    const differential=eventDifferentials(e,t,r,year);
     if(r.cash){t.reserve+=r.cash;}
     if(r.enroll){t.enroll=Math.max(.7,t.enroll+r.enroll);}
     if(r.tail){t.tail+=r.tail;}
@@ -498,7 +498,7 @@ function visibleTeam(t){
   if(hidden.before)before.reserve+=t.reserve-hidden.reserve;
   return {...t,...before,log:t.log.filter(l=>l.year<hidden.year)};
 }
-function eventDifferentials(event,t,actual){
+function eventDifferentials(event,t,actual,year=1){
   const metrics=[['cash','event cash impact',M],['enroll','enrollment change',v=>(v*100).toFixed(1)+' percentage points'],['m','raw mission point change',String],['s','raw strategic point change',String],['cite','accreditation citation count',String],['tail','annual expense change',M]];
   return t.held.flatMap(id=>{
     const without=event.f({...t,held:t.held.filter(held=>held!==id)});
@@ -506,7 +506,34 @@ function eventDifferentials(event,t,actual){
       if(key==='cash'&&(actual[key]||0)<=0&&(without[key]||0)<=0)return 'event cost was '+M(-(actual[key]||0))+' instead of '+M(-(without[key]||0));
       return label+' was '+format(actual[key]||0)+' instead of '+format(without[key]||0);
     });
-    return changes.length?[{id,text:'Because you took '+CARD(id).n+' (card '+id+'), '+changes.join('; ')+'. This comparison removes only this card and keeps your other investments.'}]:[];
+    if(changes.length){
+      const reserveDifference=(actual.cash||0)-(without.cash||0);
+      let detail=reserveDifference?' This '+(reserveDifference>0?'preserved ':'cost an additional ')+M(Math.abs(reserveDifference))+' in operating reserve.':'';
+      if(id===14&&actual.enroll!==without.enroll&&Number.isFinite(t.enroll)){
+        const actualEnrollment=Math.max(.7,t.enroll+(actual.enroll||0));
+        const alternativeEnrollment=Math.max(.7,t.enroll+(without.enroll||0));
+        const tuition=BASE.tuition*(actualEnrollment-alternativeEnrollment);
+        detail+=' From Year '+(year+1)+', annual tuition is '+M(BASE.tuition*actualEnrollment)+' instead of '+M(BASE.tuition*alternativeEnrollment)+', protecting '+M(tuition)+' per year. After card 14’s '+M(CARD(14).tail)+' annual expense, the comparative annual margin benefit is '+M(tuition-CARD(14).tail)+'.';
+        if(has(t,6)){
+          const bridge=CARD(6),revenue=enrollment=>bridge.rev*(enrollment<.95?.85:1);
+          const benefit=revenue(actualEnrollment)-revenue(alternativeEnrollment);
+          const firstYear=Math.max(year+1,(t.bought?.[6]||year)+bridge.lag);
+          detail+=' When your bridge program (card 6) is mature, from Year '+firstYear+', its annual revenue is '+M(revenue(actualEnrollment))+' instead of '+M(revenue(alternativeEnrollment))+'. Combined annual revenue protection is '+M(tuition+benefit)+'; the comparative annual margin benefit after card 14’s expense is '+M(tuition+benefit-CARD(14).tail)+'.';
+        }
+        detail+=' Year '+year+' operations precede this event. The enrollment loss persists; a later scholarship purchase does not restore it.';
+      }
+      if(id===11&&has(t,5)){
+        const program=CARD(5),firstYear=Math.max(year,(t.bought?.[5]||year)+program.lag);
+        detail+=' Separately, from Year '+firstYear+', your mature AI program (card 5) earns '+M(program.rev)+' instead of '+M(program.rev*.6)+' annually. After card 11’s '+M(CARD(11).tail)+' annual expense, the comparative annual margin benefit is '+M(program.rev*.4-CARD(11).tail)+'. Earlier lost revenue is not restored.';
+      }
+      if((actual.tail||0)!==(without.tail||0))detail+=' This event’s expense change occurs after Year '+year+' operations: it affects days cash immediately and operating margin from Year '+(year+1)+'.';
+      if(id===13)detail+=' Card 13’s ordinary annual revenue begins in Year '+((t.bought?.[13]||year)+CARD(13).lag)+'; that lag does not delay eligibility for this gift.';
+      return [{id,text:'Because you took '+CARD(id).n+' (card '+id+'), '+changes.join('; ')+'. This comparison removes only this card and keeps your other investments.'+detail}];
+    }
+    if(event.n.startsWith('OMM chair')&&id===7&&has(t,8))return [{id,text:'Faculty retention (card 7) provides no additional protection in this event because OMM succession (card 8) takes precedence. Card 7’s ordinary expense and purchase-time points still apply.'}];
+    if(event.n.startsWith('Ransomware')&&id===4&&!has(t,3))return [{id,text:'Cyber insurance (card 4) provides no event payout without cybersecurity controls (card 3). Incident cost remains '+M(-(actual.cash||0))+' and the '+M(CARD(4).tail)+' annual premium still applies.'}];
+    if(event.n.startsWith('National scrutiny')&&[5,12].includes(id)&&has(t,5)&&has(t,12)&&!has(t,11))return [{id,text:'Removing card '+id+' alone does not avoid ungoverned AI exposure because card '+(id===5?12:5)+' remains. Holding both cards does not double the '+M(-(actual.cash||0))+' remediation cost or the single citation. AI governance (card 11) is absent.'}];
+    return [];
   });
 }
 async function rollbackStage(){
@@ -591,7 +618,7 @@ function decisionSummary(t){
   const purchases=t.log.flatMap(l=>l.purchases);
   const effects=t.log.flatMap(l=>l.events.flatMap(e=>e.differential||[]));
   return `<div class="res"><h3>Your decisions and their impact</h3>
-    <p>You purchased ${purchases.length} investments, committing ${M(purchases.reduce((sum,p)=>sum+p.cost,0))} in startup funding. Your cumulative operating result was ${M(t.cumMargin)}, and your decisions left ${t.cite} accreditation citation${t.cite===1?'':'s'}. ${effects.length?escapeHTML(effects[0].text):'Your portfolio produced no card-specific event differences.'} Expand each year for the other effects and costs.</p>
+    <p>You purchased ${purchases.length} investments, committing ${M(purchases.reduce((sum,p)=>sum+p.cost,0))} in startup funding. Your cumulative operating result was ${M(t.cumMargin)}, and your decisions left ${t.cite} accreditation citation${t.cite===1?'':'s'}. ${effects.length?escapeHTML(effects[0].text.split('. This comparison')[0]+(effects[0].text.includes('. This comparison')?'.':'')):'Your portfolio produced no card-specific event differences.'} Expand each year for the other effects and costs.</p>
     ${t.log.map(l=>`<details class="notebox"><summary><b>Year ${l.year}${t.deciders[l.year]?' · '+escapeHTML(t.deciders[l.year]):''}</b> · ${l.purchases.length} investments · operating result ${M(l.margin)}</summary>
       <div>${l.purchases.length?l.purchases.map(p=>`${escapeHTML(p.n)}${p.id?' (card '+p.id+')':''}`).join('; '):'No new investments purchased.'}</div>
       <div>Startup investment: ${M(l.purchases.reduce((sum,p)=>sum+p.cost,0))}; annual expense change: ${M(l.purchases.reduce((sum,p)=>sum+p.tail,0))}. Operating result: ${M(l.margin)}.</div>
