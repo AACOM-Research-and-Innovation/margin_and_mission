@@ -428,8 +428,8 @@ test('annual briefing precedes finances and orange research notice follows purch
     run(`S={round:${year},phase:'brief',tables:1}; ME=newTeam(1); ROLE='team'; CART=[]; renderTeam();`);
     const html=app.innerHTML;
     assert(html.indexOf('annual-briefing-title') < html.indexOf('class="ledgers"'));
-    assert(html.indexOf('class="ledgers"') < html.indexOf('class="planning"'));
-    assert(html.indexOf('class="planning"') < html.indexOf('class="finance-dock"'));
+    assert.doesNotMatch(html,/class="planning"|Five-year financial outlook/);
+    assert(html.indexOf('class="ledgers"') < html.indexOf('class="finance-dock"'));
     assert(html.indexOf('class="finance-dock"') < html.indexOf('class="grid"'));
     assert.doesNotMatch(html,/You are taking the chair|opens on decisions you did not make/);
     assert.match(run(`cardEl(CARD(12),ME)`),new RegExp(`class="cflag rest">Adds additional findings in annual briefing starting Year ${year+1}`));
@@ -490,7 +490,7 @@ test('submitted cards remain highlighted, with a year-specific status', async ()
   assert.match(run('cardEl(CARD(5),ME,ME.locked[2],true)'),/class="card on" disabled/);
   for(const phase of ['locked','reveal']){
     run(`S.phase='${phase}';renderTeam();`);
-    assert.match(app.innerHTML,/Five-year financial outlook/);
+    assert.doesNotMatch(app.innerHTML,/Five-year financial outlook/);
   }
 });
 

@@ -722,12 +722,12 @@ function renderTeam(){
   if(S.phase==='final'){app.innerHTML=chrome(t)+`<div class="wrap">${finalCard(t)}${boardTable(t.id)}</div>`;return}
 
   if(S.phase==='resolved'&&t.log.length>=rd){
-    app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t)}${planningYears(t,[],rd)}${resultPanel(t,t.log[rd-1])}${boardTable(t.id)}
+    app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t)}${/* Outlook temporarily disabled; restore this call to re-enable: planningYears(t,[],rd) */''}${resultPanel(t,t.log[rd-1])}${boardTable(t.id)}
       <p class="mini">Year ${rd} is complete. The facilitator opens Year ${rd+1} when the room is ready.</p></div>`;return}
 
   if(S.phase==='locked'||S.phase==='reveal'){
     app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t,t.locked[rd]||[])}
-      ${planningYears(t,t.locked[rd]||[],rd)}
+      ${/* Outlook temporarily disabled; restore this call to re-enable: planningYears(t,t.locked[rd]||[],rd) */''}
       <div class="panel"><div class="eyebrow">Investment selections submitted</div>
       <h2>Year ${rd} investment selections submitted</h2>
       <div style="margin-top:14px">${(t.locked[rd]||[]).map(id=>`<div class="cartrow"><span>${CARD(id).n}</span><b class="num">${M(CARD(id).one)}</b></div>`).join('')||'<p class="mini">No new investments submitted for this year. Existing investments remain in effect.</p>'}</div>
@@ -769,7 +769,7 @@ function renderTeam(){
      </div>
    </section>
    ${ledgerStrip(t,commitments)}
-   ${planningYears(t,commitments,rd)}
+   ${/* Outlook temporarily disabled; restore this call to re-enable: planningYears(t,commitments,rd) */''}
    <div class="finance-dock" aria-label="Selection totals" aria-live="polite"><span>Investment fund <b class="num">${Mk(preview.team.fund)}</b></span><span>Year ${rd} operating result <b class="num">${Mk(mg)}</b></span><span>Starting restricted gift <b class="num">${Mk(preview.team.restricted)}</b></span></div>
    <p class="mini">${CARDS.length} investment cards across ${CATS.length} categories. Categories organize the menu; you do not need to choose from every category. Annual expenses continue in later rounds.</p>
    <div class="grid">
