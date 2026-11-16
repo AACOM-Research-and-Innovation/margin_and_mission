@@ -502,16 +502,24 @@ test('five-year outlook respects revenue timing, cash and recorded results', () 
   run('t.pending=[5,11];resolveRound(t,1);const later=financialOutlook(t,[13],2);');
   assert.equal(run('later.endYear'),6);
   assert.equal(run('later.rows.filter(r=>!r.recorded).length'),5);
-  assert.equal(run('later.rows.length'),5);
-  assert.equal(run('later.rows[0].year'),2);
-  assert.equal(run('later.rows[0].reserve'),run('t.reserve+later.rows[0].margin'));
-  assert.equal(run('later.rows[1].reserve'),run('later.rows[0].reserve+later.rows[1].margin'));
+  assert.equal(run('later.rows.length'),6);
+  assert.equal(run('later.rows[0].year'),1);
+  assert.equal(run('later.rows[0].recorded'),true);
+  for(const [rowKey,logKey] of [['revenue','rev'],['expense','exp'],['margin','margin'],['reserve','reserve']]){
+    assert.equal(run(`later.rows[0].${rowKey}`),run(`t.log[0].${logKey}`));
+  }
+  assert.equal(run('later.rows[1].reserve'),run('t.reserve+later.rows[1].margin'));
+  assert.equal(run('later.rows[2].reserve'),run('later.rows[1].reserve+later.rows[2].margin'));
+  // Advancement selected in Year 2 first earns revenue in Year 4.
+  assert.equal(run('later.rows[2].revenue'),run('revenueOf(t,3)'));
+  assert.equal(run('later.rows[3].revenue'),run('revenueOf(t,4)+CARD(13).rev'));
   assert.equal(run('financialOutlook(t,[],1).rows[1].reserve'),run('t.reserve+revenueOf(t,2)-expenseOf(t)'));
   const html=run('planningYears(t,[13],2)');
   assert.match(html,/Five-year financial outlook/);
   assert.doesNotMatch(html,/<p |<caption>|NaN|Infinity|scenario, not a forecast/);
   assert.equal((html.match(/<svg /g)||[]).length,1);
-  assert.equal((html.match(/<tr>/g)||[]).length,6);
+  assert.equal((html.match(/<tr>/g)||[]).length,7);
+  assert.match(html,/Five-year financial outlook · Years 1–6/);
   assert.doesNotMatch(html,/Operating revenue and expenses/);
   assert.match(html,/Operating reserve at year-end/);
 });
@@ -545,13 +553,15 @@ test('facilitator standings show actual purchases grouped by year', async () => 
   assert.doesNotMatch(run('boardTable(1)'),/Purchased investments by year/);
 });
 
-test('reserve graph stays anchored to Year 1 while the five-year outlook advances', () => {
+test('outlook table and reserve graph retain Year 1 while the projection advances', () => {
   const {run}=appContext();
   run('const team=newTeam(1);');
   for(let year=1;year<=3;year++){
     const html=run(`planningYears(team,[],${year})`);
     assert.equal((html.match(/<svg /g)||[]).length,1);
-    assert.equal((html.match(/<tr>/g)||[]).length,6);
+    assert.equal((html.match(/<tr>/g)||[]).length,year+5);
+    assert.match(html,/Year 1 · (recorded|projected)<\/td>/);
+    assert.match(html,new RegExp(`Five-year financial outlook · Years 1–${year+4}`));
     assert.equal((html.match(/data-year=/g)||[]).length,year+4);
     assert.match(html,/data-year="1"/);
     assert.match(html,new RegExp(`data-year="${year+4}"`));

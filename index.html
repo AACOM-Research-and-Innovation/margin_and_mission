@@ -872,7 +872,7 @@ function financialOutlook(t,ids,year){
   const preview=financialPreview(t,ids,year),endYear=year+4;
   let reserve=t.reserve,cumulative=0,selectionImpact=0;
   const rows=[];
-  for(let y=year;y<=endYear;y++){
+  for(let y=1;y<=endYear;y++){
     const recorded=t.log.find(l=>l.year===y);
     if(recorded){
       rows.push({year:y,recorded:true,revenue:recorded.rev,expense:recorded.exp,
@@ -927,12 +927,10 @@ function outlookGraph(rows){
 
 function planningYears(t,ids,year){
   const plan=financialOutlook(t,ids,year);
-  const history=t.log.filter(r=>r.year<year).map(r=>({year:r.year,recorded:true,reserve:r.reserve}));
-  const graphRows=[...history,...plan.rows].sort((a,b)=>a.year-b.year);
-  return `<details class="planning"><summary>Five-year financial outlook · Years ${year}–${plan.endYear}</summary>
+  return `<details class="planning"><summary>Five-year financial outlook · Years 1–${plan.endYear}</summary>
     <div class="plan-scroll" tabindex="0" role="region" aria-label="Five-year financial outlook"><table><thead><tr><th>Year and status</th><th class="r">Annual operating revenue</th><th class="r">Annual operating expenses</th><th class="r">Operating result</th><th class="r">Operating reserve at year-end</th><th class="r">Investment fund remaining</th></tr></thead><tbody>
     ${plan.rows.map(r=>`<tr><td>Year ${r.year} · ${r.recorded?'recorded':'projected'}</td><td class="r num">${Mk(r.revenue)}</td><td class="r num">${Mk(r.expense)}</td><td class="r num ${r.margin<0?'neg':''}">${Mk(r.margin)}</td><td class="r num ${r.reserve<0?'neg':''}">${Mk(r.reserve)}</td><td class="r num">${r.recorded?'—':Mk(r.fund)}</td></tr>`).join('')}
-    </tbody></table></div>${outlookGraph(graphRows)}</details>`;
+    </tbody></table></div>${outlookGraph(plan.rows)}</details>`;
 }
 
 function ledgerStrip(t,commitments=[]){

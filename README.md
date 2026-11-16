@@ -262,4 +262,5 @@ The projection adds colored category and total-score changes and a total-score l
 for each table. After Year 3, five projected years extend the graph to Year 8. Dashed
 projections preserve current enrollment, investments, expenses and rulings; they
 respect delayed revenue and assume no additional events or purchases. The CFO's
-separate financial outlook remains a rolling five-year view.
+separate financial outlook always starts at Year 1, retaining recorded annual results
+alongside the current year and four subsequent years of projections.
