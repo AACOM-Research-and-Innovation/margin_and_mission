@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -94,6 +95,9 @@ h1,h2,h3{font-weight:800;letter-spacing:-.02em;margin:0}
 .btn.locked,.btn.locked:disabled{background:#6f6f76;color:#fff;cursor:default;filter:none}
 .btn.ghost{background:none;border:1px solid var(--indigo-line);color:var(--paper);font-weight:600}
 .btn.alert{background:var(--orange)}
+.btn.danger{background:#b52e43;color:#fff}
+.report-downloads{display:flex;flex-wrap:wrap;gap:12px}.report-downloads .btn{display:inline-flex;align-items:center;justify-content:center;width:auto;text-decoration:none}
+.score-change{display:block;font-size:.65em;white-space:nowrap}.score-trend{overflow-x:auto;margin-top:28px}.score-trend svg{width:100%;min-width:600px}.score-trend text{fill:#b8b0d0;font-size:12px}.trend-legend{display:flex;flex-wrap:wrap;gap:16px;font-size:14px}
 .alertbox{background:rgba(255,89,89,.12);border-left:3px solid var(--coral);padding:10px 12px;
   font-size:12.5px;line-height:1.5;margin-top:12px;color:#ffd0d0}
 .notebox{background:rgba(255,163,0,.1);border-left:3px solid var(--orange);padding:10px 12px;
@@ -187,12 +191,19 @@ select,input{background:var(--indigo-deep);border:1px solid var(--indigo-line);c
 .outlook-chart-value span{display:block;margin-top:4px;font-size:11px;color:#a79fc4}
 .outlook-chart-scroll{overflow-x:auto;margin-top:12px}
 .outlook-chart svg{display:block;width:100%;height:auto;min-width:540px}
-.outlook-chart svg text{fill:#aaa3c4;font-size:12px;font-family:'IBM Plex Mono',monospace}
+.outlook-chart svg text{fill:#aaa3c4;font-size:12px}
 .outlook-legend{display:flex;justify-content:center;gap:24px;font-size:11px;color:#b8b0d0;margin-top:4px}
 .outlook-legend span{display:flex;align-items:center;gap:8px}
 .outlook-legend i{display:inline-block;width:24px;border-top:2px solid var(--cyan)}
 .outlook-legend i.projected{border-top-style:dashed}
 @media(max-width:600px){.outlook-chart{padding:18px 12px 14px}.outlook-chart h3{font-size:16px}.outlook-chart-value strong{font-size:20px}}
+.projection-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:24px}
+.projection-heading h1{margin-bottom:0}
+.projection-toggle{width:auto;margin:0;padding:12px 18px;font-size:15px;flex-shrink:0}
+.projection-signals{max-width:1500px;margin:0 auto}
+.projection-signal-list .sig{grid-template-columns:38px 1fr;gap:20px;padding:18px 0;font-size:clamp(21px,2.2vw,30px);line-height:1.5}
+.projection-signal-list .sig i{font-size:16px;padding-top:7px}
+@media(max-width:600px){.proj{padding:24px 18px}.projection-signal-list .sig{gap:10px;grid-template-columns:28px 1fr}}
 </style>
 
 <div id="app"></div>
@@ -398,7 +409,7 @@ function expenseOf(t){return BASE.expense + t.tail;}
 function daysCash(t){return t.reserve/(expenseOf(t)/365);}
 
 function resolveRound(t,year){
-  const out={year,purchases:[],events:[],flags:[]};
+  const out={year,purchases:[],events:[],flags:[],before:ledgerSnapshot(t),scoreBefore:score(t)};
 
   // 1. purchases
   t.pending.forEach(id=>{
@@ -410,7 +421,7 @@ function resolveRound(t,year){
     if(c.resv){t.reserve+=c.resv;}
     t.tail+=c.tail;t.held.push(id);t.bought[id]=year;
     t.mPts+=c.m;t.sPts+=c.s;t.rPts+=c.r;
-    out.purchases.push({n:c.n,cost,tail:c.tail,src});});
+    out.purchases.push({id:c.id,n:c.n,cost,tail:c.tail,src});});
   t.pending=[];
 
   // 2. operating year
@@ -421,13 +432,14 @@ function resolveRound(t,year){
   // 3. events
   EVENTS[year].forEach(e=>{
     const r=e.f(t);
+    const differential=eventDifferentials(e,t,r,year);
     if(r.cash){t.reserve+=r.cash;}
     if(r.enroll){t.enroll=Math.max(.7,t.enroll+r.enroll);}
     if(r.tail){t.tail+=r.tail;}
     if(r.m)t.mPts+=r.m;
     if(r.s)t.sPts+=r.s;
     if(r.cite)t.cite+=r.cite;
-    out.events.push({n:e.n,hd:r.hd,notes:r.notes||[],cash:r.cash||0});});
+    out.events.push({n:e.n,hd:r.hd,notes:r.notes||[],cash:r.cash||0,differential});});
 
   // 4. liquidity check
   const d=daysCash(t);t.minDays=Math.min(t.minDays,d);
@@ -437,6 +449,7 @@ function resolveRound(t,year){
   if(t.cite>=2)out.flags.push('Second accreditation citation. Institution moved to probation. Financial health category forfeited.');
   if(margin<0)out.flags.push('Structural operating deficit of '+M(-margin)+'. Annual operating expenses now exceed annual revenue.');
 
+  out.scoreAfter=score(t);
   t.log.push(out);
   return out;}
 
@@ -456,6 +469,190 @@ function score(t){
   const res = clamp(t.rPts/24,0,1)*15;
   const adj = t.adj.reduce((a,x)=>a+(x.pts||0),0);
   return{fin,mis,str,res,adj,total:clamp(fin+mis+str+res+adj,0,120)};}
+
+
+/* Only ledger fields are rewound; submissions, names and mentor rulings survive. */
+const LEDGER_FIELDS=['fund','restricted','reserve','tail','enroll','held','bought','cite','mPts','sPts','rPts','cumMargin','minDays'];
+const copy=value=>JSON.parse(JSON.stringify(value));
+function ledgerSnapshot(t){return Object.fromEntries(LEDGER_FIELDS.map(k=>[k,copy(t[k])]));}
+function roundBefore(t,record){
+  if(record.before)return copy(record.before);
+  // Older saved sessions have purchase years but no snapshots. Replay the same
+  // decisions, carrying forward any facilitator ledger differences.
+  const replay=newTeam(t.id);
+  for(let year=1;year<=record.year;year++){
+    replay.pending=t.held.filter(id=>t.bought[id]===year);
+    resolveRound(replay,year);
+  }
+  const before=copy(replay.log.at(-1).before);
+  for(const key of LEDGER_FIELDS){
+    if(typeof before[key]==='number'&&key!=='minDays')before[key]+=t[key]-replay[key];
+  }
+  before.minDays=Math.min(98,...t.log.filter(l=>l.year<record.year).map(l=>l.days));
+  return before;
+}
+function visibleTeam(t){
+  const hidden=t.log.find(l=>S&&l.year===S.round&&!['resolved','final'].includes(S.phase));
+  if(!hidden)return t;
+  const before=roundBefore(t,hidden);
+  if(hidden.before)before.reserve+=t.reserve-hidden.reserve;
+  return {...t,...before,log:t.log.filter(l=>l.year<hidden.year)};
+}
+function eventDifferentials(event,t,actual,year=1){
+  const metrics=[['cash','event cash impact',M],['enroll','enrollment change',v=>(v*100).toFixed(1)+' percentage points'],['m','raw mission point change',String],['s','raw strategic point change',String],['cite','accreditation citation count',String],['tail','annual expense change',M]];
+  return t.held.flatMap(id=>{
+    const without=event.f({...t,held:t.held.filter(held=>held!==id)});
+    const changes=metrics.filter(([key])=>(actual[key]||0)!==(without[key]||0)).map(([key,label,format])=>{
+      if(key==='cash'&&(actual[key]||0)<=0&&(without[key]||0)<=0)return 'event cost was '+M(-(actual[key]||0))+' instead of '+M(-(without[key]||0));
+      return label+' was '+format(actual[key]||0)+' instead of '+format(without[key]||0);
+    });
+    if(changes.length){
+      const reserveDifference=(actual.cash||0)-(without.cash||0);
+      let detail=reserveDifference?' This '+(reserveDifference>0?'preserved ':'cost an additional ')+M(Math.abs(reserveDifference))+' in operating reserve.':'';
+      if(id===14&&actual.enroll!==without.enroll&&Number.isFinite(t.enroll)){
+        const actualEnrollment=Math.max(.7,t.enroll+(actual.enroll||0));
+        const alternativeEnrollment=Math.max(.7,t.enroll+(without.enroll||0));
+        const tuition=BASE.tuition*(actualEnrollment-alternativeEnrollment);
+        detail+=' From Year '+(year+1)+', annual tuition is '+M(BASE.tuition*actualEnrollment)+' instead of '+M(BASE.tuition*alternativeEnrollment)+', protecting '+M(tuition)+' per year. After card 14’s '+M(CARD(14).tail)+' annual expense, the comparative annual margin benefit is '+M(tuition-CARD(14).tail)+'.';
+        if(has(t,6)){
+          const bridge=CARD(6),revenue=enrollment=>bridge.rev*(enrollment<.95?.85:1);
+          const benefit=revenue(actualEnrollment)-revenue(alternativeEnrollment);
+          const firstYear=Math.max(year+1,(t.bought?.[6]||year)+bridge.lag);
+          detail+=' When your bridge program (card 6) is mature, from Year '+firstYear+', its annual revenue is '+M(revenue(actualEnrollment))+' instead of '+M(revenue(alternativeEnrollment))+'. Combined annual revenue protection is '+M(tuition+benefit)+'; the comparative annual margin benefit after card 14’s expense is '+M(tuition+benefit-CARD(14).tail)+'.';
+        }
+        detail+=' Year '+year+' operations precede this event. The enrollment loss persists; a later scholarship purchase does not restore it.';
+      }
+      if(id===11&&has(t,5)){
+        const program=CARD(5),firstYear=Math.max(year,(t.bought?.[5]||year)+program.lag);
+        detail+=' Separately, from Year '+firstYear+', your mature AI program (card 5) earns '+M(program.rev)+' instead of '+M(program.rev*.6)+' annually. After card 11’s '+M(CARD(11).tail)+' annual expense, the comparative annual margin benefit is '+M(program.rev*.4-CARD(11).tail)+'. Earlier lost revenue is not restored.';
+      }
+      if((actual.tail||0)!==(without.tail||0))detail+=' This event’s expense change occurs after Year '+year+' operations: it affects days cash immediately and operating margin from Year '+(year+1)+'.';
+      if(id===13)detail+=' Card 13’s ordinary annual revenue begins in Year '+((t.bought?.[13]||year)+CARD(13).lag)+'; that lag does not delay eligibility for this gift.';
+      return [{id,text:'Because you took '+CARD(id).n+' (card '+id+'), '+changes.join('; ')+'. This comparison removes only this card and keeps your other investments.'+detail}];
+    }
+    if(event.n.startsWith('OMM chair')&&id===7&&has(t,8))return [{id,text:'Faculty retention (card 7) provides no additional protection in this event because OMM succession (card 8) takes precedence. Card 7’s ordinary expense and purchase-time points still apply.'}];
+    if(event.n.startsWith('Ransomware')&&id===4&&!has(t,3))return [{id,text:'Cyber insurance (card 4) provides no event payout without cybersecurity controls (card 3). Incident cost remains '+M(-(actual.cash||0))+' and the '+M(CARD(4).tail)+' annual premium still applies.'}];
+    if(event.n.startsWith('National scrutiny')&&[5,12].includes(id)&&has(t,5)&&has(t,12)&&!has(t,11))return [{id,text:'Removing card '+id+' alone does not avoid ungoverned AI exposure because card '+(id===5?12:5)+' remains. Holding both cards does not double the '+M(-(actual.cash||0))+' remediation cost or the single citation. AI governance (card 11) is absent.'}];
+    return [];
+  });
+}
+async function rollbackStage(){
+  if(BUSY)return;
+  BUSY=true;
+  try{
+    const current=await sget(K.state);
+    if(!current)return;
+    const next={...current};
+    const phases=['brief','locked','reveal','calculated','resolved','final'];
+    if(current.phase==='brief'){
+      if(current.round===1)return;
+      next.round--;next.phase='resolved';
+    }else{
+      const index=phases.indexOf(current.phase);
+      if(index<1)return;
+      next.phase=phases[index-1];
+    }
+    if(current.phase==='calculated'){
+      for(let i=1;i<=current.tables;i++){
+        const t=await sget(K.team(i));
+        if(!t)throw new Error('Could not load Table '+i+'. Retry Roll back one stage.');
+        const record=t.log.find(l=>l.year===current.round);
+        if(!record)continue; // Safe to retry after an interrupted rollback.
+        const before=roundBefore(t,record);
+        // Cash rulings made after calculation survive alongside point rulings.
+        if(record.before)before.reserve+=t.reserve-record.reserve;
+        Object.assign(t,before);
+        t.log=t.log.filter(l=>l.year<current.round);
+        t.pending=(t.locked[current.round]||[]).slice();
+        if(!await sset(K.team(i),t))throw new Error('Could not roll back every table. Retry Roll back one stage.');
+      }
+    }
+    if(!await sset(K.state,next))throw new Error('Could not save the stage. Retry Roll back one stage.');
+    S=next;await loadTeams();
+  }catch(error){alert(error.message)}finally{BUSY=false;render()}
+}
+function scoreChange(id,key){
+  const t=TEAMS.find(t=>t.id===id);
+  const record=t&&visibleTeam(t).log.at(-1);
+  if(!record?.scoreAfter||!record.scoreBefore)return '';
+  const history=visibleTeam(t).log;
+  const previous=history.at(-2)?.scoreAfter||record.scoreBefore;
+  const difference=score(visibleTeam(t))[key]-previous[key];
+  if(Math.abs(difference)<.05)return '<span class="score-change">→ 0.0</span>';
+  return `<span class="score-change ${difference>0?'pos':'neg'}" aria-label="${difference>0?'Up':'Down'} ${Math.abs(difference).toFixed(1)} points">${difference>0?'▲ +':'▼ −'}${Math.abs(difference).toFixed(1)}</span>`;
+}
+function scoreSeries(t){
+  const actual=visibleTeam(t),rows=[{year:0,total:score(newTeam(t.id)).total,recorded:true}];
+  for(const l of actual.log)if(l.scoreAfter)rows.push({year:l.year,total:l===actual.log.at(-1)?score(actual).total:l.scoreAfter.total,recorded:true});
+  if(actual.log.length===3){
+    const projected=copy(actual);
+    for(let year=4;year<=8;year++){
+      const margin=revenueOf(projected,year)-expenseOf(projected);
+      projected.reserve+=margin;projected.cumMargin+=margin;
+      projected.minDays=Math.min(projected.minDays,daysCash(projected));
+      rows.push({year,total:score(projected).total,recorded:false});
+    }
+  }
+  return rows;
+}
+function escapeHTML(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function scoreTrend(){
+  const teams=TEAMS.map(t=>({t,rows:scoreSeries(t)})).filter(({rows})=>rows.length>1);
+  if(!teams.length)return '';
+  const end=Math.max(...teams.flatMap(({rows})=>rows.map(r=>r.year))),w=1000,h=340;
+  const x=year=>60+year/end*900,y=total=>285-total/120*250;
+  const colors=['#54c8e8','#ffb45c','#b8a0ff','#6eddac','#ff7b91','#f6e86f','#91aaff','#ffa6dc','#94dc55','#f59561','#74e2d2','#d2b77b','#e8e8ef','#c481ed'];
+  return `<section class="score-trend"><h2>Score over the years</h2><p class="mini">Total score determines rank. Solid lines show recorded scores; dashed lines show five projected years after Year 3, with current investments, enrollment and annual expenses held constant and no new events or rulings.</p>
+  <svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Total score by table and year, with projections shown as dashed lines">
+  ${[0,30,60,90,120].map(v=>`<line x1="60" x2="960" y1="${y(v)}" y2="${y(v)}" stroke="#443959"/><text class="num" x="15" y="${y(v)+4}">${v}</text>`).join('')}
+  ${Array.from({length:end+1},(_,year)=>`<text x="${x(year)}" y="315" text-anchor="middle">Year ${year}</text>`).join('')}
+  ${teams.map(({t,rows},index)=>{
+    const color=colors[(t.id-1)%colors.length],style=t.id>7?'7 3 2 3':'';
+    return rows.map((r,i)=>{
+      const prev=rows[i-1];
+      return `${prev?`<line x1="${x(prev.year)}" y1="${y(prev.total)}" x2="${x(r.year)}" y2="${y(r.total)}" stroke="${color}" stroke-width="2.5" stroke-dasharray="${r.recorded?style:'5 5'}"/>`:''}<circle cx="${x(r.year)}" cy="${y(r.total)}" r="${3+index%2}" fill="${color}"><title>${escapeHTML(t.name)} · Year ${r.year} · ${r.total.toFixed(1)} points · ${r.recorded?'recorded':'projected'}</title></circle>`;
+    }).join('');
+  }).join('')}</svg><div class="trend-legend">${teams.map(({t})=>`<span style="color:${colors[(t.id-1)%colors.length]}">${t.id>7?'┄':'━'} ${escapeHTML(t.name)}</span>`).join('')}</div></section>`;
+}
+function decisionSummary(t){
+  const purchases=t.log.flatMap(l=>l.purchases);
+  const effects=t.log.flatMap(l=>l.events.flatMap(e=>e.differential||[]));
+  return `<div class="res"><h3>Your decisions and their impact</h3>
+    <p>You purchased ${purchases.length} investments, committing ${M(purchases.reduce((sum,p)=>sum+p.cost,0))} in startup funding. Your cumulative operating result was ${M(t.cumMargin)}, and your decisions left ${t.cite} accreditation citation${t.cite===1?'':'s'}. ${effects.length?escapeHTML(effects[0].text.split('. This comparison')[0]+(effects[0].text.includes('. This comparison')?'.':'')):'Your portfolio produced no card-specific event differences.'} Expand each year for the other effects and costs.</p>
+    ${t.log.map(l=>`<details class="notebox"><summary><b>Year ${l.year}${t.deciders[l.year]?' · '+escapeHTML(t.deciders[l.year]):''}</b> · ${l.purchases.length} investments · operating result ${M(l.margin)}</summary>
+      <div>${l.purchases.length?l.purchases.map(p=>`${escapeHTML(p.n)}${p.id?' (card '+p.id+')':''}`).join('; '):'No new investments purchased.'}</div>
+      <div>Startup investment: ${M(l.purchases.reduce((sum,p)=>sum+p.cost,0))}; annual expense change: ${M(l.purchases.reduce((sum,p)=>sum+p.tail,0))}. Operating result: ${M(l.margin)}.</div>
+      ${l.events.map(e=>`<div><b>${escapeHTML(e.n)}:</b> ${escapeHTML(e.hd)} ${(e.differential||[]).map(d=>escapeHTML(d.text)).join(' ')}</div>`).join('')}
+      ${l.scoreBefore&&l.scoreAfter?`<div>Total score moved from ${l.scoreBefore.total.toFixed(1)} to ${l.scoreAfter.total.toFixed(1)}. Raw mission, strategic and resilience points are converted using the category limits in the scoring guide.</div>`:''}
+      </details>`).join('')}
+      <p class="mini">Card comparisons hold the other investments constant. Overlapping benefits are conditional and should not be added together. Startup spending and recurring expenses are included in your financial position above.</p></div>`;
+}
+function decisionMarkdown(t){
+  const s=score(t),lines=['# '+t.name+' — decisions and impact','',`Final score: ${s.total.toFixed(1)}. Financial health ${s.fin.toFixed(1)}/35; mission ${s.mis.toFixed(1)}/30; strategic position ${s.str.toFixed(1)}/20; resilience ${s.res.toFixed(1)}/15; facilitator adjustment ${s.adj}.`,'',`Operating reserve ${M(t.reserve)}; investment fund ${M(t.fund)}; cumulative operating result ${M(t.cumMargin)}; enrollment ${(t.enroll*100).toFixed(1)}%; citations ${t.cite}.`,''];
+  for(const l of t.log){
+    lines.push('## Year '+l.year+(t.deciders[l.year]?' — '+t.deciders[l.year]:''),'');
+    if(t.dissent[l.year])lines.push('Dissent: '+t.dissent[l.year],'');
+    for(const p of l.purchases){
+      const c=CARD(p.id);
+      lines.push(`- ${p.id?'Card '+p.id+': ':''}${p.n}. Startup ${M(p.cost)} (${p.src}); annual expense change ${M(p.tail)}.${c?' Direct raw points: mission '+c.m+', strategic '+c.s+', resilience '+c.r+'.':''}${c?.rev?' Annual program revenue '+M(c.rev)+' starts in Year '+(l.year+c.lag)+' before applicable dependencies and enrollment adjustments.':''}`);
+    }
+    if(!l.purchases.length)lines.push('- No new investments purchased.');
+    lines.push('',`Revenue ${M(l.rev)}; expenses ${M(l.exp)}; operating result ${M(l.margin)}; year-end reserve ${M(l.reserve)}; days cash ${l.days.toFixed(1)}.`,'');
+    for(const e of l.events)lines.push('### '+e.n,'',e.hd,...e.notes,...(e.differential||[]).map(d=>d.text),'');
+    if(l.scoreBefore&&l.scoreAfter)lines.push(`Score: ${l.scoreBefore.total.toFixed(1)} → ${l.scoreAfter.total.toFixed(1)}.`,'');
+    lines.push(...l.flags,'');
+  }
+  if(t.adj.length)lines.push('## Facilitator rulings','',...t.adj.map(a=>`- ${a.pts} points: ${a.note}`),'');
+  lines.push('Comparisons remove one card at a time while keeping the other investments. Conditional benefits overlap; do not add them together. Raw event points are converted using the category limits. See the full scoring guide for formulas.');
+  return lines.join('\n');
+}
+function downloadDecisionReport(id){
+  const t=TEAMS.find(t=>t.id===id)||(ME?.id===id?ME:null);
+  if(!t)return;
+  const url=URL.createObjectURL(new Blob([decisionMarkdown(t)],{type:'text/markdown;charset=utf-8'}));
+  const link=document.createElement('a');link.href=url;link.download='table-'+id+'-decisions-and-impact.md';link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 
 /* ── Storage ─────────────────────────────────────────────── */
 /* Backend is configurable. Resolution order:
@@ -518,14 +715,61 @@ const app=$('app');
 async function pull(){
   S = await sget(K.state);
   if(ROLE==='team'&&ME) ME = await sget(K.team(ME.id)) || ME;
+  if(S)await loadTeams();
   render();}
 
 /* ══════════════ RENDER ══════════════ */
+// Drafts belong to this screen, table and year, separate from polled server data.
+// Keep them in memory only; a full browser reload still starts from saved data.
+let FORM_SCOPE=null;
+const FORM_DRAFT={};
+function formScope(){
+  if(!S)return null;
+  if(ROLE==='team'&&ME)return 'team:'+ME.id+':'+S.round;
+  if(ROLE==='fac')return 'fac:'+S.round;
+  return null;
+}
+function formFields(){
+  return ROLE==='team'?['decName','disName']:
+    ROLE==='fac'?['adjT','adjP','adjN','cashT','cashV']:[];
+}
+function clearFormDraft(){
+  for(const id of Object.keys(FORM_DRAFT))delete FORM_DRAFT[id];
+}
 function render(){
-  if(!ROLE)return renderPicker();
-  if(ROLE==='team')return renderTeam();
-  if(ROLE==='fac')return renderFac();
-  if(ROLE==='proj')return renderProj();}
+  const scope=formScope();
+  const locked=ROLE==='team'&&ME&&S&&Object.prototype.hasOwnProperty.call(ME.locked,S.round);
+  let focus=null;
+  if(scope&&scope===FORM_SCOPE&&!locked){
+    for(const id of formFields()){
+      const field=$(id);
+      if(!field||field.disabled)continue;
+      FORM_DRAFT[id]=field.value;
+      if(document.activeElement===field){
+        focus={id,start:field.selectionStart,end:field.selectionEnd,direction:field.selectionDirection};
+      }
+    }
+  }else clearFormDraft();
+  FORM_SCOPE=scope;
+  let result;
+  if(!ROLE)result=renderPicker();
+  else if(ROLE==='team')result=renderTeam();
+  else if(ROLE==='fac')result=renderFac();
+  else if(ROLE==='proj')result=renderProj();
+  for(const [id,value] of Object.entries(FORM_DRAFT)){
+    const field=$(id);
+    if(field&&!field.disabled)field.value=value;
+  }
+  if(focus){
+    const field=$(focus.id);
+    if(field&&!field.disabled){
+      field.focus();
+      if(typeof focus.start==='number'&&field.setSelectionRange)
+        field.setSelectionRange(focus.start,focus.end,focus.direction);
+    }
+  }
+  return result;
+}
 
 /* ── role picker ─────────────────────────────────────────── */
 function renderPicker(){
@@ -628,7 +872,7 @@ function financialOutlook(t,ids,year){
   const preview=financialPreview(t,ids,year),endYear=year+4;
   let reserve=t.reserve,cumulative=0,selectionImpact=0;
   const rows=[];
-  for(let y=year;y<=endYear;y++){
+  for(let y=1;y<=endYear;y++){
     const recorded=t.log.find(l=>l.year===y);
     if(recorded){
       rows.push({year:y,recorded:true,revenue:recorded.rev,expense:recorded.exp,
@@ -669,7 +913,7 @@ function outlookGraph(rows){
     <div class="outlook-chart-scroll"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Operating reserve at year-end, Years ${rows[0].year} through ${last.year}. Solid line shows recorded results; dashed line shows projections.">
       <defs><linearGradient id="reserve-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#54C8E8" stop-opacity=".18"/><stop offset="100%" stop-color="#54C8E8" stop-opacity="0"/></linearGradient></defs>
       ${firstProjected>=0?`<rect x="${forecastX}" y="${top}" width="${width-right-forecastX}" height="${height-top-bottom}" fill="#54C8E8" opacity=".025"/>`:''}
-      ${ticks.map(v=>`<line x1="${left}" y1="${y(v)}" x2="${width-right}" y2="${y(v)}" stroke="${v===0?'#5d5670':'#ffffff'}" stroke-opacity="${v===0?'.65':'.08'}"/><text x="${left-14}" y="${y(v)+4}" text-anchor="end">${Mk(v)}</text>`).join('')}
+      ${ticks.map(v=>`<line x1="${left}" y1="${y(v)}" x2="${width-right}" y2="${y(v)}" stroke="${v===0?'#5d5670':'#ffffff'}" stroke-opacity="${v===0?'.65':'.08'}"/><text class="num" x="${left-14}" y="${y(v)+4}" text-anchor="end">${Mk(v)}</text>`).join('')}
       <polygon points="${x(0)},${y(0)} ${allPoints} ${x(rows.length-1)},${y(0)}" fill="url(#reserve-fill)"/>
       ${lastRecorded>=0&&firstProjected>=0?`<line x1="${forecastX}" y1="${top}" x2="${forecastX}" y2="${height-bottom}" stroke="#54C8E8" stroke-opacity=".22" stroke-dasharray="3 6"/>`:''}
       <polyline class="reserve-recorded" points="${points(actual)}" fill="none" stroke="#54C8E8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
@@ -683,12 +927,10 @@ function outlookGraph(rows){
 
 function planningYears(t,ids,year){
   const plan=financialOutlook(t,ids,year);
-  const history=t.log.filter(r=>r.year<year).map(r=>({year:r.year,recorded:true,reserve:r.reserve}));
-  const graphRows=[...history,...plan.rows].sort((a,b)=>a.year-b.year);
-  return `<details class="planning"><summary>Five-year financial outlook · Years ${year}–${plan.endYear}</summary>
+  return `<details class="planning"><summary>Five-year financial outlook · Years 1–${plan.endYear}</summary>
     <div class="plan-scroll" tabindex="0" role="region" aria-label="Five-year financial outlook"><table><thead><tr><th>Year and status</th><th class="r">Annual operating revenue</th><th class="r">Annual operating expenses</th><th class="r">Operating result</th><th class="r">Operating reserve at year-end</th><th class="r">Investment fund remaining</th></tr></thead><tbody>
     ${plan.rows.map(r=>`<tr><td>Year ${r.year} · ${r.recorded?'recorded':'projected'}</td><td class="r num">${Mk(r.revenue)}</td><td class="r num">${Mk(r.expense)}</td><td class="r num ${r.margin<0?'neg':''}">${Mk(r.margin)}</td><td class="r num ${r.reserve<0?'neg':''}">${Mk(r.reserve)}</td><td class="r num">${r.recorded?'—':Mk(r.fund)}</td></tr>`).join('')}
-    </tbody></table></div>${outlookGraph(graphRows)}</details>`;
+    </tbody></table></div>${outlookGraph(plan.rows)}</details>`;
 }
 
 function ledgerStrip(t,commitments=[]){
@@ -715,19 +957,19 @@ function ledgerStrip(t,commitments=[]){
 
 function renderTeam(){
   if(!S){app.innerHTML='<div class="picker"><p>Waiting for the facilitator…</p></div>';return}
-  const t=ME,rd=S.round;
+  const t=visibleTeam(ME),rd=S.round;
   const isLocked=Object.prototype.hasOwnProperty.call(t.locked,rd);
   const commitments=isLocked?(t.locked[rd]||[]):CART;
 
   if(S.phase==='final'){app.innerHTML=chrome(t)+`<div class="wrap">${finalCard(t)}${boardTable(t.id)}</div>`;return}
 
   if(S.phase==='resolved'&&t.log.length>=rd){
-    app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t)}${/* Outlook temporarily disabled; restore this call to re-enable: planningYears(t,[],rd) */''}${resultPanel(t,t.log[rd-1])}${boardTable(t.id)}
+    app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t)}${planningYears(t,[],rd)}${resultPanel(t,t.log[rd-1])}${boardTable(t.id)}
       <p class="mini">Year ${rd} is complete. The facilitator opens Year ${rd+1} when the room is ready.</p></div>`;return}
 
-  if(S.phase==='locked'||S.phase==='reveal'){
+  if(S.phase==='locked'||S.phase==='reveal'||S.phase==='calculated'){
     app.innerHTML=chrome(t)+`<div class="wrap">${ledgerStrip(t,t.locked[rd]||[])}
-      ${/* Outlook temporarily disabled; restore this call to re-enable: planningYears(t,t.locked[rd]||[],rd) */''}
+      ${planningYears(t,t.locked[rd]||[],rd)}
       <div class="panel"><div class="eyebrow">Investment selections submitted</div>
       <h2>Year ${rd} investment selections submitted</h2>
       <div style="margin-top:14px">${(t.locked[rd]||[]).map(id=>`<div class="cartrow"><span>${CARD(id).n}</span><b class="num">${M(CARD(id).one)}</b></div>`).join('')||'<p class="mini">No new investments submitted for this year. Existing investments remain in effect.</p>'}</div>
@@ -769,7 +1011,7 @@ function renderTeam(){
      </div>
    </section>
    ${ledgerStrip(t,commitments)}
-   ${/* Outlook temporarily disabled; restore this call to re-enable: planningYears(t,commitments,rd) */''}
+   ${planningYears(t,commitments,rd)}
    <div class="finance-dock" aria-label="Selection totals" aria-live="polite"><span>Investment fund <b class="num">${Mk(preview.team.fund)}</b></span><span>Year ${rd} operating result <b class="num">${Mk(mg)}</b></span><span>Starting restricted gift <b class="num">${Mk(preview.team.restricted)}</b></span></div>
    <p class="mini">${CARDS.length} investment cards across ${CATS.length} categories. Categories organize the menu; you do not need to choose from every category. Annual expenses continue in later rounds.</p>
    <div class="grid">
@@ -836,7 +1078,11 @@ async function lockIn(){
   t.deciders[S.round]=dn.trim();
   t.dissent[S.round]=(($('disName')||{}).value||'').trim();
   t.cfo=ME.cfo;t.mentor=ME.mentor;
-  await sset(K.team(t.id),t);
+  if(!await sset(K.team(t.id),t)){
+    BUSY=false;
+    alert('Your submission could not be saved. Your entries are still here; please try again.');
+    return;
+  }
   ME=t;CART=[];BUSY=false;render();}
 
 async function unlockYear(){
@@ -886,7 +1132,8 @@ function resultPanel(t,L){
    ${L.events.map(e=>`<div class="ev"><h3>${e.n}</h3>
      <div class="res"><div class="line"><span><b>${e.hd}</b></span>
        ${e.cash?`<b class="amt num ${e.cash<0?'neg':'pos'}">${M(e.cash)}</b>`:''}</div>
-       ${e.notes.map(n=>`<div style="color:#a79fc4;padding:3px 0">${n}</div>`).join('')}</div></div>`).join('')}
+       ${e.notes.map(n=>`<div style="color:#a79fc4;padding:3px 0">${n}</div>`).join('')}
+       ${(e.differential||[]).map(d=>`<div class="notebox">${d.text}</div>`).join('')}</div></div>`).join('')}
    <div class="res"><div class="line"><span><b>Operating reserve at year-end</b></span><b class="amt num">${M(L.reserve)}</b></div>
      <div class="line"><span>Days cash on hand</span><b class="amt num ${L.days<60?'neg':''}">${Math.round(L.days)}</b></div></div>
    ${L.flags.map(f=>`<div class="alertbox">${f}</div>`).join('')}
@@ -915,6 +1162,9 @@ function finalCard(t){
       <b class="amt num">${(t.locked[y]||[]).length} investments submitted</b></div>`:'').join('')}
     <div style="color:#a79fc4;padding-top:8px">Each decider inherited the year before it. Ask the table which inherited position was hardest to accept, and whether the person who argued against the consensus turned out to be right.</div>
    </div>
+   ${decisionSummary(t)}
+   <div class="report-downloads"><a class="btn ghost" href="docs/card-impact-differential-explanations.md" download>Download full scoring guide (Markdown)</a>
+   <button class="btn ghost" onclick="downloadDecisionReport(${t.id})">Download your decision report (Markdown)</button></div>
    ${t.fund>2000000?`<div class="notebox">You closed with ${M(t.fund)} uncommitted. That balance scores in financial health and in none of the other three categories. Unspent investment funds support financial health but do not add mission, strategic position or resilience points.</div>`:''}
   </div>`;}
 
@@ -940,7 +1190,7 @@ function boardTable(mine,showPurchases=false){
     <td class="r num"><b>${b.s.total.toFixed(1)}</b></td></tr>`).join('')}
    </tbody></table></div>`;}
 
-function phaseLabel(phase){return {brief:'Deliberation open',locked:'Deliberation closed',reveal:'Events shown',resolved:'Year complete',final:'Final'}[phase]||phase;}
+function phaseLabel(phase){return {brief:'Deliberation open',locked:'Deliberation closed',reveal:'Events shown',calculated:'Results calculated · awaiting display',resolved:'Year complete',final:'Final'}[phase]||phase;}
 function chrome(t){
   const ph=phaseLabel(S.phase);
   return `<div class="topbar"><span class="brand">Margin <span>and Mission</span></span>
@@ -955,7 +1205,7 @@ let TEAMS=[];
 async function loadTeams(){
   if(!S)return;TEAMS=[];
   for(let i=1;i<=S.tables;i++){const t=await sget(K.team(i))||newTeam(i);TEAMS.push(t)}
-  BOARD=TEAMS.map(t=>({id:t.id,name:t.name,s:score(t)})).sort((a,b)=>b.s.total-a.s.total);}
+  BOARD=TEAMS.map(t=>({id:t.id,name:t.name,s:score(visibleTeam(t))})).sort((a,b)=>b.s.total-a.s.total);}
 
 async function renderFac(){
   if(!S){app.innerHTML=`<div class="picker"><h1>Start the session</h1>
@@ -978,9 +1228,11 @@ async function renderFac(){
       ${S.phase==='brief'?`<button class="btn" onclick="setPhase('locked')">Close deliberation (${submitted}/${S.tables} tables submitted)</button>`:''}
       ${S.phase==='locked'?`<button class="btn alert" onclick="setPhase('reveal')">Show Year ${S.round} events</button>`:''}
       ${S.phase==='reveal'?`<button class="btn" onclick="doResolve()">Calculate Year ${S.round} results</button>`:''}
+      ${S.phase==='calculated'?`<button class="btn" onclick="setPhase('resolved')">Show Year ${S.round} results</button>`:''}
       ${S.phase==='resolved'&&S.round<3?`<button class="btn" onclick="nextRound()">Open Year ${S.round+1}</button>`:''}
       ${S.phase==='resolved'&&S.round===3?`<button class="btn" onclick="setPhase('final')">Publish final standings</button>`:''}
-      <button class="btn ghost" onclick="loadTeams().then(render)">Refresh</button>
+      <button class="btn danger" onclick="rollbackStage()" ${S.round===1&&S.phase==='brief'?'disabled':''}>Roll back one stage</button>
+      <button class="btn ghost" onclick="pull()">Refresh</button>
       <button class="btn ghost" onclick="hardReset()">Reset session</button>
     </div>
     <p class="mini">Closing deliberation with outstanding submissions records no new investments for those tables that year. Use "Enter for this table" if a device fails.</p>
@@ -1029,36 +1281,47 @@ async function startGame(){
   for(let i=1;i<=n;i++)await sset(K.team(i),newTeam(i));
   await loadTeams();render();}
 
-async function setPhase(p){S.phase=p;await sset(K.state,S);await loadTeams();render()}
-async function nextRound(){S.round++;S.phase='brief';await sset(K.state,S);render()}
+async function setPhase(p){if(BUSY)return;const next={...S,phase:p};if(!await sset(K.state,next))return;S=next;await loadTeams();render()}
+async function nextRound(){if(BUSY)return;const next={...S,round:S.round+1,phase:'brief'};if(!await sset(K.state,next))return;S=next;await loadTeams();render()}
 
 async function doResolve(){
-  if(BUSY)return;BUSY=true;
+  if(BUSY||!S||S.phase!=='reveal')return;BUSY=true;
+  try{
   for(let i=1;i<=S.tables;i++){
-    const t=await sget(K.team(i))||newTeam(i);
+    const t=await sget(K.team(i));
+    if(!t)throw new Error('Could not load Table '+i+'. Retry Calculate.');
     if(t.log.length>=S.round)continue;
+    t.pending=(t.locked[S.round]||[]).filter((id,index,ids)=>CARD(id)&&!has(t,id)&&ids.indexOf(id)===index);
     resolveRound(t,S.round);
-    await sset(K.team(i),t);}
-  S.phase='resolved';await sset(K.state,S);
-  await loadTeams();BUSY=false;render();}
+    if(!await sset(K.team(i),t))throw new Error('Could not save calculated results. Retry Calculate.');}
+  const next={...S,phase:'calculated'};
+  if(!await sset(K.state,next))throw new Error('Could not save the stage. Retry Calculate.');
+  S=next;await loadTeams();
+  }catch(error){alert(error.message)}finally{BUSY=false;render()}}
 
 async function applyAdj(){
   const id=+$('adjT').value,p=+$('adjP').value,n=$('adjN').value||'Facilitator ruling';
   if(!p)return;
   const t=await sget(K.team(id));t.adj.push({pts:p,note:n});
-  await sset(K.team(id),t);await loadTeams();render();}
+  if(!await sset(K.team(id),t))return;
+  // Clear only the successfully submitted adjustment, preserving the other form.
+  for(const field of ['adjP','adjN']){delete FORM_DRAFT[field];if($(field))$(field).value='';}
+  await loadTeams();render();}
 
 async function applyCash(){
   const id=+$('cashT').value,v=+$('cashV').value;
   if(!v)return;
   const t=await sget(K.team(id));t.reserve+=v;t.adj.push({pts:0,note:'Operating reserve adjusted '+M(v)});
-  await sset(K.team(id),t);await loadTeams();render();}
+  if(!await sset(K.team(id),t))return;
+  delete FORM_DRAFT.cashV;if($('cashV'))$('cashV').value='';
+  await loadTeams();render();}
 
 async function facEnter(id){
+  if(!S||S.phase!=='brief')return;
   const t=await sget(K.team(id));
   const picks=prompt(`Enter card numbers for ${t.name}, Year ${S.round}, comma separated.\n\nExample: 3, 10, 12`,'');
   if(picks===null)return;
-  const ids=picks.split(',').map(x=>parseInt(x.trim())).filter(x=>CARD(x)&&!t.held.includes(x));
+  const ids=picks.split(',').map(x=>parseInt(x.trim())).filter((x,i,ids)=>CARD(x)&&!t.held.includes(x)&&ids.indexOf(x)===i);
   t.pending=ids;t.locked[S.round]=ids;
   await sset(K.team(id),t);await loadTeams();render();}
 
@@ -1069,20 +1332,35 @@ async function hardReset(){
   S=null;TEAMS=[];BOARD=[];render();}
 
 /* ── projection ──────────────────────────────────────────── */
+// Display choice is local to the projection device; it does not change the game.
+let PROJ_SIGNALS=false,PROJ_ROUND=null;
+function toggleProjection(){
+  if(!S||S.phase!=='brief')return;
+  PROJ_SIGNALS=!PROJ_SIGNALS;
+  renderProj();
+}
 function renderProj(){
+  if(!S||S.phase!=='brief'||PROJ_ROUND!==S.round)PROJ_SIGNALS=false;
+  PROJ_ROUND=S?S.round:null;
   if(!S){app.innerHTML='<div class="proj"><h1>Margin and Mission</h1><p class="mini">Waiting for the facilitator.</p></div>';return}
   if(S.phase==='reveal'){
     app.innerHTML=`<div class="proj"><div class="eyebrow">Year ${S.round}</div><h1>What happened</h1>
      ${EVENTS[S.round].map(e=>`<div class="ev"><h3 style="font-size:26px">${e.n}</h3><p style="font-size:18px">${e.d}</p></div>`).join('')}</div>`;return}
-  app.innerHTML=`<div class="proj"><div class="eyebrow">${S.phase==='final'?'Final standings':'After Year '+S.round}</div>
-   <h1>Margin and Mission</h1>
+  const toggle=S.phase==='brief'?`<button type="button" class="btn ghost projection-toggle" onclick="toggleProjection()" aria-pressed="${PROJ_SIGNALS}">${PROJ_SIGNALS?'Show leaderboard':'Show environmental signals'}</button>`:'';
+  if(S.phase==='brief'&&PROJ_SIGNALS){
+    app.innerHTML=`<div class="proj projection-signals"><div class="projection-heading"><div><div class="eyebrow">Annual briefing · Year ${S.round} · Deliberation open</div><h1>Environmental signals</h1></div>${toggle}</div>
+      <div class="projection-signal-list">${BRIEFS[S.round].sig.map((signal,i)=>`<div class="sig"><i>${String(i+1).padStart(2,'0')}</i><span>${signal}</span></div>`).join('')}</div></div>`;
+    return;
+  }
+  app.innerHTML=`<div class="proj"><div class="projection-heading"><div><div class="eyebrow">${S.phase==='final'?'Final standings':S.phase==='brief'?'Year '+S.round+' · Deliberation open':S.phase==='calculated'?'Year '+S.round+' · Awaiting results':'After Year '+S.round}</div>
+   <h1>Margin and Mission</h1></div>${toggle}</div>
    <table><thead><tr><th></th><th>Table</th><th class="r">Financial health</th><th class="r">Mission and outcomes</th>
    <th class="r">Strategic position</th><th class="r">Resilience</th><th class="r">Total</th></tr></thead><tbody>
    ${BOARD.map((b,i)=>`<tr><td class="rank">${i+1}</td><td>${b.name}</td>
-    <td class="r num">${b.s.fin.toFixed(1)}</td><td class="r num">${b.s.mis.toFixed(1)}</td>
-    <td class="r num">${b.s.str.toFixed(1)}</td><td class="r num">${b.s.res.toFixed(1)}</td>
-    <td class="r num"><b>${b.s.total.toFixed(1)}</b></td></tr>`).join('')}
-   </tbody></table></div>`;}
+    <td class="r num">${b.s.fin.toFixed(1)}${scoreChange(b.id,'fin')}</td><td class="r num">${b.s.mis.toFixed(1)}${scoreChange(b.id,'mis')}</td>
+    <td class="r num">${b.s.str.toFixed(1)}${scoreChange(b.id,'str')}</td><td class="r num">${b.s.res.toFixed(1)}${scoreChange(b.id,'res')}</td>
+    <td class="r num"><b>${b.s.total.toFixed(1)}${scoreChange(b.id,'total')}</b></td></tr>`).join('')}
+   </tbody></table>${scoreTrend()}</div>`;}
 
 /* ── loop ────────────────────────────────────────────────── */
 async function loop_old(){
@@ -1091,7 +1369,7 @@ async function loop_old(){
   if(S&&ROLE==='team'&&ME){
     const t=await sget(K.team(ME.id));if(t)ME=t;
     TEAMS=[];for(let i=1;i<=S.tables;i++){const x=await sget(K.team(i));if(x)TEAMS.push(x)}
-    BOARD=TEAMS.map(t=>({id:t.id,name:t.name,s:score(t)})).sort((a,b)=>b.s.total-a.s.total);}
+    BOARD=TEAMS.map(t=>({id:t.id,name:t.name,s:score(visibleTeam(t))})).sort((a,b)=>b.s.total-a.s.total);}
   render();
   setTimeout(loop_old,6000);}
 
@@ -1169,7 +1447,7 @@ async function loop(){
 
   // Recalculate standings from the newly fetched team data.
   BOARD=TEAMS
-    .map(team=>({id:team.id,name:team.name,s:score(team)}))
+    .map(team=>({id:team.id,name:team.name,s:score(visibleTeam(team))}))
     .sort((a,b)=>b.s.total-a.s.total);
 
   /*
